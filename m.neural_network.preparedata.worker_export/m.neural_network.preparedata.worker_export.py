@@ -125,14 +125,9 @@ def main():
         if "@" not in image_bands[num]:
             image_bands[num] += f"@{old_mapset}"
 
-
-
     # image band export
     image_file = os.path.join(output_dir, f"image_{tile_name}.tif")
-    image_bands_fn = [
-        x for x in image_bands if "@" in x else f"{x}@{old_mapset}"
-    ]
-    grass.run_command("i.group", group="image_bands", input=image_bands_fn)
+    grass.run_command("i.group", group="image_bands", input=image_bands)
     grass.run_command(
         "r.out.gdal",
         input="image_bands",
