@@ -138,7 +138,9 @@ def main():
         map=map,
         flags="g",
     )
-    sys.stdout.write(f"For tile {tile_name} the number of null cells is: {stats['null_cells']}\n")
+    sys.stdout.write(
+        f"For tile {tile_name} the number of null cells is: {stats['null_cells']}\n"
+    )
 
     # switch back to original mapset
     grass.utils.try_remove(newgisrc)
