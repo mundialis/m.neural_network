@@ -122,7 +122,6 @@ def main():
         os.makedirs(output_dir)
 
     # switch to the new mapset
-    # TODO: switch_to_new_mapset muss in alte mapset wechseln können
     gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset, new=False)
 
     if ndsm and "@" not in ndsm:
@@ -156,6 +155,7 @@ def main():
     grass.run_command("r.mapcalc", expression=ex_cut)
     ex_scale = f"ndsm_scaled = int((ndsm_cut / 30. * 254.) + 1)"
     grass.run_command("r.mapcalc", expression=ex_scale)
+
     grass.run_command(
         "r.out.gdal",
         input="ndsm_scaled",
@@ -230,7 +230,7 @@ def main():
                 flags="s",
                 quiet=True,
             )
-        # TODO QML file?
+        # TODO QML file? Label Stil Datei
 
     # switch back to original mapset
     grass.utils.try_remove(newgisrc)

@@ -6,7 +6,8 @@
 #
 # AUTHOR(S):    Anika Weinmann, Guido Riembauer and Victoria-Leandra Brunn
 #
-# PURPOSE:      Prepare training data for creating a neuronal network.
+# PURPOSE:      Prepare training data as first step for the process of
+#               creating a neural network.
 #
 # COPYRIGHT:	(C) 2024 by mundialis and the GRASS Development Team
 #
@@ -305,16 +306,15 @@ def main():
     random.shuffle(possible_tr_data)
     tr_tiles = possible_tr_data[:num_tr_tiles]
     ap_tiles = [x for x in tiles_with_data if x not in tr_tiles]
-
     # loop over training data
     queue_export_tr = ParallelModuleQueue(nprocs=nprocs)
     try:
         for tr_tile in tr_tiles:
             tile_name = geojson_dict["features"][tr_tile]["properties"]["name"]
             tile_path = os.path.join(output_dir, "train", tile_name)
-            tile_id=geojson_dict["features"][tr_tile]["properties"]["fid"]
+            tile_id = geojson_dict["features"][tr_tile]["properties"]["fid"]
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
-            # update jeojson values
+            # update geojson values
             geojson_dict["features"][tr_tile]["properties"][
                 "training"
             ] = "TODO"
@@ -346,7 +346,7 @@ def main():
         for ap_tile in ap_tiles:
             tile_name = geojson_dict["features"][ap_tile]["properties"]["name"]
             tile_path = os.path.join(output_dir, "apply", tile_name)
-            tile_id=geojson_dict["features"][ap_tile]["properties"]["fid"]
+            tile_id = geojson_dict["features"][ap_tile]["properties"]["fid"]
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update jeojson values
             geojson_dict["features"][ap_tile]["properties"]["training"] = "no"
