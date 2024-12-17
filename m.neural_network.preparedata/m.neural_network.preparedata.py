@@ -108,6 +108,7 @@
 import atexit
 import json
 import os
+import shutil
 import random
 
 import grass.script as grass
@@ -115,6 +116,7 @@ from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.general import set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
 from grass.pygrass.modules import Module, ParallelModuleQueue
+from grass.pygrass.utils import get_lib_path
 
 
 # initialize global vars
@@ -142,7 +144,7 @@ def cleanup():
     )
 
 
-def export_tindex(output_dir, geojson_dict):
+def export_tindex(output_dir, geojson_dict, etc_path):
     """Export tile index from geojson_dict.
 
     Export of tile index and verification of correct gpkg file.
@@ -167,6 +169,11 @@ def export_tindex(output_dir, geojson_dict):
     tindex_verification = stream.read()
     print(tindex_verification)
 
+    # copy qml file
+    qml_src_file = os.path.join(etc_path, "qml", "tindex.qml")
+    qml_dest_file = os.path.join(output_dir, "tindex.qml")
+    shutil.copyfile(qml_src_file, qml_dest_file)
+
 
 def main():
     global orig_region, rm_files
@@ -181,6 +188,11 @@ def main():
     train_percentage = int(options["train_percentage"])
     output_dir = options["output_dir"]
     nprocs = set_nprocs(int(options["nprocs"]))
+
+    # get addon etc path
+    etc_path = get_lib_path(modname="m.neural_network.preparedata")
+    if etc_path is None:
+        grass.fatal("Unable to find qml files!")
 
     # get location infos
     gisenv = grass.gisenv()
@@ -292,6 +304,7 @@ def main():
 
     possible_tr_data = []
     tiles_with_data = []
+    tiles_wo_data = []
     for proc in queue.get_finished_modules():
         stdout_strs = proc.outputs["stdout"].value.strip().split(":")
         null_cells = int(stdout_strs[1].strip())
@@ -300,6 +313,8 @@ def main():
             possible_tr_data.append(num)
         if null_cells != tile_size * tile_size:
             tiles_with_data.append(num)
+        else:
+            tiles_wo_data.append(num)
 
     # random split into train and apply data tiles
     num_tr_tiles = round(train_percentage / 100.0 * len(possible_tr_data))
@@ -368,8 +383,14 @@ def main():
         check_parallel_errors(queue_export_ap)
     verify_mapsets(cur_mapset)
 
+    # remove tiles without data
+    tiles_wo_data.reverse()
+    for num in tiles_wo_data:
+        del geojson_dict["features"][num]
+
     # export tindex
-    export_tindex(output_dir, geojson_dict)
+    export_tindex(output_dir, geojson_dict, etc_path)
+
     grass.message(_("Prepare data done"))
 
 

@@ -93,10 +93,12 @@
 # %end
 
 import os
-
+import shutil
 import grass.script as grass
 
+from grass.script.vector import vector_info_topo
 from grass_gis_helpers.mapset import switch_to_new_mapset
+from grass.pygrass.utils import get_lib_path
 
 EXPORT_PARAM = {
     "format": "GTiff",
@@ -116,6 +118,11 @@ def main():
     segmentation_threshold = float(options["segmentation_threshold"])
     output_dir = options["output_dir"]
     tr_flag = flags["t"]
+
+    # get addon etc path
+    etc_path = get_lib_path(modname="m.neural_network.preparedata")
+    if etc_path is None:
+        grass.fatal("Unable to find qml files!")
 
     # make new output directory
     if not os.path.isdir(output_dir):
@@ -149,13 +156,13 @@ def main():
         output=os.path.join(output_dir, f"ndsm_{tile_name}.tif"),
         **EXPORT_PARAM,
     )
+
     # nDSM scaled + export (cut to [0 30] and rescale to [1 255]))
     ndsm_sc_file = os.path.join(output_dir, f"ndsm_1_255_{tile_name}.tif")
     ex_cut = f"ndsm_cut = if( {ndsm} >= 30, 30, if( {ndsm} < 0, 0, {ndsm} ) )"
     grass.run_command("r.mapcalc", expression=ex_cut)
     ex_scale = f"ndsm_scaled = int((ndsm_cut / 30. * 254.) + 1)"
     grass.run_command("r.mapcalc", expression=ex_scale)
-
     grass.run_command(
         "r.out.gdal",
         input="ndsm_scaled",
@@ -167,6 +174,7 @@ def main():
     # segmentation or clip reference data
     if tr_flag:
         label_file = os.path.join(output_dir, f"label_{tile_name}.gpkg")
+        create_seg = False
         if reference:
             grass.run_command(
                 "v.clip",
@@ -175,36 +183,46 @@ def main():
                 flags="r",
                 quiet=True,
             )
-            grass.run_command(
-                "v.db.addcolumn",
-                map="segments",
-                columns="class_number INTEGER",
-                quiet=True,
-            )
-            grass.run_command(
-                "v.db.update",
-                map="segments",
-                column="class_number",
-                value=0,
-                quiet=True,
-            )
-            grass.run_command(
-                "v.out.ogr",
-                input="reference_clipped",
-                output=label_file,
-                flags="s",
-                quiet=True,
-            )
+            if vector_info_topo("reference_clipped")["centroids"] == 0:
+                create_seg = True
+            else:
+                grass.run_command(
+                    "v.db.addcolumn",
+                    map="reference_clipped",
+                    columns="class_number INTEGER",
+                    quiet=True,
+                )
+                grass.run_command(
+                    "v.db.update",
+                    map="reference_clipped",
+                    column="class_number",
+                    value=0,
+                    quiet=True,
+                )
+                grass.run_command(
+                    "v.out.ogr",
+                    input="reference_clipped",
+                    output=label_file,
+                    flags="s",
+                    quiet=True,
+                )
         else:
-            grass.run_command(
-                "i.group", group="image_bands", input="ndsm_scaled"
+            create_seg = True
+        if create_seg:
+            ndsm_range = grass.parse_command(
+                "r.info", map="ndsm_scaled", flags="r"
             )
+            if ndsm_range["min"] != ndsm_range["max"]:
+                grass.run_command(
+                    "i.group", group="image_bands", input="ndsm_scaled"
+                )
             grass.run_command(
                 "i.segment",
                 group="image_bands",
                 output="segments",
                 threshold=segmentation_threshold,
                 minsize=segmentation_minsize,
+                memory=1000,
                 quiet=True,
             )
             grass.run_command(
@@ -230,7 +248,10 @@ def main():
                 flags="s",
                 quiet=True,
             )
-        # TODO QML file? Label Stil Datei
+        # copy qml file
+        qml_src_file = os.path.join(etc_path, "qml", "label.qml")
+        qml_dest_file = os.path.join(output_dir, f"label_{tile_name}.qml")
+        shutil.copyfile(qml_src_file, qml_dest_file)
 
     # switch back to original mapset
     grass.utils.try_remove(newgisrc)
