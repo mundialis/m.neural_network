@@ -6,7 +6,7 @@
 #
 # AUTHOR(S):    Anika Weinmann, Guido Riembauer and Victoria-Leandra Brunn
 #
-# PURPOSE:      TODO.
+# PURPOSE:      Prepare training data for creating a neuronal network.
 #
 # COPYRIGHT:	(C) 2024 by mundialis and the GRASS Development Team
 #
@@ -17,7 +17,7 @@
 #############################################################################
 
 # %Module
-# % description: TODO.
+# % description: Prepare training data for creating a neuronal network
 # % keyword: raster
 # % keyword: vector
 # % keyword: export
@@ -118,14 +118,9 @@ from grass.pygrass.modules import Module, ParallelModuleQueue
 
 # initialize global vars
 ID = grass.tempname(8)
-# rm_rasters = list()
-# rm_groups = list()
-# rm_vectors = list()
 rm_files = list()
-# rm_regions = list()
 orig_region = None
 rm_dirs = []
-# nprocs = -2
 
 
 def check_parallel_errors(queue):
@@ -141,7 +136,9 @@ def check_parallel_errors(queue):
 
 
 def cleanup():
-    general_cleanup(orig_region=orig_region)  # TODO rm_dirs, rm_files
+    general_cleanup(
+        orig_region=orig_region, rm_dirs=rm_dirs, rm_files=rm_files
+    )
 
 
 def export_tindex(output_dir, geojson_dict):
@@ -315,6 +312,8 @@ def main():
         for tr_tile in tr_tiles:
             tile_name = geojson_dict["features"][tr_tile]["properties"]["name"]
             tile_path = os.path.join(output_dir, "train", tile_name)
+            tile_id=geojson_dict["features"][tr_tile]["properties"]["fid"]
+            new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update jeojson values
             geojson_dict["features"][tr_tile]["properties"][
                 "training"
@@ -325,6 +324,7 @@ def main():
                 "m.neural_network.preparedata.worker_export",
                 image_bands=image_bands,
                 ndsm=ndsm,
+                tile_name=tile_name,
                 reference=reference,
                 segmentation_minsize=segmentation_minsize,
                 segmentation_threshold=segmentation_threshold,
@@ -346,6 +346,8 @@ def main():
         for ap_tile in ap_tiles:
             tile_name = geojson_dict["features"][ap_tile]["properties"]["name"]
             tile_path = os.path.join(output_dir, "apply", tile_name)
+            tile_id=geojson_dict["features"][ap_tile]["properties"]["fid"]
+            new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update jeojson values
             geojson_dict["features"][ap_tile]["properties"]["training"] = "no"
             geojson_dict["features"][ap_tile]["properties"]["path"] = tile_path
@@ -353,6 +355,7 @@ def main():
             worker_export_ap = Module(
                 "m.neural_network.preparedata.worker_export",
                 image_bands=image_bands,
+                tile_name=tile_name,
                 ndsm=ndsm,
                 output_dir=tile_path,
                 new_mapset=new_mapset,

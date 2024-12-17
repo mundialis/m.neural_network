@@ -87,6 +87,11 @@
 # % label: Name for new mapset
 # %end
 
+# %flag
+# % key: t
+# % label: Export reference or segmentation data as training data suggestion
+# %end
+
 import os
 
 import grass.script as grass
@@ -95,7 +100,6 @@ from grass_gis_helpers.mapset import switch_to_new_mapset
 
 EXPORT_PARAM = {
     "format": "GTiff",
-    "type": "Byte",
     "flags": "mc",
     "createopt": "COMPRESS=LZW,TILED=YES,BIGTIFF=YES",
     "overviews": 5,
@@ -104,8 +108,8 @@ EXPORT_PARAM = {
 
 def main():
     new_mapset = options["new_mapset"]
-    tile_name = options["tile_name"].split(",")
-    image_bands = options["image_bands"]
+    tile_name = options["tile_name"]
+    image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
     reference = options["reference"]
     segmentation_minsize = int(options["segmentation_minsize"])
@@ -113,9 +117,13 @@ def main():
     output_dir = options["output_dir"]
     tr_flag = flags["t"]
 
+    # make new output directory
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
+
     # switch to the new mapset
     # TODO: switch_to_new_mapset muss in alte mapset wechseln können
-    gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset)
+    gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset, new=False)
 
     if ndsm and "@" not in ndsm:
         ndsm += f"@{old_mapset}"
@@ -142,23 +150,23 @@ def main():
         output=os.path.join(output_dir, f"ndsm_{tile_name}.tif"),
         **EXPORT_PARAM,
     )
-
-    # nDSM scalled + export (cut to [0 30] and rescale to [0 255]))
-    ndsm_sc_file = os.path.join(output_dir, f"ndsm_0_255_{tile_name}.tif")
+    # nDSM scaled + export (cut to [0 30] and rescale to [1 255]))
+    ndsm_sc_file = os.path.join(output_dir, f"ndsm_1_255_{tile_name}.tif")
     ex_cut = f"ndsm_cut = if( {ndsm} >= 30, 30, if( {ndsm} < 0, 0, {ndsm} ) )"
     grass.run_command("r.mapcalc", expression=ex_cut)
-    ex_scale = f"ndsm_scalled = int(ndsm_cut / 30. * 255.)"
+    ex_scale = f"ndsm_scaled = int((ndsm_cut / 30. * 254.) + 1)"
     grass.run_command("r.mapcalc", expression=ex_scale)
     grass.run_command(
         "r.out.gdal",
-        input="ndsm_scalled",
+        input="ndsm_scaled",
         output=ndsm_sc_file,
+        type="Byte",
         **EXPORT_PARAM,
     )
 
     # segmentation or clip reference data
     if tr_flag:
-        label_file = os.path.join(output_dir, f"label_{tile_name}.tif")
+        label_file = os.path.join(output_dir, f"label_{tile_name}.gpkg")
         if reference:
             grass.run_command(
                 "v.clip",
@@ -189,7 +197,7 @@ def main():
             )
         else:
             grass.run_command(
-                "i.group", group="image_bands", input="ndsm_scalled"
+                "i.group", group="image_bands", input="ndsm_scaled"
             )
             grass.run_command(
                 "i.segment",
