@@ -158,7 +158,7 @@ def main():
 
     # segmentation or clip reference data
     if tr_flag:
-        label_file = os.path.join()
+        label_file = os.path.join(output_dir, f"label_{tile_name}.tif")
         if reference:
             grass.run_command(
                 "v.clip",
@@ -170,7 +170,7 @@ def main():
             grass.run_command(
                 "v.db.addcolumn",
                 map="segments",
-                columns="class_number",
+                columns="class_number INTEGER",
                 quiet=True,
             )
             grass.run_command(
@@ -180,7 +180,6 @@ def main():
                 value=0,
                 quiet=True,
             )
-            # TODO class_number=0?
             grass.run_command(
                 "v.out.ogr",
                 input="reference_clipped",
@@ -190,8 +189,8 @@ def main():
             )
         else:
             grass.run_command(
-                "i.group", group="image_bands", input=ndsm
-            )  # TODO or ndsm_scalled
+                "i.group", group="image_bands", input="ndsm_scalled"
+            )
             grass.run_command(
                 "i.segment",
                 group="image_bands",
@@ -206,6 +205,7 @@ def main():
                 output="segments",
                 type="area",
                 col="class_number",
+                flags="s",
                 quiet=True,
             )
             grass.run_command(
@@ -222,6 +222,7 @@ def main():
                 flags="s",
                 quiet=True,
             )
+        # TODO QML file?
 
     # switch back to original mapset
     grass.utils.try_remove(newgisrc)

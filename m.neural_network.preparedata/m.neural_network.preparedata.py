@@ -365,14 +365,9 @@ def main():
         check_parallel_errors(queue_export_ap)
     verify_mapsets(cur_mapset)
 
-    import pdb
-
-    pdb.set_trace()
-
     # export tindex
     export_tindex(output_dir, geojson_dict)
     grass.message(_("Prepare data done"))
-    # TODO: tile XY soll doch auch gelabelt werden, wie da trees / segementierung noch erstellen
 
 
 if __name__ == "__main__":
