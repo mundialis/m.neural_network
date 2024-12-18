@@ -48,12 +48,40 @@
 # % guisection: Input
 # %end
 
+# %option
+# % key: class_column
+# % type: string
+# % required: yes
+# % multiple: no
+# % answer: class_number
+# % label: column of the label vector that holds the class number
+# % guisection: Parameters
+# %end
+
+# %option
+# % key: class_value
+# % type: integer
+# % required: yes
+# % multiple: no
+# % answer: 2
+# % label: Expected and output value for the class of interest
+# % guisection: Parameters
+# %end
+
+# %option
+# % key: no_class_value
+# % type: integer
+# % required: yes
+# % multiple: no
+# % answer: 1
+# % label: Expected and output value for the non class of interest areas (inverse of <class_value>)
+# % guisection: Parameters
+# %end
 
 # %option G_OPT_M_NPROCS
 # %end
 
 import atexit
-import itertools
 from multiprocessing import Pool
 import os
 import random
@@ -68,15 +96,11 @@ from osgeo import gdal
 
 # initialize global vars
 ID = grass.tempname(8)
-rm_rasters = list()
-# rm_groups = list()
-# rm_vectors = list()
-rm_files = list()
-# rm_regions = list()
 orig_region = None
 rm_dirs = []
-# nprocs = -2
 
+def cleanup():
+    general_cleanup(orig_region=orig_region, rm_dirs=rm_dirs)
 
 def check_parallel_errors(queue):
     for proc_num in range(queue.get_num_run_procs()):
@@ -89,9 +113,12 @@ def check_parallel_errors(queue):
                 _(f"\nERROR processing <{proc.get_bash()}>: {errmsg}"),
             )
 
-
-def cleanup():
-    general_cleanup(orig_region=orig_region, rm_rasters=rm_rasters)
+def check_parallel_warnings(queue):
+    for mod in queue.get_finished_modules():
+        stderr = mod.outputs["stderr"].value.strip()
+        # the WARNING might get translated...
+        if "WARN" in stderr:
+            grass.warning(_(f"\nWARNING processing <{mod.get_bash()}>: {stderr}"))
 
 def get_tile_infos(in_dir, type):
     all_tiles = []
@@ -99,11 +126,11 @@ def get_tile_infos(in_dir, type):
     for tile in os.listdir(in_dir):
         tiledir = os.path.join(in_dir, tile)
         tiledict = {}
-        if os.path.isdir(tiledir) and tiledir.startswith("tile_"):
+        if os.path.isdir(tiledir) and tile.startswith("tile_"):
             tiledict["id"] = tile
             tiledict["type"] = type
-            tiledict["dop_tif"] = os.path.join(tiledir, f"DOP_{tile}.tif")
-            tiledict["ndom_tif"] = os.path.join(tiledir, f"nDOM_{tile}.tif")
+            tiledict["dop_tif"] = os.path.join(tiledir, f"image_{tile}.tif")
+            tiledict["ndom_tif"] = os.path.join(tiledir, f"ndsm_1_255_{tile}.tif")
             checklist = [tiledict["dop_tif"], tiledict["ndom_tif"]]
             if type == "training":
                 tiledict["label_gpkg"] = os.path.join(tiledir, f"label_{tile}.gpkg")
@@ -140,29 +167,15 @@ def build_vrts(outdir, dop, ndom, tile_id):
     return bands_e_vrt
 
 def main():
-    global orig_region, rm_files, rm_dirs
-
-    # TODO
-    # Ordner erstellen: train_images, train_masks, val_images, val_masks
-    # globale Liste aller gelabelten Tiles erstellen
-    # training und validation aufsplitten
-    # für jede tile (parallel!):
-    # - Einzel-VRTs aus den DOPs erstellen
-    # - zusammen mit dem ndom EIN komplett VRT erstellen
-    # --> geht beides auch außerhalb von GRASS
-    # --> beides für apply und train!
-    # für jede Training tile (parallel!): TODO
-    # --> labels importieren TODO
-    # --> region aus dem DOP/vrt übernehmen TODO
-    # --> !! TESTEN ob valider Wertebereich!! prüfen, dass keine Klasse 0 mehr vorhanden ist, sonst FEHLER und WARNUNG, falls eine Kachel gar keinen Baum enthält TODO
-    # --> labels rasterisieren, Wert 2 TODO
-    # --> NoData auffüllen mit Wert 0 (?) TODO
-    # --> als .tif mit tilename rausschreiben TODO
+    global orig_region, rm_dirs
 
     train_dir = options["input_traindir"]
     apply_dir = options["input_applydir"]
     val_percentage = int(options["val_percentage"])
     nprocs = set_nprocs(int(options["nprocs"]))
+    class_col = options["class_column"]
+    class_value = options["class_value"]
+    no_class_value = options["no_class_value"]
 
     # get location infos
     gisenv = grass.gisenv()
@@ -192,8 +205,8 @@ def main():
     # split into training and validation
     num_val_tiles = round(val_percentage / 100.0 * len(all_train_tiles))
     random.shuffle(all_train_tiles)
-    train_tiles = all_train_tiles[:num_val_tiles]
-    val_tiles = [x for x in all_train_tiles if x not in train_tiles]
+    val_tiles = all_train_tiles[:num_val_tiles]
+    train_tiles = [x for x in all_train_tiles if x not in val_tiles]
     grass.message(_(f"Selected {len(val_tiles)} tiles as validation tiles and "
                     f"{len(train_tiles)} as training tiles."))
     for d in val_tiles:
@@ -218,35 +231,46 @@ def main():
     # source: https://miguendes.me/how-to-pass-multiple-arguments-to-a-map
     # -function-in-python#problem-2-passing-multiple-parameters-to-
     # multiprocessing-poolmap
+    # actually it is not really necessary to do in parallel as we only create
+    # .vrts... but here is the code
+    grass.message(_("Compiling required .vrt files..."))
     with Pool(processes=nprocs) as pool:
         vrts = pool.starmap(build_vrts, arglist)
 
-    # TODO: worker addon for parallel label processing
-
     # loop over tiles
+    grass.message(_("Checking and rasterizing labels..."))
     queue = ParallelModuleQueue(nprocs=nprocs)
-    num = 0
-    for tiledict in train_tiles + val_tiles:
-        if tiledict["type"] == "training":
-            outdir = train_train_masks_dir
-        elif tiledict["type"] == "validation":
-            outdir = train_val_masks_dir
-        outfile = os.path.join(outdir, f"{tiledict['id']}.tif")
-        new_mapset = f"tmp_mapset_{tiledict['id']}_{ID}"
-        rm_dirs.append(new_mapset)
-        worker = Module(
-            "m.neural_network.preparetraining.worker",
-            input=tiledict["label_gpkg"],
-            dop_path=tiledict["dop_tif"],
-            class_value=2,
-            noclass_value=0,
-            output=outfile,
-            new_mapset=new_mapset,
-            run_=False
-        )
-        queue.put(worker)
-    queue.wait()
+    try:
+        for tiledict in train_tiles + val_tiles:
+            outdir = None
+            if tiledict["type"] == "training":
+                outdir = train_train_masks_dir
+            elif tiledict["type"] == "validation":
+                outdir = train_val_masks_dir
+            outfile = os.path.join(outdir, f"{tiledict['id']}.tif")
+            new_mapset = f"tmp_mapset_{tiledict['id']}_{ID}"
+            rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
+            worker = Module(
+                "m.neural_network.preparetraining.worker",
+                input=tiledict["label_gpkg"],
+                img_path=tiledict["dop_tif"],
+                class_value=class_value,
+                no_class_value=no_class_value,
+                class_column=class_col,
+                output=outfile,
+                new_mapset=new_mapset,
+                run_=False,
+            )
+            worker.stdout_ = grass.PIPE
+            worker.stderr_ = grass.PIPE
+            queue.put(worker)
+        queue.wait()
+    except Exception:
+        check_parallel_errors(queue)
+    # needed to catch the warnings from the worker
+    check_parallel_warnings(queue)
     verify_mapsets(cur_mapset)
+    grass.message(_("Training data preparation completed."))
 
 if __name__ == "__main__":
     options, flags = grass.parser()
