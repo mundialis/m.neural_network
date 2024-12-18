@@ -1,16 +1,17 @@
 <h2>DESCRIPTION</h2>
 
-<em>m.neural_network.preparedata</em> TODO.
+<em>m.neural_network.preparedata</em> preapares tiles for the labeling process as part of the
+training data preparation of a neural network using DOPs and nDSM as input data. Additionally,
+a tile index containing information about the labeled status is created.
 
 <h2>REQUIREMENTS</h2>
 
-
 <h2>EXAMPLES</h2>
 
-<h3>TODO</h3>
+<h3>Prepare the labeling of training data for a neural network with a tile_size of 512</h3>
 
 <div class="code"><pre>
-  TODO
+m.neural_network.preparedata image_bands=top_red_02,top_green_02,top_blue_02,top_nir_02 ndsm=ndsm tile_size=512 output_dir=/mnt/data/ nprocs=7
 </pre></div>
 
 
@@ -18,12 +19,9 @@
 
 TODO
 <em>
-<a href="https://grass.osgeo.org/grass-stable/manuals/r.import.html">r.import</a>,
+<a href="g.region.html">g.region</a>,
+<a href="r.univar.html">r.univar</a>
 <a href="https://grass.osgeo.org/grass-stable/manuals/r.in.pdal.html">r.in.pdal</a>,
-<a href="v.alkis.buildings.import.html">v.alkis.buildings.import</a>,
-<a href="r.import.ndsm_nrw.html">r.import.ndsm_nrw</a>,
-<a href="r.import.dtm_nrw.html">r.import.dtm_nrw</a>,
-<a href="r.dem.import.html">r.dem.import</a>
 </em>
 
 <h2>AUTHORS</h2>
