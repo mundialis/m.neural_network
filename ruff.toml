@@ -1,5 +1,0 @@
-# Define linting ignore list
-
-lint.ignore = [
-    "F821",
-]

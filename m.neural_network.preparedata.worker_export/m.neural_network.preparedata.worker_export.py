@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""
-############################################################################
+"""############################################################################
 #
 # MODULE:      m.neural_network.preparedata.worker_export
 # AUTHOR(S):   Guido Riembauer, Anika Weinmann
 # PURPOSE:     Worker module for m.neural_network.preparedata to export data
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
-#              Team
+#              Team.
 #
 # 		This program is free software under the GNU General Public
 # 		License (v3). Read the file COPYING that comes with GRASS
@@ -94,11 +93,11 @@
 
 import os
 import shutil
-import grass.script as grass
 
+import grass.script as grass
+from grass.pygrass.utils import get_lib_path
 from grass.script.vector import vector_info_topo
 from grass_gis_helpers.mapset import switch_to_new_mapset
-from grass.pygrass.utils import get_lib_path
 
 EXPORT_PARAM = {
     "format": "GTiff",
@@ -108,7 +107,8 @@ EXPORT_PARAM = {
 }
 
 
-def main():
+def main() -> None:
+    """Export tiles and training data suggestion."""
     new_mapset = options["new_mapset"]
     tile_name = options["tile_name"]
     image_bands = options["image_bands"].split(",")
@@ -161,7 +161,7 @@ def main():
     ndsm_sc_file = os.path.join(output_dir, f"ndsm_1_255_{tile_name}.tif")
     ex_cut = f"ndsm_cut = if( {ndsm} >= 30, 30, if( {ndsm} < 0, 0, {ndsm} ) )"
     grass.run_command("r.mapcalc", expression=ex_cut)
-    ex_scale = f"ndsm_scaled = int((ndsm_cut / 30. * 254.) + 1)"
+    ex_scale = "ndsm_scaled = int((ndsm_cut / 30. * 254.) + 1)"
     grass.run_command("r.mapcalc", expression=ex_scale)
     grass.run_command(
         "r.out.gdal",
@@ -210,11 +210,15 @@ def main():
             create_seg = True
         if create_seg:
             ndsm_range = grass.parse_command(
-                "r.info", map="ndsm_scaled", flags="r"
+                "r.info",
+                map="ndsm_scaled",
+                flags="r",
             )
             if ndsm_range["min"] != ndsm_range["max"]:
                 grass.run_command(
-                    "i.group", group="image_bands", input="ndsm_scaled"
+                    "i.group",
+                    group="image_bands",
+                    input="ndsm_scaled",
                 )
             grass.run_command(
                 "i.segment",

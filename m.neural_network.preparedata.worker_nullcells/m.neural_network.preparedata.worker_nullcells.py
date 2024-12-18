@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""
-############################################################################
+"""############################################################################
 #
 # MODULE:      m.neural_network.preparedata.worker_nullcells
 # AUTHOR(S):   Guido Riembauer, Anika Weinmann
 # PURPOSE:     Worker module for m.neural_network.preparedata to check null
 #              cells
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
-#              Team
+#              Team.
 #
 # 		This program is free software under the GNU General Public
 # 		License (v3). Read the file COPYING that comes with GRASS
@@ -99,11 +98,11 @@ import os
 import sys
 
 import grass.script as grass
-
 from grass_gis_helpers.mapset import switch_to_new_mapset
 
 
-def main():
+def main() -> None:
+    """Check null cells."""
     new_mapset = options["new_mapset"]
     tile_name = options["tile_name"]
     north = options["n"]
@@ -139,7 +138,7 @@ def main():
         flags="g",
     )
     sys.stdout.write(
-        f"For tile {tile_name} the number of null cells is: {stats['null_cells']}\n"
+        f"For tile {tile_name} the number of null cells is: {stats['null_cells']}\n",
     )
 
     # switch back to original mapset

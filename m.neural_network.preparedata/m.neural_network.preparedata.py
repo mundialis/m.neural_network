@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
-
-############################################################################
+"""############################################################################
 #
 # MODULE:       m.neural_network.preparedata
-#
 # AUTHOR(S):    Anika Weinmann, Guido Riembauer and Victoria-Leandra Brunn
-#
 # PURPOSE:      Prepare training data as first step for the process of
 #               creating a neural network.
 #
@@ -16,6 +13,7 @@
 # 		for details.
 #
 #############################################################################
+"""
 
 # %Module
 # % description: Prepare training data for creating a neuronal network
@@ -108,16 +106,15 @@
 import atexit
 import json
 import os
-import shutil
 import random
+import shutil
 
 import grass.script as grass
+from grass.pygrass.modules import Module, ParallelModuleQueue
+from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.general import set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
-from grass.pygrass.modules import Module, ParallelModuleQueue
-from grass.pygrass.utils import get_lib_path
-
 
 # initialize global vars
 ID = grass.tempname(8)
@@ -126,7 +123,13 @@ orig_region = None
 rm_dirs = []
 
 
-def check_parallel_errors(queue):
+def check_parallel_errors(queue) -> None:
+    """Check parallel processes.
+
+    Args:
+        queue: Currently running processes.
+
+    """
     for proc_num in range(queue.get_num_run_procs()):
         proc = queue.get(proc_num)
         if proc.returncode != 0:
@@ -138,13 +141,16 @@ def check_parallel_errors(queue):
             )
 
 
-def cleanup():
+def cleanup() -> None:
+    """Clean up function calling general clean up from grass_gis_helpers."""
     general_cleanup(
-        orig_region=orig_region, rm_dirs=rm_dirs, rm_files=rm_files
+        orig_region=orig_region,
+        rm_dirs=rm_dirs,
+        rm_files=rm_files,
     )
 
 
-def export_tindex(output_dir, geojson_dict, etc_path):
+def export_tindex(output_dir, geojson_dict, etc_path) -> None:
     """Export tile index from geojson_dict.
 
     Export of tile index and verification of correct gpkg file.
@@ -153,11 +159,13 @@ def export_tindex(output_dir, geojson_dict, etc_path):
         output_dir (str): The output directory where the tile index should be
                           exported
         geojson_dict (dict): The dictionary with the tile index
+        etc_path (str): The addon etc path
+
     """
     geojson_file = os.path.join(output_dir, "tindex.geojson")
     gpkg_file = os.path.join(output_dir, "tindex.gpkg")
     rm_files.append(geojson_file)
-    with open(geojson_file, "w") as f:
+    with open(geojson_file, "w", encoding="utf-8") as f:
         json.dump(geojson_dict, f, indent=4)
     # create GPKG from GeoJson
     stream = os.popen(f"ogr2ogr {gpkg_file} {geojson_file}")
@@ -175,7 +183,13 @@ def export_tindex(output_dir, geojson_dict, etc_path):
     shutil.copyfile(qml_src_file, qml_dest_file)
 
 
-def main():
+def main() -> None:
+    """Prepare training data.
+
+    Main function for data preparation. Creating tileindex, calling export_tindex
+    for its export. Creating tiles for label process with DOPs and nDOM split in
+    train and apply tiles. Exporting tiles regarding to tileindex.
+    """
     global orig_region, rm_files
 
     image_bands = options["image_bands"].split(",")
@@ -286,7 +300,7 @@ def main():
                                 [east, south],
                                 [west, south],
                                 [west, north],
-                            ]
+                            ],
                         ],
                     },
                 }
