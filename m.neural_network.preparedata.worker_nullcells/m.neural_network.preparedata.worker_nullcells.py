@@ -95,11 +95,11 @@
 # %end
 
 import os
-import sys
 import shutil
+import sys
 
-import grass.script as grass
 from grass_gis_helpers.mapset import switch_to_new_mapset
+import grass.script as grass
 
 NEWGISRC = None
 GISRC = None
