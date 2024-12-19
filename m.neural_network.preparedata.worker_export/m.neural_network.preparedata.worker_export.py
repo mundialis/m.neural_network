@@ -105,6 +105,23 @@ EXPORT_PARAM = {
     "createopt": "COMPRESS=LZW,TILED=YES,BIGTIFF=YES",
     "overviews": 5,
 }
+newgisrc = None
+gisrc = None
+ID = grass.tempname(8)
+new_mapset = None
+
+
+def cleanup() -> None:
+    """Clean up function calling general clean up from grass_gis_helpers."""
+    grass.utils.try_remove(newgisrc)
+    os.environ["GISRC"] = gisrc
+    # delete the new mapset (doppelt haelt besser)
+    gisenv = grass.gisenv()
+    gisdbase = gisenv["GISDBASE"]
+    location = gisenv["LOCATION_NAME"]
+    mapset_dir = os.path.join(gisdbase, location, new_mapset)
+    if os.path.isdir(mapset_dir):
+        shutil.rmtree(mapset_dir)
 
 
 def main() -> None:
@@ -256,10 +273,6 @@ def main() -> None:
         qml_src_file = os.path.join(etc_path, "qml", "label.qml")
         qml_dest_file = os.path.join(output_dir, f"label_{tile_name}.qml")
         shutil.copyfile(qml_src_file, qml_dest_file)
-
-    # switch back to original mapset
-    grass.utils.try_remove(newgisrc)
-    os.environ["GISRC"] = gisrc
 
 
 if __name__ == "__main__":

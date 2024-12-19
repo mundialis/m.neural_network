@@ -96,9 +96,28 @@
 
 import os
 import sys
+import shutil
 
 import grass.script as grass
 from grass_gis_helpers.mapset import switch_to_new_mapset
+
+newgisrc = None
+gisrc = None
+ID = grass.tempname(8)
+new_mapset = None
+
+
+def cleanup() -> None:
+    """Clean up function calling general clean up from grass_gis_helpers."""
+    grass.utils.try_remove(newgisrc)
+    os.environ["GISRC"] = gisrc
+    # delete the new mapset (doppelt haelt besser)
+    gisenv = grass.gisenv()
+    gisdbase = gisenv["GISDBASE"]
+    location = gisenv["LOCATION_NAME"]
+    mapset_dir = os.path.join(gisdbase, location, new_mapset)
+    if os.path.isdir(mapset_dir):
+        shutil.rmtree(mapset_dir)
 
 
 def main() -> None:
@@ -140,10 +159,6 @@ def main() -> None:
     sys.stdout.write(
         f"For tile {tile_name} the number of null cells is: {stats['null_cells']}\n",
     )
-
-    # switch back to original mapset
-    grass.utils.try_remove(newgisrc)
-    os.environ["GISRC"] = gisrc
 
 
 if __name__ == "__main__":
