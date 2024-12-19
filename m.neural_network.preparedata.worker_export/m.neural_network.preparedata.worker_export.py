@@ -105,28 +105,30 @@ EXPORT_PARAM = {
     "createopt": "COMPRESS=LZW,TILED=YES,BIGTIFF=YES",
     "overviews": 5,
 }
-newgisrc = None
-gisrc = None
+NEWGISRC = None
+GISRC = None
 ID = grass.tempname(8)
-new_mapset = None
+NEW_MAPSET = None
 
 
 def cleanup() -> None:
     """Clean up function calling general clean up from grass_gis_helpers."""
-    grass.utils.try_remove(newgisrc)
-    os.environ["GISRC"] = gisrc
+    grass.utils.try_remove(NEWGISRC)
+    os.environ["GISRC"] = GISRC
     # delete the new mapset (doppelt haelt besser)
     gisenv = grass.gisenv()
     gisdbase = gisenv["GISDBASE"]
     location = gisenv["LOCATION_NAME"]
-    mapset_dir = os.path.join(gisdbase, location, new_mapset)
+    mapset_dir = os.path.join(gisdbase, location, NEW_MAPSET)
     if os.path.isdir(mapset_dir):
         shutil.rmtree(mapset_dir)
 
 
 def main() -> None:
     """Export tiles and training data suggestion."""
-    new_mapset = options["new_mapset"]
+    global NEW_MAPSET, NEWGISRC, GISRC
+
+    NEW_MAPSET = options["new_mapset"]
     tile_name = options["tile_name"]
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
@@ -146,7 +148,7 @@ def main() -> None:
         os.makedirs(output_dir)
 
     # switch to the new mapset
-    gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset, new=False)
+    GISRC, NEWGISRC, old_mapset = switch_to_new_mapset(NEW_MAPSET, new=False)
 
     if ndsm and "@" not in ndsm:
         ndsm += f"@{old_mapset}"

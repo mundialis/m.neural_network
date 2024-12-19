@@ -101,28 +101,30 @@ import shutil
 import grass.script as grass
 from grass_gis_helpers.mapset import switch_to_new_mapset
 
-newgisrc = None
-gisrc = None
+NEWGISRC = None
+GISRC = None
 ID = grass.tempname(8)
-new_mapset = None
+NEW_MAPSET = None
 
 
 def cleanup() -> None:
     """Clean up function calling general clean up from grass_gis_helpers."""
-    grass.utils.try_remove(newgisrc)
-    os.environ["GISRC"] = gisrc
+    grass.utils.try_remove(NEWGISRC)
+    os.environ["GISRC"] = GISRC
     # delete the new mapset (doppelt haelt besser)
     gisenv = grass.gisenv()
     gisdbase = gisenv["GISDBASE"]
     location = gisenv["LOCATION_NAME"]
-    mapset_dir = os.path.join(gisdbase, location, new_mapset)
+    mapset_dir = os.path.join(gisdbase, location, NEW_MAPSET)
     if os.path.isdir(mapset_dir):
         shutil.rmtree(mapset_dir)
 
 
 def main() -> None:
     """Check null cells."""
-    new_mapset = options["new_mapset"]
+    global NEW_MAPSET, NEWGISRC, GISRC
+
+    NEW_MAPSET = options["new_mapset"]
     tile_name = options["tile_name"]
     north = options["n"]
     south = options["s"]
@@ -132,7 +134,7 @@ def main() -> None:
     map = options["map"]
 
     # switch to the new mapset
-    gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset)
+    GISRC, NEWGISRC, old_mapset = switch_to_new_mapset(NEW_MAPSET)
 
     # map full name
     if "@" not in map:
