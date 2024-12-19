@@ -119,7 +119,7 @@ from grass_gis_helpers.mapset import verify_mapsets
 # initialize global vars
 ID = grass.tempname(8)
 rm_files = list()
-orig_region = None
+ORIG_REGION = None
 rm_dirs = []
 
 
@@ -144,7 +144,7 @@ def check_parallel_errors(queue) -> None:
 def cleanup() -> None:
     """Clean up function calling general clean up from grass_gis_helpers."""
     general_cleanup(
-        orig_region=orig_region,
+        orig_region=ORIG_REGION,
         rm_dirs=rm_dirs,
         rm_files=rm_files,
     )
@@ -186,11 +186,12 @@ def export_tindex(output_dir, geojson_dict, etc_path) -> None:
 def main() -> None:
     """Prepare training data.
 
-    Main function for data preparation. Creating tileindex, calling export_tindex
-    for its export. Creating tiles for label process with DOPs and nDOM split in
-    train and apply tiles. Exporting tiles regarding to tileindex.
+    Main function for data preparation. Creating tileindex, calling
+    export_tindex for its export. Creating tiles for label process
+    with DOPs and nDOM split in train and apply tiles. Exporting tiles
+    regarding to tileindex.
     """
-    global orig_region, rm_files
+    global ORIG_REGION, rm_files
 
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
@@ -215,8 +216,8 @@ def main() -> None:
     location = gisenv["LOCATION_NAME"]
 
     # save orginal region
-    orig_region = f"orig_region_{ID}"
-    grass.run_command("g.region", save=orig_region, quiet=True)
+    ORIG_REGION = f"orig_region_{ID}"
+    grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
     # set region
     grass.run_command("g.region", raster=image_bands[0], quiet=True)

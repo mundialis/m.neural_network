@@ -11,3 +11,5 @@ on:
 jobs:
   lint:
     uses: mundialis/github-workflows/.github/workflows/linting.yml@main
+    with:
+      VALIDATE_HTML: false
