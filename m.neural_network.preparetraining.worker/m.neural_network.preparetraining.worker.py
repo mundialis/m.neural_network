@@ -43,17 +43,17 @@
 # % required: yes
 # % multiple: no
 # % answer: class_number
-# % label: column of the label vector that holds the class number
+# % label: Column of the label vector that holds the class number
 # % guisection: Parameters
 # %end
 
 # %option
-# % key: class_value
+# % key: class_values
 # % type: integer
 # % required: yes
-# % multiple: no
+# % multiple: yes
 # % answer: 2
-# % label: Expected and output value for the class of interest
+# % label: Expected and output values for the class/es of interest
 # % guisection: Parameters
 # %end
 
@@ -63,7 +63,8 @@
 # % required: yes
 # % multiple: no
 # % answer: 1
-# % label: Expected and output value for the non class of interest areas (inverse of <class_value>)
+# % label: Expected and output value for the non class of interest areas
+# % description: Can be understood as a "rest" class for a multiclass system and a "no-class" for a binary classification
 # % guisection: Parameters
 # %end
 
@@ -114,7 +115,7 @@ def main():
     input = options["input"]
     img_file = options["img_path"]
     new_mapset = options["new_mapset"]
-    class_value = options["class_value"]
+    class_values = options["class_values"].split(",")
     no_class_value = options["no_class_value"]
     class_col = options["class_column"]
     output = options["output"]
@@ -160,20 +161,20 @@ def main():
     except ValueError:
         grass.fatal(_(f"File {input} has no column {class_col}"))
     class_numbers = [item[idx] for item in rows]
-    class_num_set_ref = set((class_value, no_class_value))
+    class_num_set_ref = set(class_values + [no_class_value])
     difference = set(class_numbers).difference(class_num_set_ref)
     if len(difference) > 0:
 
         grass.fatal(_(f"Label file {input} has features with unexpected values"
                       f" in column {class_col}: {difference}. Allowed values "
-                      f"are [{class_value}, {no_class_value}]."))
+                      f"are [{','.join(class_values)}, {no_class_value}]."))
 
     tile_empty = False
     if len(class_numbers) == 0 or set(class_numbers) == set((no_class_value)):
         grass.warning(_(f"Label file {input} contains no features with the "
-                        f"expected class value {class_value} in "
-                        f"column {class_col}. It is assumed that the class "
-                        "does not occur in this tile."))
+                        f"expected class values {class_values} in "
+                        f"column {class_col}. It is assumed that the classes "
+                        "do not occur in this tile."))
         tile_empty = True
 
     # rasterize
@@ -205,7 +206,7 @@ def main():
         "r.out.gdal",
         input=labelrast,
         output=output,
-        type="Int16",
+        type="Byte",
         createopt="COMPRESS=LZW", # no tiles or overviews required for the small tiles (?)
         flags="c",
         quiet=True)

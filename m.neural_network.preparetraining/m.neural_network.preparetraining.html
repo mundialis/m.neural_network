@@ -1,33 +1,63 @@
 <h2>DESCRIPTION</h2>
 
-<em>m.neural_network.preparetraining</em>
+<em>m.neural_network.preparetraining</em> prepares imagery and labelled data for training and application of a neural network.
+<p>While <a href="m.neural_network.preparedata">m.neural_network.preparedata</a> initially provides a setup for labelling tiles of imagery,
+<em>m.neural_network.preparetraining</em> rasterizes the vector labels and restructures the imagery data.
 
-<h2>REQUIREMENTS</h2>
+<h2>Notes</h2>
+It is expected that all data lie in the directory structure and naming format as created by <a href="m.neural_network.preparedata">m.neural_network.preparedata</a>.
+This data is provided to <em>m.neural_network.preparetraining</em> via the <em>input_traindir</em> and <em>input_applydir</em> parameters.
+<em>m.neural_network.preparetraining</em> creates a new directory with the two directories <em>train</em> and <em>apply</em>. Each of these contains
+the following directories/data:
 
+ <ul>
+  <li><em>train_images:</em>: contains tilewise multiband .vrt-files with all imagery bands and an ndsm band to be used for training. This directory is empty in the <em>apply</em> dir.</li>
+  <li><em>train_masks:</em>: contains tilewise rasterized .tif label files to be used for training. This directory is empty in the <em>apply</em> dir.</li>
+  <li><em>val_images:</em>: contains tilewise multiband .vrt-files with all imagery bands and an ndsm band to be used for validation. This directory holds data both in the <em>train</em> and <em>apply</em> dirs. In the <em>train</em> dir, this data is used for validation during training, while in the <em>apply</em> dir, this directory holds all imagery used for prediction.</li>
+  <li><em>val_masks:</em>: contains tilewise rasterized .tif label files to be used for training. This directory is empty in the <em>apply</em> dir.</li>
+  <li><em>singleband_vrts:</em>: contains singleband .vrts for each imagery band of each tile. They are stored here as a basis to create the tilewise multiband .vrts.</li>
+  <li><em>tile_XX_YY.vrt:</em> (only in the <em>train</em> dir): One multiband tile .vrt is stored here for the NN model to read in the number of bands.</li>
+ </ul>
+<p>
+In order to save diskspace, all imagery is stored as .vrts, so the original datasets (created by <a href="m.neural_network.preparedata">m.neural_network.preparedata</a>) should
+  not be moved (or <em>m.neural_network.preparetraining</em> should be run again afterwards).
+</p>
+<p>
+  The user can indicate what percentage of the training tiles are used for validation (during training) with the <em>val_percentage</em> parameter.
+</p>
+<p>
+  It is not possible to run <em>m.neural_network.preparetraining</em> repeatedly with the same <em>output</em> directory, as the training/validation split up happens during runtime.
+  Hence, <em>m.neural_network.preparetraining</em> expects that the <em>output</em> directory does not exist.
+</p>
+<p>
+  With the <em>class_values</em> and the <em>no_class_value</em> parameters, the user defines the allowed range of values in the <em>class_column</em> of the labelled data. In
+  case an unexpected value is found, an error is thrown which indicates the
+</p>
+<p>
+ If a tile is not completely covered either by <em>class_values</em> or <em>no_class_value</em>, the not allocated areas will be filled with <em>no_class_value</em> in the rasterized version.
+</p>
 
 <h2>EXAMPLES</h2>
 
-<h3>TODO</h3>
-
 <div class="code"><pre>
-  TODO
+  m.neural_network.preparetraining input_traindir=nn_data_with_labels/train input_applydir=nn_data_with_labels/apply nprocs=6 class_column=class_number class_values=2 no_class_value=1 output=nn_data_structured
 </pre></div>
 
 
 <h2>SEE ALSO</h2>
 
-TODO
 <em>
-<a href="https://grass.osgeo.org/grass-stable/manuals/r.import.html">r.import</a>,
-<a href="https://grass.osgeo.org/grass-stable/manuals/r.in.pdal.html">r.in.pdal</a>,
-<a href="v.alkis.buildings.import.html">v.alkis.buildings.import</a>,
-<a href="r.import.ndsm_nrw.html">r.import.ndsm_nrw</a>,
-<a href="r.import.dtm_nrw.html">r.import.dtm_nrw</a>,
-<a href="r.dem.import.html">r.dem.import</a>
+<a href="https://grass.osgeo.org/grass-stable/manuals/v.import.html">v.import</a>,
+<a href="https://grass.osgeo.org/grass-stable/manuals/g.region.html">g.region</a>
+<a href="https://grass.osgeo.org/grass-stable/manuals/r.mapcalc.html">r.mapcalc</a>,
+<a href="https://grass.osgeo.org/grass-stable/manuals/v.to.rast.html">v.to.rast</a>,
 </em>
 
 <h2>REQUIREMENTS</h2>
-GDAL is required to create .tifs and .vrts
+ <ul>
+  <li>GDAL and OGR Python bindings</li>
+   <li><a href="https://pypi.org/project/grass-gis-helpers/">grass-gis-helpers</a> Python library >= 2.2.0</li>
+ </ul>
 
 <h2>AUTHORS</h2>
 Guido Riembauer, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
