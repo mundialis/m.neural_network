@@ -332,7 +332,7 @@ def main() -> None:
             grass.message(
                 _(
                     f"Segmenting and/or Exporting: "
-                    f"training tile {i + 1} of {len(tr_tiles)}"
+                    f"training tile {i + 1} of {len(tr_tiles)}",
                 ),
             )
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
