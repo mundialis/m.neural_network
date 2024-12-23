@@ -2,9 +2,7 @@
 """############################################################################
 #
 # MODULE:       m.neural_network.preparetraining
-#
 # AUTHOR(S):    Guido Riembauer
-#
 # PURPOSE:      Prepares tiled imagery and labelled data for training and application
 #               in a Neural Network (NN).
 #
@@ -107,7 +105,6 @@ from grass_gis_helpers.parallel import (
     check_parallel_warnings,
 )
 from osgeo import gdal, ogr
-
 
 # initialize global vars
 ID = grass.tempname(8)
