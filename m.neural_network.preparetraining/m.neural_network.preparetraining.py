@@ -101,7 +101,10 @@ import grass.script as grass
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.general import set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
-from grass_gis_helpers.parallel import check_parallel_errors, check_parallel_warnings
+from grass_gis_helpers.parallel import (
+    check_parallel_errors,
+    check_parallel_warnings,
+)
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from osgeo import gdal, ogr
 
@@ -111,10 +114,15 @@ ID = grass.tempname(8)
 orig_region = None
 rm_dirs = []
 
+
 def cleanup():
+    """cleanup function that passes args to the general cleanup from
+    grass-gis-helpers."""
     general_cleanup(orig_region=orig_region, rm_dirs=rm_dirs)
 
+
 def get_tile_infos(in_dir, type):
+    """reads tile-wise directory and saves metadata in a list of dicts."""
     all_tiles = []
     # get all training_tiles and split into training and validation
     for tile in os.listdir(in_dir):
@@ -124,10 +132,14 @@ def get_tile_infos(in_dir, type):
             tiledict["id"] = tile
             tiledict["type"] = type
             tiledict["dop_tif"] = os.path.join(tiledir, f"image_{tile}.tif")
-            tiledict["ndom_tif"] = os.path.join(tiledir, f"ndsm_1_255_{tile}.tif")
+            tiledict["ndom_tif"] = os.path.join(
+                tiledir, f"ndsm_1_255_{tile}.tif"
+            )
             checklist = [tiledict["dop_tif"], tiledict["ndom_tif"]]
             if type == "training":
-                tiledict["label_gpkg"] = os.path.join(tiledir, f"label_{tile}.gpkg")
+                tiledict["label_gpkg"] = os.path.join(
+                    tiledir, f"label_{tile}.gpkg"
+                )
                 checklist.append(tiledict["label_gpkg"])
 
             # check if they exist
@@ -138,7 +150,9 @@ def get_tile_infos(in_dir, type):
             all_tiles.append(tiledict)
     return all_tiles
 
+
 def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
+    """function that builds the required .vrt files."""
     src_ds = gdal.Open(dop)
     band_count = 0
     if src_ds is not None:
@@ -160,7 +174,9 @@ def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
     gdal.BuildVRT(bands_e_vrt, vrt_input, options=vrt_options)
     return bands_e_vrt
 
+
 def main():
+    """main function for training data preparation."""
     global orig_region, rm_dirs
 
     train_dir_in = options["input_traindir"]
@@ -201,7 +217,20 @@ def main():
     apply_val_images_dir = os.path.join(apply_dir_out, "val_images")
     apply_val_masks_dir = os.path.join(apply_dir_out, "val_masks")
     apply_singleband_vrt_dir = os.path.join(apply_dir_out, "singleband_vrts")
-    for c_dir in [train_dir_out, apply_dir_out, train_train_img_dir, train_train_masks_dir, train_val_images_dir, train_val_masks_dir, apply_train_img_dir, apply_train_masks_dir, apply_val_images_dir, apply_val_masks_dir, train_singleband_vrt_dir, apply_singleband_vrt_dir]:
+    for c_dir in [
+        train_dir_out,
+        apply_dir_out,
+        train_train_img_dir,
+        train_train_masks_dir,
+        train_val_images_dir,
+        train_val_masks_dir,
+        apply_train_img_dir,
+        apply_train_masks_dir,
+        apply_val_images_dir,
+        apply_val_masks_dir,
+        train_singleband_vrt_dir,
+        apply_singleband_vrt_dir,
+    ]:
         os.makedirs(c_dir, exist_ok=True)
 
     all_train_tiles = get_tile_infos(train_dir_in, type="training")
@@ -218,17 +247,25 @@ def main():
         for feature in layer:
             val = feature.GetField(class_col)
             if val not in allowed_vals:
-                grass.fatal(_(f"File {gpkg} contains unexpected value {val} "
-                              f"in column {class_col}. Allowed values are " 
-                              f"{allowed_vals}."))
+                grass.fatal(
+                    _(
+                        f"File {gpkg} contains unexpected value {val} "
+                        f"in column {class_col}. Allowed values are "
+                        f"{allowed_vals}."
+                    )
+                )
 
     # split into training and validation
     num_val_tiles = round(val_percentage / 100.0 * len(all_train_tiles))
     random.shuffle(all_train_tiles)
     val_tiles = all_train_tiles[:num_val_tiles]
     train_tiles = [x for x in all_train_tiles if x not in val_tiles]
-    grass.message(_(f"Selected {len(val_tiles)} tiles as validation tiles and "
-                    f"{len(train_tiles)} as training tiles."))
+    grass.message(
+        _(
+            f"Selected {len(val_tiles)} tiles as validation tiles and "
+            f"{len(train_tiles)} as training tiles."
+        )
+    )
     for d in val_tiles:
         d["type"] = "validation"
 
@@ -249,7 +286,13 @@ def main():
             out_img_dir = apply_val_images_dir
             singleband_vrt_dir = apply_singleband_vrt_dir
         tiledict["out_img_dir"] = out_img_dir
-        args = [out_img_dir, tiledict["dop_tif"], tiledict["ndom_tif"], tiledict["id"], singleband_vrt_dir]
+        args = [
+            out_img_dir,
+            tiledict["dop_tif"],
+            tiledict["ndom_tif"],
+            tiledict["id"],
+            singleband_vrt_dir,
+        ]
         arglist.append(args)
 
     # a single .vrt should be placed next to the train dirs for the NN code

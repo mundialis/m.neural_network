@@ -97,7 +97,9 @@ gisrc = None
 ID = grass.tempname(8)
 new_mapset = None
 
+
 def cleanup():
+    """Clean up function switching mapsets and deleting the new one."""
     # switch back to original mapset
     grass.utils.try_remove(newgisrc)
     os.environ["GISRC"] = gisrc
@@ -111,6 +113,7 @@ def cleanup():
 
 
 def main():
+    """main function of worker module."""
     global newgisrc, gisrc, new_mapset
     input = options["input"]
     img_file = options["img_path"]
@@ -139,18 +142,13 @@ def main():
         w=west,
         rows=rows,
         cols=cols,
-        quiet=True
+        quiet=True,
     )
 
     # import the label dataset
     labelvect = f"labelvect_{ID}"
     labelrast = f"labelrast_{ID}"
-    grass.run_command(
-        "v.import",
-        input=input,
-        output=labelvect,
-        quiet=True
-    )
+    grass.run_command("v.import", input=input, output=labelvect, quiet=True)
 
     # check the values of the vector
     dbselect = list(grass.parse_command("v.db.select", map=labelvect).keys())
@@ -165,24 +163,30 @@ def main():
     difference = set(class_numbers).difference(class_num_set_ref)
     if len(difference) > 0:
 
-        grass.fatal(_(f"Label file {input} has features with unexpected values"
-                      f" in column {class_col}: {difference}. Allowed values "
-                      f"are [{','.join(class_values)}, {no_class_value}]."))
+        grass.fatal(
+            _(
+                f"Label file {input} has features with unexpected values"
+                f" in column {class_col}: {difference}. Allowed values "
+                f"are [{','.join(class_values)}, {no_class_value}]."
+            )
+        )
 
     tile_empty = False
     if len(class_numbers) == 0 or set(class_numbers) == set((no_class_value)):
-        grass.warning(_(f"Label file {input} contains no features with the "
-                        f"expected class values {class_values} in "
-                        f"column {class_col}. It is assumed that the classes "
-                        "do not occur in this tile."))
+        grass.warning(
+            _(
+                f"Label file {input} contains no features with the "
+                f"expected class values {class_values} in "
+                f"column {class_col}. It is assumed that the classes "
+                "do not occur in this tile."
+            )
+        )
         tile_empty = True
 
     # rasterize
     if tile_empty is True:
         grass.run_command(
-            "r.mapcalc",
-            expression=f"{labelrast}={no_class_value}",
-            quiet=True
+            "r.mapcalc", expression=f"{labelrast}={no_class_value}", quiet=True
         )
     else:
         labelrast_tmp = f"{labelrast}_tmp"
@@ -193,23 +197,22 @@ def main():
             type="area",
             use="attr",
             attribute_column=class_col,
-            quiet=True
+            quiet=True,
         )
         # if there is any nodata left in the label, this will be assigned
         # to the no-class class
         exp = f"{labelrast}=if(isnull({labelrast_tmp}),{no_class_value},{labelrast_tmp})"
-        grass.run_command("r.mapcalc",
-                          expression=exp,
-                          quiet=True)
+        grass.run_command("r.mapcalc", expression=exp, quiet=True)
 
     grass.run_command(
         "r.out.gdal",
         input=labelrast,
         output=output,
         type="Byte",
-        createopt="COMPRESS=LZW", # no tiles or overviews required for the small tiles (?)
+        createopt="COMPRESS=LZW",  # no tiles or overviews required for the small tiles (?)
         flags="c",
-        quiet=True)
+        quiet=True,
+    )
 
 
 if __name__ == "__main__":
