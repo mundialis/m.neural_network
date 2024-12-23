@@ -3,6 +3,7 @@
 ignore = [ 
     "A001", # shadowing variables
     "ANN001", # missing type annotation
+    "ANN201", # Missing return type annotation for public function
     "BLE001", # catch blind exception
     "D205",
     "E501", # allow > 79 characters

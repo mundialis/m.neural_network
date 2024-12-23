@@ -115,14 +115,13 @@ ORIG_REGION = None
 rm_dirs = []
 
 
-def cleanup():
-    """Cleanup function that passes args to the general cleanup from
-    grass-gis-helpers."""
+def cleanup(): -> None
+    """Pass args to the general cleanup from grass-gis-helpers."""
     general_cleanup(orig_region=ORIG_REGION, rm_dirs=rm_dirs)
 
 
-def get_tile_infos(in_dir, type):
-    """Reads tile-wise directory and saves metadata in a list of dicts."""
+def get_tile_infos(in_dir, ttype):
+    """Read tile-wise directory and saves metadata in a list of dicts."""
     all_tiles = []
     # get all training_tiles and split into training and validation
     for tile in os.listdir(in_dir):
@@ -130,14 +129,14 @@ def get_tile_infos(in_dir, type):
         tiledict = {}
         if os.path.isdir(tiledir) and tile.startswith("tile_"):
             tiledict["id"] = tile
-            tiledict["type"] = type
+            tiledict["type"] = ttype
             tiledict["dop_tif"] = os.path.join(tiledir, f"image_{tile}.tif")
             tiledict["ndom_tif"] = os.path.join(
                 tiledir,
                 f"ndsm_1_255_{tile}.tif",
             )
             checklist = [tiledict["dop_tif"], tiledict["ndom_tif"]]
-            if type == "training":
+            if ttype == "training":
                 tiledict["label_gpkg"] = os.path.join(
                     tiledir,
                     f"label_{tile}.gpkg",
@@ -154,7 +153,7 @@ def get_tile_infos(in_dir, type):
 
 
 def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
-    """Function that builds the required .vrt files."""
+    """Build the required .vrt files."""
     src_ds = gdal.Open(dop)
     band_count = 0
     if src_ds is not None:
@@ -178,7 +177,7 @@ def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
 
 
 def main():
-    """Main function for training data preparation."""
+    """Run training and apply data preparation."""
     global ORIG_REGION, rm_dirs
 
     train_dir_in = options["input_traindir"]

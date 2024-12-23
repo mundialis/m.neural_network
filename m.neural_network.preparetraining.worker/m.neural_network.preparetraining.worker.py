@@ -97,8 +97,8 @@ ID = grass.tempname(8)
 NEW_MAPSET = None
 
 
-def cleanup():
-    """Clean up function switching mapsets and deleting the new one."""
+def cleanup(): -> None
+    """Switch mapsets and deleting the new one."""
     # switch back to original mapset
     grass.utils.try_remove(NEWGISRC)
     os.environ["GISRC"] = GISRC
@@ -112,7 +112,7 @@ def cleanup():
 
 
 def main():
-    """Main function of worker module."""
+    """Run label rasterization"""
     global NEWGISRC, GISRC, NEW_MAPSET
     input = options["input"]
     img_file = options["img_path"]
