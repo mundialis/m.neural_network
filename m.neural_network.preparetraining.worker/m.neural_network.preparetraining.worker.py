@@ -97,7 +97,7 @@ ID = grass.tempname(8)
 NEW_MAPSET = None
 
 
-def cleanup(): -> None
+def cleanup():
     """Switch mapsets and deleting the new one."""
     # switch back to original mapset
     grass.utils.try_remove(NEWGISRC)

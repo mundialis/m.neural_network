@@ -115,7 +115,7 @@ ORIG_REGION = None
 rm_dirs = []
 
 
-def cleanup(): -> None
+def cleanup():
     """Pass args to the general cleanup from grass-gis-helpers."""
     general_cleanup(orig_region=ORIG_REGION, rm_dirs=rm_dirs)
 
