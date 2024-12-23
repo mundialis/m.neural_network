@@ -1,0 +1,27 @@
+<h2>DESCRIPTION</h2>
+
+<em>m.neural_network.preparedata</em> prepares tiles for the labeling process as part of the
+training data preparation of a neural network using DOPs and nDSM as input data. Additionally,
+a tile index containing information about the labeled status is created.
+
+<h2>EXAMPLES</h2>
+
+<h3>Prepare the labeling of training data for a neural network with a tile_size of 512</h3>
+
+<div class="code"><pre>
+m.neural_network.preparedata image_bands=top_red_02,top_green_02,top_blue_02,top_nir_02 ndsm=ndsm tile_size=512 output_dir=/mnt/data/ nprocs=7
+</pre></div>
+
+
+<h2>SEE ALSO</h2>
+
+<em>
+<a href="g.region.html">g.region</a>,
+<a href="r.univar.html">r.univar</a>,
+</em>
+
+<h2>AUTHORS</h2>
+
+Anika Weinmann, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Guido Riembauer, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Victoria-Leandra Brunn, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>

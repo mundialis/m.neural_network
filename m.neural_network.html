@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>m.neural_network toolset - GRASS GIS manual</title>
+<meta name="Author" content="mundialis team">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="content-language" content="en-us">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="grassdocs.css" type="text/css">
+</head>
+<body bgcolor="white">
+<div id="container">
+
+<a href="https://grass.osgeo.org/grass-stable/manuals/index.html"><img src="grass_logo.png" alt="GRASS logo"></a>
+<hr class="header">
+
+<h2>NAME</h2>
+
+<em><b>m.neural_network</b></em> -  GRASS GIS addons to train and apply a neural network.
+
+<h2>KEYWORDS</h2>
+<a href="https://grass.osgeo.org/grass-stable/manuals/raster.html">raster</a>, <a href="https://grass.osgeo.org/grass-stable/manuals/vector.html">vector</a>
+
+<!-- meta page description:  addons for Regionalverband Ruhr (RVR) related geodata processing -->
+<h2>DESCRIPTION</h2>
+
+The <em>m.neural_network</em> toolset consists of several modules.
+
+<ul>
+<li><a href="m.neural_network.preparedata.html">m.neural_network.preparedata</a>: Prepares and exports tiles for the label process</li>
+<li><a href="m.neural_network.preparedata.worker_export.html">m.neural_network.preparedata.worker_export</a>: Worker for parallel processing for exporting for <b>m.neural_network.preparedata</b></li>
+<li><a href="m.neural_network.preparedata.worker_nullcells.html">m.neural_network.preparedata.worker_nullcells</a>: Worker to analyse the number of null cells in parallel for <b>m.neural_network.preparedata</b></li>
+<li><a href="m.neural_network.preparetraining.html">m.neural_network.preparetraining</a>: Takes and reformats labeled tiles for the neural network training</li>
+</ul>
+
+<h2>REQUIREMENTS</h2>
+
+The following Python libraries are needed.
+
+<ul>
+  <li>grass-gis-helpers>=2.2.0</li>
+</ul>
+
+<h2>AUTHORS</h2>
+
+Anika Weinmann, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>, weinmann at mundialis.de
+<p>Guido Riembauer, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>, riembauer at mundialis.de</p>
+<p>Victoria-Leandra Brunn, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>, brunn at mundialis.de</p>
+
+</div>
+</body>
+</html>
+

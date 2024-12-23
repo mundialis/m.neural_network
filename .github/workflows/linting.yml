@@ -1,0 +1,15 @@
+---
+name: Linting and code quality check
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  lint:
+    uses: mundialis/github-workflows/.github/workflows/linting.yml@main
+    with:
+      VALIDATE_HTML: false
