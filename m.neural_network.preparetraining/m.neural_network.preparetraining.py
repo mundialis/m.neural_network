@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-############################################################################
+"""############################################################################
 #
 # MODULE:       m.neural_network.preparetraining
 #
@@ -8,13 +8,14 @@
 # PURPOSE:      Prepares tiled imagery and labelled data for training and application
 #               in a Neural Network (NN).
 #
-# COPYRIGHT:	(C) 2024 by mundialis and the GRASS Development Team
+# COPYRIGHT:	(C) 2024 by mundialis and the GRASS Development Team.
 #
 # 		This program is free software under the GNU General Public
 # 		License (v3). Read the file COPYING that comes with GRASS
 # 		for details.
 #
 #############################################################################
+"""
 
 # %Module
 # % description: Prepares tiled imagery and labelled data for training and application in a Neural Network (NN).
@@ -97,6 +98,7 @@ import random
 from multiprocessing import Pool
 
 import grass.script as grass
+from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.general import set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
@@ -104,7 +106,6 @@ from grass_gis_helpers.parallel import (
     check_parallel_errors,
     check_parallel_warnings,
 )
-from grass.pygrass.modules import Module, ParallelModuleQueue
 from osgeo import gdal, ogr
 
 

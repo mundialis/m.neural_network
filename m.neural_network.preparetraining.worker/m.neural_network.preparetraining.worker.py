@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-##############################################################################
+"""############################################################################
 #
 # MODULE:      m.neural_network.preparetraining.worker
 # AUTHOR(S):   Guido Riembauer
 # PURPOSE:     Worker module for m.neural_network.preparetraining to check
 #              and rasterize label data
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
-#              Team
+#              Team.
 #
 # 		This program is free software under the GNU General Public
 # 		License (v3). Read the file COPYING that comes with GRASS
 # 		for details.
 #
 ##############################################################################
+"""
 
 # %Module
 # % description: Worker module for m.neural_network.preparetraining to check and rasterize label data
