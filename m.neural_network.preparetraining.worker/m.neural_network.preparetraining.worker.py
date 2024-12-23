@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""############################################################################
+"""###########################################################################
 #
 # MODULE:      m.neural_network.preparetraining.worker
 # AUTHOR(S):   Guido Riembauer
@@ -112,7 +112,7 @@ def cleanup():
 
 
 def main():
-    """Run label rasterization"""
+    """Run label rasterization."""
     global NEWGISRC, GISRC, NEW_MAPSET
     input = options["input"]
     img_file = options["img_path"]
@@ -170,7 +170,7 @@ def main():
         )
 
     tile_empty = False
-    if len(class_numbers) == 0 or set(class_numbers) == set((no_class_value)):
+    if len(class_numbers) == 0 or set(class_numbers) == set([no_class_value]):
         grass.warning(
             _(
                 f"Label file {input} contains no features with the "
