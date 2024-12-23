@@ -1,0 +1,22 @@
+
+[lint]
+ignore = [ 
+    "A001", # shadowing variables
+    "ANN001", # missing type annotation
+    "BLE001", # catch blind exception
+    "D205",
+    "E501", # allow > 79 characters
+    "INT001",
+    "PLR0912", # allow > 12 branches (if/for/else/...)
+    "PLR0914",
+    "PLR0915",
+    "PLW0602",
+    "PLW0603",
+    "PTH103",
+    "PTH112",
+    "PTH118",
+    "PTH123",
+    "S605", # using shell
+    "F821", 
+    "D203", 
+    "D213",]

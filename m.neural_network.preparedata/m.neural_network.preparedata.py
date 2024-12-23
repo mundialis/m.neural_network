@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-
-############################################################################
+"""############################################################################
 #
 # MODULE:       m.neural_network.preparedata
-#
 # AUTHOR(S):    Anika Weinmann, Guido Riembauer and Victoria-Leandra Brunn
-#
-# PURPOSE:      TODO.
+# PURPOSE:      Prepare training data as first step for the process of
+#               creating a neural network.
 #
 # COPYRIGHT:	(C) 2024 by mundialis and the GRASS Development Team
 #
@@ -15,9 +13,10 @@
 # 		for details.
 #
 #############################################################################
+"""
 
 # %Module
-# % description: TODO.
+# % description: Prepare training data for creating a neuronal network
 # % keyword: raster
 # % keyword: vector
 # % keyword: export
@@ -108,43 +107,33 @@ import atexit
 import json
 import os
 import random
+import shutil
 
 import grass.script as grass
+from grass.pygrass.modules import Module, ParallelModuleQueue
+from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.general import set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
-from grass.pygrass.modules import Module, ParallelModuleQueue
-
+from grass_gis_helpers.parallel import check_parallel_errors
 
 # initialize global vars
 ID = grass.tempname(8)
-# rm_rasters = list()
-# rm_groups = list()
-# rm_vectors = list()
 rm_files = list()
-# rm_regions = list()
-orig_region = None
+ORIG_REGION = None
 rm_dirs = []
-# nprocs = -2
 
 
-def check_parallel_errors(queue):
-    for proc_num in range(queue.get_num_run_procs()):
-        proc = queue.get(proc_num)
-        if proc.returncode != 0:
-            # save all stderr to a variable and pass it to a GRASS
-            # exception
-            errmsg = proc.outputs["stderr"].value.strip()
-            grass.fatal(
-                _(f"\nERROR processing <{proc.get_bash()}>: {errmsg}"),
-            )
+def cleanup() -> None:
+    """Clean up function calling general clean up from grass_gis_helpers."""
+    general_cleanup(
+        orig_region=ORIG_REGION,
+        rm_dirs=rm_dirs,
+        rm_files=rm_files,
+    )
 
 
-def cleanup():
-    general_cleanup(orig_region=orig_region)  # TODO rm_dirs, rm_files
-
-
-def export_tindex(output_dir, geojson_dict):
+def export_tindex(output_dir, geojson_dict, etc_path) -> None:
     """Export tile index from geojson_dict.
 
     Export of tile index and verification of correct gpkg file.
@@ -153,11 +142,13 @@ def export_tindex(output_dir, geojson_dict):
         output_dir (str): The output directory where the tile index should be
                           exported
         geojson_dict (dict): The dictionary with the tile index
+        etc_path (str): The addon etc path
+
     """
     geojson_file = os.path.join(output_dir, "tindex.geojson")
     gpkg_file = os.path.join(output_dir, "tindex.gpkg")
     rm_files.append(geojson_file)
-    with open(geojson_file, "w") as f:
+    with open(geojson_file, "w", encoding="utf-8") as f:
         json.dump(geojson_dict, f, indent=4)
     # create GPKG from GeoJson
     stream = os.popen(f"ogr2ogr {gpkg_file} {geojson_file}")
@@ -169,9 +160,21 @@ def export_tindex(output_dir, geojson_dict):
     tindex_verification = stream.read()
     print(tindex_verification)
 
+    # copy qml file
+    qml_src_file = os.path.join(etc_path, "qml", "tindex.qml")
+    qml_dest_file = os.path.join(output_dir, "tindex.qml")
+    shutil.copyfile(qml_src_file, qml_dest_file)
 
-def main():
-    global orig_region, rm_files
+
+def main() -> None:
+    """Prepare training data.
+
+    Main function for data preparation. Creating tileindex, calling
+    export_tindex for its export. Creating tiles for label process
+    with DOPs and nDOM split in train and apply tiles. Exporting tiles
+    regarding to tileindex.
+    """
+    global ORIG_REGION, rm_files
 
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
@@ -184,6 +187,11 @@ def main():
     output_dir = options["output_dir"]
     nprocs = set_nprocs(int(options["nprocs"]))
 
+    # get addon etc path
+    etc_path = get_lib_path(modname="m.neural_network.preparedata")
+    if etc_path is None:
+        grass.fatal("Unable to find qml files!")
+
     # get location infos
     gisenv = grass.gisenv()
     cur_mapset = gisenv["MAPSET"]
@@ -191,8 +199,8 @@ def main():
     location = gisenv["LOCATION_NAME"]
 
     # save orginal region
-    orig_region = f"orig_region_{ID}"
-    grass.run_command("g.region", save=orig_region, quiet=True)
+    ORIG_REGION = f"orig_region_{ID}"
+    grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
     # set region
     grass.run_command("g.region", raster=image_bands[0], quiet=True)
@@ -229,7 +237,9 @@ def main():
         for row in range(num_tiles_row):
             west = reg["w"]
             for col in range(num_tiles_col):
-                print(f"row {row} - col {col}")
+                grass.message(
+                    _(f"Checking for null cells: row {row} - col {col}"),
+                )
                 row_str = str(row).zfill(num_zeros)
                 col_str = str(col).zfill(num_zeros)
                 tile_id = f"{row_str}{col_str}"
@@ -256,6 +266,7 @@ def main():
                     run_=False,
                 )
                 worker_nullcells.stdout_ = grass.PIPE
+                worker_nullcells.stderr_ = grass.PIPE
                 queue.put(worker_nullcells)
 
                 # create tile for tindex
@@ -276,7 +287,7 @@ def main():
                                 [east, south],
                                 [west, south],
                                 [west, north],
-                            ]
+                            ],
                         ],
                     },
                 }
@@ -294,6 +305,7 @@ def main():
 
     possible_tr_data = []
     tiles_with_data = []
+    tiles_wo_data = []
     for proc in queue.get_finished_modules():
         stdout_strs = proc.outputs["stdout"].value.strip().split(":")
         null_cells = int(stdout_strs[1].strip())
@@ -302,20 +314,29 @@ def main():
             possible_tr_data.append(num)
         if null_cells != tile_size * tile_size:
             tiles_with_data.append(num)
+        else:
+            tiles_wo_data.append(num)
 
     # random split into train and apply data tiles
     num_tr_tiles = round(train_percentage / 100.0 * len(possible_tr_data))
     random.shuffle(possible_tr_data)
     tr_tiles = possible_tr_data[:num_tr_tiles]
     ap_tiles = [x for x in tiles_with_data if x not in tr_tiles]
-
     # loop over training data
     queue_export_tr = ParallelModuleQueue(nprocs=nprocs)
     try:
-        for tr_tile in tr_tiles:
+        for i, tr_tile in enumerate(tr_tiles):
             tile_name = geojson_dict["features"][tr_tile]["properties"]["name"]
             tile_path = os.path.join(output_dir, "train", tile_name)
-            # update jeojson values
+            tile_id = geojson_dict["features"][tr_tile]["properties"]["fid"]
+            grass.message(
+                _(
+                    f"Segmenting and/or Exporting: "
+                    f"training tile {i + 1} of {len(tr_tiles)}",
+                ),
+            )
+            new_mapset = f"tmp_mapset_{ID}_{tile_id}"
+            # update geojson values
             geojson_dict["features"][tr_tile]["properties"][
                 "training"
             ] = "TODO"
@@ -325,6 +346,7 @@ def main():
                 "m.neural_network.preparedata.worker_export",
                 image_bands=image_bands,
                 ndsm=ndsm,
+                tile_name=tile_name,
                 reference=reference,
                 segmentation_minsize=segmentation_minsize,
                 segmentation_threshold=segmentation_threshold,
@@ -334,6 +356,7 @@ def main():
                 run_=False,
             )
             worker_export_tr.stdout_ = grass.PIPE
+            worker_export_tr.stderr_ = grass.PIPE
             queue_export_tr.put(worker_export_tr)
         queue_export_tr.wait()
     except Exception:
@@ -343,9 +366,14 @@ def main():
     # loop over apply data
     queue_export_ap = ParallelModuleQueue(nprocs=nprocs)
     try:
-        for ap_tile in ap_tiles:
+        for i, ap_tile in enumerate(ap_tiles):
             tile_name = geojson_dict["features"][ap_tile]["properties"]["name"]
             tile_path = os.path.join(output_dir, "apply", tile_name)
+            tile_id = geojson_dict["features"][ap_tile]["properties"]["fid"]
+            grass.message(
+                _(f"Exporting: apply tile {i + 1} of {len(ap_tiles)}"),
+            )
+            new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update jeojson values
             geojson_dict["features"][ap_tile]["properties"]["training"] = "no"
             geojson_dict["features"][ap_tile]["properties"]["path"] = tile_path
@@ -353,6 +381,7 @@ def main():
             worker_export_ap = Module(
                 "m.neural_network.preparedata.worker_export",
                 image_bands=image_bands,
+                tile_name=tile_name,
                 ndsm=ndsm,
                 output_dir=tile_path,
                 new_mapset=new_mapset,
@@ -365,14 +394,15 @@ def main():
         check_parallel_errors(queue_export_ap)
     verify_mapsets(cur_mapset)
 
-    import pdb
-
-    pdb.set_trace()
+    # remove tiles without data
+    tiles_wo_data.reverse()
+    for num in tiles_wo_data:
+        del geojson_dict["features"][num]
 
     # export tindex
-    export_tindex(output_dir, geojson_dict)
+    export_tindex(output_dir, geojson_dict, etc_path)
+
     grass.message(_("Prepare data done"))
-    # TODO: tile XY soll doch auch gelabelt werden, wie da trees / segementierung noch erstellen
 
 
 if __name__ == "__main__":

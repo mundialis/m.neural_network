@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""
-############################################################################
+"""############################################################################
 #
 # MODULE:      m.neural_network.preparedata.worker_nullcells
 # AUTHOR(S):   Guido Riembauer, Anika Weinmann
 # PURPOSE:     Worker module for m.neural_network.preparedata to check null
 #              cells
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
-#              Team
+#              Team.
 #
 # 		This program is free software under the GNU General Public
 # 		License (v3). Read the file COPYING that comes with GRASS
@@ -96,15 +95,36 @@
 # %end
 
 import os
+import shutil
 import sys
 
 import grass.script as grass
-
 from grass_gis_helpers.mapset import switch_to_new_mapset
 
+NEWGISRC = None
+GISRC = None
+ID = grass.tempname(8)
+NEW_MAPSET = None
 
-def main():
-    new_mapset = options["new_mapset"]
+
+def cleanup() -> None:
+    """Clean up function switching mapsets and deleting the new one."""
+    grass.utils.try_remove(NEWGISRC)
+    os.environ["GISRC"] = GISRC
+    # delete the new mapset (doppelt haelt besser)
+    gisenv = grass.gisenv()
+    gisdbase = gisenv["GISDBASE"]
+    location = gisenv["LOCATION_NAME"]
+    mapset_dir = os.path.join(gisdbase, location, NEW_MAPSET)
+    if os.path.isdir(mapset_dir):
+        shutil.rmtree(mapset_dir)
+
+
+def main() -> None:
+    """Check null cells."""
+    global NEW_MAPSET, NEWGISRC, GISRC
+
+    NEW_MAPSET = options["new_mapset"]
     tile_name = options["tile_name"]
     north = options["n"]
     south = options["s"]
@@ -114,7 +134,7 @@ def main():
     map = options["map"]
 
     # switch to the new mapset
-    gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset)
+    GISRC, NEWGISRC, old_mapset = switch_to_new_mapset(NEW_MAPSET)
 
     # map full name
     if "@" not in map:
@@ -139,12 +159,8 @@ def main():
         flags="g",
     )
     sys.stdout.write(
-        f"For tile {tile_name} the number of null cells is: {stats['null_cells']}\n"
+        f"For tile {tile_name} the number of null cells is: {stats['null_cells']}\n",
     )
-
-    # switch back to original mapset
-    grass.utils.try_remove(newgisrc)
-    os.environ["GISRC"] = gisrc
 
 
 if __name__ == "__main__":
