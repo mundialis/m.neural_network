@@ -7,6 +7,7 @@ ignore = [
     "BLE001", # catch blind exception
     "D205",
     "E501", # allow > 79 characters
+    "F841",
     "INT001",
     "PLR0912", # allow > 12 branches (if/for/else/...)
     "PLR0914",
@@ -15,8 +16,10 @@ ignore = [
     "PLW0603",
     "PTH103",
     "PTH112",
+    "PTH113",
     "PTH118",
     "PTH123",
+    "PTH208",
     "S605", # using shell
     "F821", 
     "D203", 

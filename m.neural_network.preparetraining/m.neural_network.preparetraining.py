@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-
-############################################################################
+"""############################################################################
 #
 # MODULE:       m.neural_network.preparetraining
 #
@@ -16,6 +15,7 @@
 # 		for details.
 #
 #############################################################################
+"""
 
 # %Module
 # % description: Prepares tiled imagery and labelled data for training and application in a Neural Network (NN).
@@ -234,8 +234,8 @@ def main():
     ]:
         os.makedirs(c_dir, exist_ok=True)
 
-    all_train_tiles = get_tile_infos(train_dir_in, type="training")
-    all_apply_tiles = get_tile_infos(apply_dir_in, type="apply")
+    all_train_tiles = get_tile_infos(train_dir_in, ttype="training")
+    all_apply_tiles = get_tile_infos(apply_dir_in, ttype="apply")
 
     # check the train tiles for wrong values in the label file
     train_gpkgs = [tile["label_gpkg"] for tile in all_train_tiles]
