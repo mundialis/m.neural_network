@@ -111,18 +111,18 @@ from osgeo import gdal, ogr
 
 # initialize global vars
 ID = grass.tempname(8)
-orig_region = None
+ORIG_REGION = None
 rm_dirs = []
 
 
 def cleanup():
-    """cleanup function that passes args to the general cleanup from
+    """Cleanup function that passes args to the general cleanup from
     grass-gis-helpers."""
-    general_cleanup(orig_region=orig_region, rm_dirs=rm_dirs)
+    general_cleanup(orig_region=ORIG_REGION, rm_dirs=rm_dirs)
 
 
 def get_tile_infos(in_dir, type):
-    """reads tile-wise directory and saves metadata in a list of dicts."""
+    """Reads tile-wise directory and saves metadata in a list of dicts."""
     all_tiles = []
     # get all training_tiles and split into training and validation
     for tile in os.listdir(in_dir):
@@ -133,12 +133,14 @@ def get_tile_infos(in_dir, type):
             tiledict["type"] = type
             tiledict["dop_tif"] = os.path.join(tiledir, f"image_{tile}.tif")
             tiledict["ndom_tif"] = os.path.join(
-                tiledir, f"ndsm_1_255_{tile}.tif"
+                tiledir,
+                f"ndsm_1_255_{tile}.tif",
             )
             checklist = [tiledict["dop_tif"], tiledict["ndom_tif"]]
             if type == "training":
                 tiledict["label_gpkg"] = os.path.join(
-                    tiledir, f"label_{tile}.gpkg"
+                    tiledir,
+                    f"label_{tile}.gpkg",
                 )
                 checklist.append(tiledict["label_gpkg"])
 
@@ -152,7 +154,7 @@ def get_tile_infos(in_dir, type):
 
 
 def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
-    """function that builds the required .vrt files."""
+    """Function that builds the required .vrt files."""
     src_ds = gdal.Open(dop)
     band_count = 0
     if src_ds is not None:
@@ -176,8 +178,8 @@ def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
 
 
 def main():
-    """main function for training data preparation."""
-    global orig_region, rm_dirs
+    """Main function for training data preparation."""
+    global ORIG_REGION, rm_dirs
 
     train_dir_in = options["input_traindir"]
     apply_dir_in = options["input_applydir"]
@@ -195,8 +197,8 @@ def main():
     location = gisenv["LOCATION_NAME"]
 
     # save orginal region
-    orig_region = f"orig_region_{ID}"
-    grass.run_command("g.region", save=orig_region, quiet=True)
+    ORIG_REGION = f"orig_region_{ID}"
+    grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
     try:
         os.makedirs(output, exist_ok=False)
@@ -238,7 +240,7 @@ def main():
 
     # check the train tiles for wrong values in the label file
     train_gpkgs = [tile["label_gpkg"] for tile in all_train_tiles]
-    allowed_vals_str = set(class_values + [no_class_value])
+    allowed_vals_str = set([*class_values, no_class_value])
     allowed_vals = [int(i) for i in allowed_vals_str]
     for gpkg in train_gpkgs:
         driver = ogr.GetDriverByName("GPKG")
@@ -251,8 +253,8 @@ def main():
                     _(
                         f"File {gpkg} contains unexpected value {val} "
                         f"in column {class_col}. Allowed values are "
-                        f"{allowed_vals}."
-                    )
+                        f"{allowed_vals}.",
+                    ),
                 )
 
     # split into training and validation
@@ -263,8 +265,8 @@ def main():
     grass.message(
         _(
             f"Selected {len(val_tiles)} tiles as validation tiles and "
-            f"{len(train_tiles)} as training tiles."
-        )
+            f"{len(train_tiles)} as training tiles.",
+        ),
     )
     for d in val_tiles:
         d["type"] = "validation"
@@ -309,7 +311,7 @@ def main():
     # .vrts... but here is the code
     grass.message(_("Compiling required .vrt files..."))
     with Pool(processes=nprocs) as pool:
-        vrts = pool.starmap(build_vrts, arglist)
+        pool.starmap(build_vrts, arglist)
 
     # loop over tiles
     grass.message(_("Checking and rasterizing labels..."))

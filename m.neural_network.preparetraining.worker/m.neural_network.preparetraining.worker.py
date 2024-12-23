@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-############################################################################
+"""############################################################################
 #
 # MODULE:      m.neural_network.preparetraining.worker
 # AUTHOR(S):   Guido Riembauer
@@ -86,45 +85,45 @@
 
 import atexit
 import os
-import grass.script as grass
-from osgeo import gdal
 import shutil
 
+import grass.script as grass
 from grass_gis_helpers.mapset import switch_to_new_mapset
+from osgeo import gdal
 
-newgisrc = None
-gisrc = None
+NEWGISRC = None
+GISRC = None
 ID = grass.tempname(8)
-new_mapset = None
+NEW_MAPSET = None
 
 
 def cleanup():
     """Clean up function switching mapsets and deleting the new one."""
     # switch back to original mapset
-    grass.utils.try_remove(newgisrc)
-    os.environ["GISRC"] = gisrc
+    grass.utils.try_remove(NEWGISRC)
+    os.environ["GISRC"] = GISRC
     # delete the new mapset (doppelt haelt besser)
     gisenv = grass.gisenv()
     gisdbase = gisenv["GISDBASE"]
     location = gisenv["LOCATION_NAME"]
-    mapset_dir = os.path.join(gisdbase, location, new_mapset)
+    mapset_dir = os.path.join(gisdbase, location, NEW_MAPSET)
     if os.path.isdir(mapset_dir):
         shutil.rmtree(mapset_dir)
 
 
 def main():
-    """main function of worker module."""
-    global newgisrc, gisrc, new_mapset
+    """Main function of worker module."""
+    global NEWGISRC, GISRC, NEW_MAPSET
     input = options["input"]
     img_file = options["img_path"]
-    new_mapset = options["new_mapset"]
+    NEW_MAPSET = options["new_mapset"]
     class_values = options["class_values"].split(",")
     no_class_value = options["no_class_value"]
     class_col = options["class_column"]
     output = options["output"]
 
     # switch to the new mapset
-    gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset)
+    GISRC, NEWGISRC, old_mapset = switch_to_new_mapset(NEW_MAPSET)
 
     # get extent from reference img file
     info = gdal.Info(img_file, format="json")
@@ -159,7 +158,7 @@ def main():
     except ValueError:
         grass.fatal(_(f"File {input} has no column {class_col}"))
     class_numbers = [item[idx] for item in rows]
-    class_num_set_ref = set(class_values + [no_class_value])
+    class_num_set_ref = set([*class_values, no_class_value])
     difference = set(class_numbers).difference(class_num_set_ref)
     if len(difference) > 0:
 
@@ -167,8 +166,8 @@ def main():
             _(
                 f"Label file {input} has features with unexpected values"
                 f" in column {class_col}: {difference}. Allowed values "
-                f"are [{','.join(class_values)}, {no_class_value}]."
-            )
+                f"are [{','.join(class_values)}, {no_class_value}].",
+            ),
         )
 
     tile_empty = False
@@ -178,15 +177,17 @@ def main():
                 f"Label file {input} contains no features with the "
                 f"expected class values {class_values} in "
                 f"column {class_col}. It is assumed that the classes "
-                "do not occur in this tile."
-            )
+                "do not occur in this tile.",
+            ),
         )
         tile_empty = True
 
     # rasterize
     if tile_empty is True:
         grass.run_command(
-            "r.mapcalc", expression=f"{labelrast}={no_class_value}", quiet=True
+            "r.mapcalc",
+            expression=f"{labelrast}={no_class_value}",
+            quiet=True,
         )
     else:
         labelrast_tmp = f"{labelrast}_tmp"
