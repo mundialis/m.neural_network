@@ -238,7 +238,7 @@ def main() -> None:
             west = reg["w"]
             for col in range(num_tiles_col):
                 grass.message(
-                    _(f"Checking for null cells: " f"row {row} - col {col}")
+                    _(f"Checking for null cells: row {row} - col {col}"),
                 )
                 row_str = str(row).zfill(num_zeros)
                 col_str = str(col).zfill(num_zeros)
@@ -333,7 +333,7 @@ def main() -> None:
                 _(
                     f"Segmenting and/or Exporting: "
                     f"training tile {i + 1} of {len(tr_tiles)}"
-                )
+                ),
             )
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update geojson values
@@ -371,7 +371,7 @@ def main() -> None:
             tile_path = os.path.join(output_dir, "apply", tile_name)
             tile_id = geojson_dict["features"][ap_tile]["properties"]["fid"]
             grass.message(
-                _(f"Exporting: " f"apply tile {i + 1} of {len(ap_tiles)}")
+                _(f"Exporting: apply tile {i + 1} of {len(ap_tiles)}"),
             )
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update jeojson values

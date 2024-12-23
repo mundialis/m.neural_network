@@ -162,7 +162,10 @@ def main() -> None:
     # image band export
     image_file = os.path.join(output_dir, f"image_{tile_name}.tif")
     grass.run_command(
-        "i.group", group="image_bands", input=image_bands, quiet=True
+        "i.group",
+        group="image_bands",
+        input=image_bands,
+        quiet=True,
     )
     grass.run_command(
         "r.out.gdal",
