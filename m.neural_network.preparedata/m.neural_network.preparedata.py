@@ -115,30 +115,13 @@ from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.general import set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
+from grass_gis_helpers.parallel import check_parallel_errors
 
 # initialize global vars
 ID = grass.tempname(8)
 rm_files = list()
 ORIG_REGION = None
 rm_dirs = []
-
-
-def check_parallel_errors(queue) -> None:
-    """Check parallel processes.
-
-    Args:
-        queue: Currently running processes.
-
-    """
-    for proc_num in range(queue.get_num_run_procs()):
-        proc = queue.get(proc_num)
-        if proc.returncode != 0:
-            # save all stderr to a variable and pass it to a GRASS
-            # exception
-            errmsg = proc.outputs["stderr"].value.strip()
-            grass.fatal(
-                _(f"\nERROR processing <{proc.get_bash()}>: {errmsg}"),
-            )
 
 
 def cleanup() -> None:
@@ -254,7 +237,8 @@ def main() -> None:
         for row in range(num_tiles_row):
             west = reg["w"]
             for col in range(num_tiles_col):
-                print(f"row {row} - col {col}")
+                grass.message(_(f"Checking for null cells: "
+                                f"row {row} - col {col}"))
                 row_str = str(row).zfill(num_zeros)
                 col_str = str(col).zfill(num_zeros)
                 tile_id = f"{row_str}{col_str}"
@@ -281,6 +265,7 @@ def main() -> None:
                     run_=False,
                 )
                 worker_nullcells.stdout_ = grass.PIPE
+                worker_nullcells.stderr_ = grass.PIPE
                 queue.put(worker_nullcells)
 
                 # create tile for tindex
@@ -339,10 +324,12 @@ def main() -> None:
     # loop over training data
     queue_export_tr = ParallelModuleQueue(nprocs=nprocs)
     try:
-        for tr_tile in tr_tiles:
+        for i, tr_tile in enumerate(tr_tiles):
             tile_name = geojson_dict["features"][tr_tile]["properties"]["name"]
             tile_path = os.path.join(output_dir, "train", tile_name)
             tile_id = geojson_dict["features"][tr_tile]["properties"]["fid"]
+            grass.message(_(f"Segmenting and/or Exporting: "
+                            f"training tile {i+1} of {len(tr_tiles)}"))
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update geojson values
             geojson_dict["features"][tr_tile]["properties"][
@@ -364,6 +351,7 @@ def main() -> None:
                 run_=False,
             )
             worker_export_tr.stdout_ = grass.PIPE
+            worker_export_tr.stderr_ = grass.PIPE
             queue_export_tr.put(worker_export_tr)
         queue_export_tr.wait()
     except Exception:
@@ -373,10 +361,12 @@ def main() -> None:
     # loop over apply data
     queue_export_ap = ParallelModuleQueue(nprocs=nprocs)
     try:
-        for ap_tile in ap_tiles:
+        for i, ap_tile in enumerate(ap_tiles):
             tile_name = geojson_dict["features"][ap_tile]["properties"]["name"]
             tile_path = os.path.join(output_dir, "apply", tile_name)
             tile_id = geojson_dict["features"][ap_tile]["properties"]["fid"]
+            grass.message(_(f"Exporting: "
+                            f"apply tile {i+1} of {len(ap_tiles)}"))
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update jeojson values
             geojson_dict["features"][ap_tile]["properties"]["training"] = "no"

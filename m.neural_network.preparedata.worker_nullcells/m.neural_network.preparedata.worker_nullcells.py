@@ -108,7 +108,7 @@ NEW_MAPSET = None
 
 
 def cleanup() -> None:
-    """Clean up function calling general clean up from grass_gis_helpers."""
+    """Clean up function switching mapsets and deleting the new one"""
     grass.utils.try_remove(NEWGISRC)
     os.environ["GISRC"] = GISRC
     # delete the new mapset (doppelt haelt besser)
