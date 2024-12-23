@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""############################################################################
+############################################################################
 #
 # MODULE:       m.neural_network.preparetraining
 #
@@ -15,7 +15,6 @@
 # 		for details.
 #
 #############################################################################
-"""
 
 # %Module
 # % description: Prepares tiled imagery and labelled data for training and application in a Neural Network (NN).
@@ -93,9 +92,9 @@
 # %end
 
 import atexit
-from multiprocessing import Pool
 import os
 import random
+from multiprocessing import Pool
 
 import grass.script as grass
 from grass_gis_helpers.cleanup import general_cleanup

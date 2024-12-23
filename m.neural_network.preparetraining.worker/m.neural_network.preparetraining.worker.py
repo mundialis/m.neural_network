@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""###########################################################################
+##############################################################################
 #
 # MODULE:      m.neural_network.preparetraining.worker
 # AUTHOR(S):   Guido Riembauer
@@ -12,8 +12,7 @@
 # 		License (v3). Read the file COPYING that comes with GRASS
 # 		for details.
 #
-#############################################################################
-"""
+##############################################################################
 
 # %Module
 # % description: Worker module for m.neural_network.preparetraining to check and rasterize label data
