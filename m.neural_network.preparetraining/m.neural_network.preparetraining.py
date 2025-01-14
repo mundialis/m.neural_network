@@ -155,7 +155,7 @@ def vrt_absolute_paths(vrt, abs_paths, rel_paths):
     :param abs_paths: List: absolute paths to be replaced
     :param rel_paths: List: relative paths to replace the absolute paths with.
     """
-    with open(vrt, "r") as file:
+    with open(vrt, encoding="utf-8") as file:
         data = file.read()
         data = data.replace('relativeToVRT="0"', 'relativeToVRT="1"')
         for abs_path, rel_path in zip(abs_paths, rel_paths):
