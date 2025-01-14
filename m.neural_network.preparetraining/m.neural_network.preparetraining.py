@@ -149,7 +149,7 @@ def get_tile_infos(in_dir, ttype):
     return all_tiles
 
 
-def vrt_absolute_paths(vrt, abs_paths, rel_paths):
+def vrt_relative_paths(vrt, abs_paths, rel_paths):
     """Change absolute to relative paths in a .vrt
     :param vrt: String: Path to the vrt
     :param abs_paths: List: absolute paths to be replaced
@@ -181,7 +181,7 @@ def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
         gdal.BuildVRT(band_vrt, [dop], options=vrt_options_sep)
         # replace absolute with relative path
         rel_path = os.path.relpath(dop, start=singleband_vrt_dir)
-        vrt_absolute_paths(band_vrt, abs_paths=[dop], rel_paths=[rel_path])
+        vrt_relative_paths(band_vrt, abs_paths=[dop], rel_paths=[rel_path])
         vrt_input.append(band_vrt)
 
     # create vrt
@@ -191,7 +191,7 @@ def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
     vrt_options = gdal.BuildVRTOptions(separate=True)
     gdal.BuildVRT(bands_e_vrt, vrt_input, options=vrt_options)
     # replace absolute with relative paths
-    vrt_absolute_paths(bands_e_vrt, abs_paths=vrt_input, rel_paths=rel_paths)
+    vrt_relative_paths(bands_e_vrt, abs_paths=vrt_input, rel_paths=rel_paths)
     return bands_e_vrt
 
 
