@@ -92,6 +92,15 @@
 # % guisection: Optional input
 # %end
 
+# %option
+# % key: suffix
+# % type: string
+# % required: no
+# % label: Suffix to be added to each output file
+# % description: Use the suffix to provide a unique ID for e.g. a specific flight campaign year
+# % guisection: Optional input
+# %end
+
 # %option G_OPT_M_DIR
 # % key: output_dir
 # % multiple: no
@@ -186,6 +195,8 @@ def main() -> None:
     train_percentage = int(options["train_percentage"])
     output_dir = options["output_dir"]
     nprocs = set_nprocs(int(options["nprocs"]))
+    if options["suffix"]:
+        suffix = options["suffix"]
 
     # get addon etc path
     etc_path = get_lib_path(modname="m.neural_network.preparedata")
@@ -244,6 +255,8 @@ def main() -> None:
                 col_str = str(col).zfill(num_zeros)
                 tile_id = f"{row_str}{col_str}"
                 tile_name = f"tile_{row_str}_{col_str}"
+                if options["suffix"]:
+                    tile_name += f"_{suffix}"
                 new_mapset = f"tmp_mapset_{ID}_{tile_id}"
                 rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
 
