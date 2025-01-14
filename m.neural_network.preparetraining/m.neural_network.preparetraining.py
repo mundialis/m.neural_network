@@ -148,9 +148,10 @@ def get_tile_infos(in_dir, ttype):
             all_tiles.append(tiledict)
     return all_tiles
 
+
 def vrt_absolute_paths(vrt, abs_paths, rel_paths):
     """
-    Changes absolute to relative paths in a .vrt
+    Change absolute to relative paths in a .vrt
     :param vrt: String: Path to the vrt
     :param abs_paths: List: absolute paths to be replaced
     :param rel_paths: List: relative paths to replace the absolute paths with
@@ -162,6 +163,7 @@ def vrt_absolute_paths(vrt, abs_paths, rel_paths):
             data = data.replace(abs_path, rel_path)
     with open(vrt, "w") as file:
         file.write(data)
+
 
 def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
     """Build the required .vrt files."""
