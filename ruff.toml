@@ -8,6 +8,8 @@ ignore = [
     "D205",
     "E501", # allow > 79 characters
     "F841",
+    "FURB101", # `open` and `read` should be replaced by `Path(vrt).read_text(encoding="utf-8")`
+    "FURB103", # `open` and `write` should be replaced by `Path(vrt).write_text(data, encoding="utf-8")`
     "INT001",
     "PLR0912", # allow > 12 branches (if/for/else/...)
     "PLR0914",
@@ -18,6 +20,7 @@ ignore = [
     "PTH112",
     "PTH113",
     "PTH118",
+    "PTH120", # `os.path.dirname()` should be replaced by `Path.parent`
     "PTH123",
     "PTH208",
     "S605", # using shell
