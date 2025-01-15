@@ -149,16 +149,16 @@ def get_tile_infos(in_dir, ttype):
     return all_tiles
 
 
-def vrt_relative_paths(vrt, abs_paths, rel_paths):
+def vrt_relative_paths(vrt, abs_paths):
     """Change absolute to relative paths in a .vrt
     :param vrt: String: Path to the vrt
     :param abs_paths: List: absolute paths to be replaced
-    :param rel_paths: List: relative paths to replace the absolute paths with.
     """
     with open(vrt, encoding="utf-8") as file:
         data = file.read()
         data = data.replace('relativeToVRT="0"', 'relativeToVRT="1"')
-        for abs_path, rel_path in zip(abs_paths, rel_paths):
+        for abs_path in abs_paths:
+            rel_path = os.path.relpath(abs_path, start=os.path.dirname(vrt))
             data = data.replace(abs_path, rel_path)
     with open(vrt, "w", encoding="utf-8") as file:
         file.write(data)
@@ -180,18 +180,16 @@ def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
         vrt_options_sep = gdal.BuildVRTOptions(bandList=[num])
         gdal.BuildVRT(band_vrt, [dop], options=vrt_options_sep)
         # replace absolute with relative path
-        rel_path = os.path.relpath(dop, start=singleband_vrt_dir)
-        vrt_relative_paths(band_vrt, abs_paths=[dop], rel_paths=[rel_path])
+        vrt_relative_paths(band_vrt, abs_paths=[dop])
         vrt_input.append(band_vrt)
 
     # create vrt
     vrt_input.append(ndom)
-    rel_paths = [os.path.relpath(target, start=outdir) for target in vrt_input]
     bands_e_vrt = os.path.join(outdir, f"{tile_id}.vrt")
     vrt_options = gdal.BuildVRTOptions(separate=True)
     gdal.BuildVRT(bands_e_vrt, vrt_input, options=vrt_options)
     # replace absolute with relative paths
-    vrt_relative_paths(bands_e_vrt, abs_paths=vrt_input, rel_paths=rel_paths)
+    vrt_relative_paths(bands_e_vrt, abs_paths=vrt_input)
     return bands_e_vrt
 
 
