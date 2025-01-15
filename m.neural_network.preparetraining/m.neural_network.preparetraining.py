@@ -152,7 +152,7 @@ def get_tile_infos(in_dir, ttype):
 def vrt_relative_paths(vrt, abs_paths):
     """Change absolute to relative paths in a .vrt
     :param vrt: String: Path to the vrt
-    :param abs_paths: List: absolute paths to be replaced
+    :param abs_paths: List: absolute paths to be replaced.
     """
     with open(vrt, encoding="utf-8") as file:
         data = file.read()
