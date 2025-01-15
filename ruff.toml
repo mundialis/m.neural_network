@@ -20,6 +20,7 @@ ignore = [
     "PTH112",
     "PTH113",
     "PTH118",
+    "PTH120", # `os.path.dirname()` should be replaced by `Path.parent`
     "PTH123",
     "PTH208",
     "S605", # using shell
