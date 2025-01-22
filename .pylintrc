@@ -25,7 +25,7 @@ disable=
         import-error, ; To suppress e.g "Unable to import 'grass.script"
         missing-module-docstring, ; we use the GRASS GIS header
         R, ; refactoring + design recommendations
-        consider-using-enumerate, ; to supress consider using enumerate
+        consider-using-enumerate, ; to suppress consider using enumerate
         line-too-long, ; >80
 
 [BASIC]

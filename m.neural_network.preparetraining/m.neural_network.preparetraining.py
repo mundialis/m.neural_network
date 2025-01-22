@@ -212,7 +212,7 @@ def main():
     gisdbase = gisenv["GISDBASE"]
     location = gisenv["LOCATION_NAME"]
 
-    # save orginal region
+    # save original region
     ORIG_REGION = f"orig_region_{ID}"
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
