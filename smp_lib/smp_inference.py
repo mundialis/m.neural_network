@@ -27,10 +27,10 @@
 # https://github.com/qubvel-org/segmentation_models.pytorch/blob/main/examples/upernet_inference_pretrained.ipynb
 
 import os
+
 import numpy as np
-import albumentations as A
-import torch
 import segmentation_models_pytorch as smp
+import torch
 from osgeo import gdal
 
 
@@ -69,12 +69,12 @@ def read_image_gdal(filename, driver, output_file):
 
 
 def smp_infer(data_dir, input_model_path, num_classes, output_path):
-    """
-    Args:
-        data_dir (string): root folder with training data
-        input_model_path (string): path to trained and locally saved model
-        num_classes (int): number of output classes
-        output_path (string): path where to save results
+    """Args:
+    data_dir (string): root folder with training data
+    input_model_path (string): path to trained and locally saved model
+    num_classes (int): number of output classes
+    output_path (string): path where to save results.
+
     """
     x_test_dir = data_dir
 
@@ -142,7 +142,7 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
 
         # Postprocess mask
         mask = torch.nn.functional.interpolate(
-            output_mask, size=image.shape[1:], mode="bilinear", align_corners=False
+            output_mask, size=image.shape[1:], mode="bilinear", align_corners=False,
         )
         if num_classes > 2:
             mask = mask[0].argmax(0).cpu().numpy()
@@ -160,7 +160,7 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Train a model from segmentation_models.pytorch"
+        description="Train a model from segmentation_models.pytorch",
     )
     parser.add_argument("configfile", help="Path to configfile.")
 

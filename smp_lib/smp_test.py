@@ -25,15 +25,15 @@
 
 
 import os
-import torch
-from torch.utils.data import Dataset as BaseDataset
-from torch.utils.data import DataLoader
-import segmentation_models_pytorch as smp
 import albumentations as A
-from torchmetrics.classification import MulticlassConfusionMatrix
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import segmentation_models_pytorch as smp
+import torch
 from osgeo import gdal
+from torch.utils.data import DataLoader
+from torch.utils.data import Dataset as BaseDataset
+from torchmetrics.classification import MulticlassConfusionMatrix
 
 
 def read_image_gdal(filename):
@@ -54,7 +54,7 @@ def read_image_gdal(filename):
 
 
 class GdalImageDataset(BaseDataset):
-    def __init__(self, img_dir, lbl_dir, augmentation=None):
+    def __init__(self, img_dir, lbl_dir, augmentation=None) -> None:
         # directory listing
         self.ids = os.listdir(img_dir)
         self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
@@ -73,7 +73,7 @@ class GdalImageDataset(BaseDataset):
             # file exists?
             if not os.path.exists(os.path.join(lbl_dir, mask_id)):
                 print(
-                    f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> does not exist"
+                    f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> does not exist",
                 )
                 sys.exit(1)
 
@@ -86,7 +86,7 @@ class GdalImageDataset(BaseDataset):
         self.lbl_dir = lbl_dir
         self.augmentation = augmentation
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.ids)
 
     def __getitem__(self, i):
@@ -104,7 +104,7 @@ class GdalImageDataset(BaseDataset):
 
 
 def get_validation_augmentation():
-    """Add paddings to make image shape divisible by 32"""
+    """Add paddings to make image shape divisible by 32."""
     test_transform = [
         A.PadIfNeeded(512, 512),
     ]
@@ -120,7 +120,7 @@ def evaluate_model(
     save_plot_path=None,
     save_norm_plot_path=None,
 ):
-    """Evaluate segmentation model and compute confusion matrix"""
+    """Evaluate segmentation model and compute confusion matrix."""
     # Set model to evaluation mode
     model.eval()
     model.to(device)
@@ -128,7 +128,7 @@ def evaluate_model(
     # Initialize confusion matrix
     if num_classes > 2:
         confmat = MulticlassConfusionMatrix(
-            num_classes=num_classes, normalize="none"
+            num_classes=num_classes, normalize="none",
         ).to(device)
     else:
         confmat = BinaryConfusionMatrix(normalize="none").to(device)
@@ -151,10 +151,7 @@ def evaluate_model(
             if isinstance(outputs, dict):
                 outputs = outputs["out"]
 
-            if num_classes > 2:
-                preds = outputs.argmax(dim=1)
-            else:
-                preds = outputs
+            preds = outputs.argmax(dim=1) if num_classes > 2 else outputs
 
             # Update confusion matrix (flatten spatial dimensions H x W)
             confmat.update(preds.flatten(), masks.flatten())
@@ -165,7 +162,7 @@ def evaluate_model(
     # Save confusion matrix plot if requested
     if save_plot_path:
         fig, ax = confmat.plot(
-            labels=class_names, add_text=True
+            labels=class_names, add_text=True,
         )  # Set add_text=True to show values in cells
         fig.set_size_inches(12, 10)
         # fig.tight_layout()
@@ -175,7 +172,7 @@ def evaluate_model(
     if save_norm_plot_path:
         cm_tensor_norm = cm_tensor / cm_tensor.sum(dim=-1, keepdim=True)
         fig, ax = confmat.plot(
-            val=cm_tensor_norm, labels=class_names, add_text=True
+            val=cm_tensor_norm, labels=class_names, add_text=True,
         )  # Set add_text=True to show values in cells
         fig.set_size_inches(12, 10)
         # fig.tight_layout()
@@ -186,15 +183,14 @@ def evaluate_model(
 
 
 def smp_test(data_dir, input_model_path, num_classes, class_names, output_path):
-    """
-    Args
-        data_dir (string): root folder with training data
-        input_model_path (string): path to trained and locally saved model
-        num_classes (int): number of output classes
-        class_names (string): comma-separated list of class names
-        output_path (string): path where to save figures and statistics
-    """
+    """Args:
+    data_dir (string): root folder with training data
+    input_model_path (string): path to trained and locally saved model
+    num_classes (int): number of output classes
+    class_names (string): comma-separated list of class names
+    output_path (string): path where to save figures and statistics.
 
+    """
     class_names = [x.strip() for x in class_names.split(",")]
     if len(class_names) != num_classes:
         print("Number of class names does not match number of classes!")
@@ -259,7 +255,7 @@ def smp_test(data_dir, input_model_path, num_classes, class_names, output_path):
     # `"pred"` will divide by the sum of the row dimension (predictions)
     # cm_np_norm = cm_np / cm_np.sum(dim=-2, keepdim=True)
 
-    with open(iou_path, "w") as f:
+    with open(iou_path, "w", encoding="utf-8") as f:
         print(f"Overall Accuracy: {accuracy:.4f}", file=f)
         print(f"mIoU: {np.nanmean(iou_per_class):.4f}", file=f)
         for i, iou in enumerate(iou_per_class):

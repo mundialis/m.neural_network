@@ -28,19 +28,17 @@
 # https://github.com/qubvel-org/segmentation_models.pytorch/blob/main/examples/camvid_segmentation_multiclass.ipynb
 
 import os
-import sys
 import shutil
-import math
-import torch
-from torch.utils.data import Dataset as BaseDataset
-from torch.utils.data import DataLoader
-from torch.optim import lr_scheduler
-import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
-import segmentation_models_pytorch as smp
-import numpy as np
+import sys
+
 import albumentations as A
+import pytorch_lightning as pl
+import segmentation_models_pytorch as smp
+import torch
 from osgeo import gdal
+from torch.optim import lr_scheduler
+from torch.utils.data import DataLoader
+from torch.utils.data import Dataset as BaseDataset
 
 
 # from mmsegmentation LoadSingleRSImageFromFile()
@@ -65,7 +63,7 @@ def read_image_gdal(filename):
 # assign a label to each pixel
 # https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset
 class GdalImageDataset(BaseDataset):
-    def __init__(self, img_dir, lbl_dir, augmentation=None):
+    def __init__(self, img_dir, lbl_dir, augmentation=None) -> None:
         # directory listing
         self.ids = os.listdir(img_dir)
         self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
@@ -85,7 +83,7 @@ class GdalImageDataset(BaseDataset):
             # file exists?
             if not os.path.exists(os.path.join(lbl_dir, mask_id)):
                 print(
-                    f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> does not exist"
+                    f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> does not exist",
                 )
                 sys.exit(1)
 
@@ -98,7 +96,7 @@ class GdalImageDataset(BaseDataset):
         self.lbl_dir = lbl_dir
         self.augmentation = augmentation
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.ids)
 
     def __getitem__(self, i):
@@ -136,7 +134,7 @@ def get_training_augmentation(img_size=512):
             [
                 # A.CLAHE(p=1), # only grayscale or RGB
                 A.RandomBrightnessContrast(
-                    brightness_limit=0.5, contrast_limit=0.5, p=1
+                    brightness_limit=0.5, contrast_limit=0.5, p=1,
                 ),
                 A.RandomGamma(p=1),
             ],
@@ -153,7 +151,7 @@ def get_training_augmentation(img_size=512):
         A.OneOf(
             [
                 A.RandomBrightnessContrast(
-                    brightness_limit=0.5, contrast_limit=0.5, p=1
+                    brightness_limit=0.5, contrast_limit=0.5, p=1,
                 ),
                 # A.HueSaturationValue(p=1), # only grayscale or RGB
             ],
@@ -164,7 +162,7 @@ def get_training_augmentation(img_size=512):
 
 
 def get_validation_augmentation(img_size=512):
-    """Add paddings to make image shape divisible by 32"""
+    """Add paddings to make image shape divisible by 32."""
     test_transform = [
         A.PadIfNeeded(img_size, img_size),
     ]
@@ -180,7 +178,7 @@ class plModule(pl.LightningModule):
         model_path_base,
         t_max,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__()
         self.model = model
 
@@ -195,12 +193,12 @@ class plModule(pl.LightningModule):
         if out_classes > 2:
             # Loss function for multi-class segmentation
             self.loss_fn = smp.losses.JaccardLoss(
-                smp.losses.MULTICLASS_MODE, from_logits=True
+                smp.losses.MULTICLASS_MODE, from_logits=True,
             )
         else:
             # Loss function for binary segmentation
             self.loss_fn = smp.losses.JaccardLoss(
-                smp.losses.BINARY_MODE, from_logits=True
+                smp.losses.BINARY_MODE, from_logits=True,
             )
 
         # Step metrics tracking
@@ -219,8 +217,7 @@ class plModule(pl.LightningModule):
         # Normalize image
         image = image.float()
         image = (image - self.mean) / self.std
-        mask = self.model(image)
-        return mask
+        return self.model(image)
 
     def shared_step(self, batch, stage):
         image, mask = batch
@@ -237,7 +234,8 @@ class plModule(pl.LightningModule):
         else:
             assert mask.ndim == 4  # [batch_size, H, W]
             # Check that mask values in between 0 and 1, NOT 0 and 255 for binary segmentation
-            assert mask.max() <= 1.0 and mask.min() >= 0
+            assert mask.max() <= 1.0
+            assert mask.min() >= 0
 
         # Predict mask logits
         logits_mask = self.forward(image)
@@ -262,7 +260,7 @@ class plModule(pl.LightningModule):
 
             # Compute true positives, false positives, false negatives, and true negatives
             tp, fp, fn, tn = smp.metrics.get_stats(
-                pred_mask, mask, mode="multiclass", num_classes=self.number_of_classes
+                pred_mask, mask, mode="multiclass", num_classes=self.number_of_classes,
             )
         else:
             # first convert mask values to probabilities, then
@@ -290,7 +288,7 @@ class plModule(pl.LightningModule):
 
         # Per-image IoU and dataset IoU calculations
         per_image_iou = smp.metrics.iou_score(
-            tp, fp, fn, tn, reduction="micro-imagewise"
+            tp, fp, fn, tn, reduction="micro-imagewise",
         )
         dataset_iou = smp.metrics.iou_score(tp, fp, fn, tn, reduction="micro")
         dataset_acc = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
@@ -359,7 +357,7 @@ class plModule(pl.LightningModule):
         # weight_decay should be in the range 0, 0.05
         optimizer = torch.optim.Adam(self.parameters(), lr=2e-4, weight_decay=0.0)
         scheduler = lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=self.t_max, eta_min=1e-5
+            optimizer, T_max=self.t_max, eta_min=1e-5,
         )
         return {
             "optimizer": optimizer,
@@ -384,8 +382,7 @@ def smp_train(
     epochs=50,
     batch_size=8,
 ):
-    """
-    see https://smp.readthedocs.io/en/latest/encoders.html
+    """See https://smp.readthedocs.io/en/latest/encoders.html.
 
     Args:
         data_dir (string): root folder with training data
@@ -403,7 +400,6 @@ def smp_train(
         batch_size (int): batch size for training
 
     """
-
     if output_model_path is None:
         print("ERROR: output model path is required.")
         sys.exit(1)
@@ -443,13 +439,13 @@ def smp_train(
 
     # pytorch dataloaders
     train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True, num_workers=4
+        train_dataset, batch_size=batch_size, shuffle=True, num_workers=4,
     )
     valid_loader = DataLoader(
-        valid_dataset, batch_size=batch_size, shuffle=False, num_workers=4
+        valid_dataset, batch_size=batch_size, shuffle=False, num_workers=4,
     )
     test_loader = DataLoader(
-        test_dataset, batch_size=batch_size, shuffle=False, num_workers=4
+        test_dataset, batch_size=batch_size, shuffle=False, num_workers=4,
     )
 
     # loading the model
@@ -468,7 +464,7 @@ def smp_train(
         print(f"loading model {model_arch} with encoder {encoder_name} ...")
         # handling special cases
         model_kwargs = {}
-        if batch_size < 6 and model_arch.lower() in ["upernet", "manet"]:
+        if batch_size < 6 and model_arch.lower() in {"upernet", "manet"}:
             model_kwargs["decoder_use_norm"] = False
         #     img_size=XXX, needed for swin
         if encoder_name.lower()[:7] == "tu-swin":
