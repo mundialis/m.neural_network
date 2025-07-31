@@ -45,7 +45,7 @@ from torch.utils.data import Dataset as BaseDataset
 # from mmsegmentation LoadSingleRSImageFromFile()
 def read_image_gdal(filename):
     """Args:
-        filename (string): path to file to read with GDAL.
+    filename (string): path to file to read with GDAL.
     """
     ds = gdal.Open(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -67,13 +67,10 @@ def read_image_gdal(filename):
 # assign a label to each pixel
 # https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset
 class GdalImageDataset(BaseDataset):
-    """
-        pytorch dataset using GDAL to read raster files
-    """
+    """pytorch dataset using GDAL to read raster files."""
+
     def __init__(self, img_dir, lbl_dir, augmentation=None) -> None:
-        """
-            initialize the dataset
-        """
+        """Initialize the dataset."""
         # directory listing
         self.ids = os.listdir(img_dir)
         self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
@@ -107,15 +104,13 @@ class GdalImageDataset(BaseDataset):
         self.augmentation = augmentation
 
     def __len__(self) -> int:
-        """
-            return length of the dataset
-        """
+        """Return length of the dataset."""
         return len(self.ids)
 
     def __getitem__(self, i):
-        """get next item
+        """Get next item
         Returns:
-            image, mask pair
+            image, mask pair.
         """
         image = read_image_gdal(self.images_fps[i])
         mask = read_image_gdal(self.labels_fps[i])
@@ -187,9 +182,8 @@ def get_validation_augmentation(img_size=512):
 
 
 class PlModule(pl.LightningModule):
-    """
-    pytorch lightning module for training
-    """
+    """pytorch lightning module for training."""
+
     def __init__(
         self,
         model,
@@ -197,9 +191,7 @@ class PlModule(pl.LightningModule):
         model_path_base,
         t_max,
     ) -> None:
-        """
-            initialize the module
-        """
+        """Initialize the module."""
         super().__init__()
         self.model = model
 
