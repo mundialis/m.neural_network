@@ -37,9 +37,9 @@ from osgeo import gdal
 
 def read_image_gdal(filename, driver, output_file):
     """Args:
-        filename (string): path to file to read with GDAL
-        driver (GDAL raster driver): GDAL driver to use for creating output raster
-        output_file (string): path to output raster file
+    filename (string): path to file to read with GDAL
+    driver (GDAL raster driver): GDAL driver to use for creating output raster
+    output_file (string): path to output raster file.
     """
     ds = gdal.Open(filename, gdal.GA_ReadOnly)
     if ds is None:

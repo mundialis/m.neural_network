@@ -40,7 +40,7 @@ from torchmetrics.classification import MulticlassConfusionMatrix
 
 def read_image_gdal(filename):
     """Args:
-        filename (string): path to file to read with GDAL 
+    filename (string): path to file to read with GDAL.
     """
     ds = gdal.Open(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -59,13 +59,10 @@ def read_image_gdal(filename):
 
 
 class GdalImageDataset(BaseDataset):
-    """
-        pytorch dataset using GDAL to read raster files
-    """
+    """pytorch dataset using GDAL to read raster files."""
+
     def __init__(self, img_dir, lbl_dir, augmentation=None) -> None:
-        """
-            initialize the dataset
-        """
+        """Initialize the dataset."""
         # directory listing
         self.ids = os.listdir(img_dir)
         self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
@@ -98,15 +95,13 @@ class GdalImageDataset(BaseDataset):
         self.augmentation = augmentation
 
     def __len__(self) -> int:
-        """
-            return length of the dataset
-        """
+        """Return length of the dataset."""
         return len(self.ids)
 
     def __getitem__(self, i):
-        """get next item
+        """Get next item
         Returns:
-            image, mask pair
+            image, mask pair.
         """
         image = read_image_gdal(self.images_fps[i])
         mask = read_image_gdal(self.labels_fps[i])
