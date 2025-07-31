@@ -79,7 +79,7 @@ class GdalImageDataset(BaseDataset):
                 mask_id = image_id
 
             # file exists?
-            if not os.path.exists(os.path.join(lbl_dir, mask_id)):
+            if not Path.exists(os.path.join(lbl_dir, mask_id)):
                 print(
                     f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> does not exist",
                 )

@@ -44,7 +44,7 @@ from torch.utils.data import Dataset as BaseDataset
 # from mmsegmentation LoadSingleRSImageFromFile()
 def read_image_gdal(filename):
     """Args:
-        filename (string): path to file to read with GDAL 
+        filename (string): path to file to read with GDAL.
     """
     ds = gdal.Open(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -190,15 +190,15 @@ class PlModule(pl.LightningModule):
     pytorch lightning module for training
     """
     def __init__(
-        """
-            initialize the module
-        """
         self,
         model,
         out_classes,
         model_path_base,
         t_max,
     ) -> None:
+        """
+            initialize the module
+        """
         super().__init__()
         self.model = model
 
