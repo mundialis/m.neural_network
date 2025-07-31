@@ -53,30 +53,46 @@
 # % description: patched tiles output
 # %end
 
+# %flag
+# % key: b
+# % description: No cutting of edges at border tiles
+# %end
+
 # import needed libraries
 import atexit
 import os
 
 import grass.script as grass
 
+from grass_gis_helpers.cleanup import general_cleanup
+
 # initialize global variables
-rm_rast = []
+ID = grass.tempname(12)
+orig_region = None
+rm_rasters = []
 
 
-# cleanup function (can be extended)
+# cleanup function
 def cleanup():
-    """Cleanup fuction (can be extended)"""
-    # TODO (use grass gis helpers)
-
+    """Cleanup fuction"""
+    general_cleanup(
+        orig_region = orig_region,
+        rm_rasters = rm_rasters,
+    )
 
 def main():
     """Main function of r.postprocessing.patch"""
-    global rm_rast
+    global ID, orig_region, rm_rasters
 
     tiles_filelist = options["tiles_filelist"]
     tiles_path = options["tiles_path"]
     edge_cut = options["edge_cut"]
     output = options["output"]
+    keep_border_tile_edges = flags["b"]
+
+    # save original region
+    orig_region = f"original_region_{ID}"
+    grass.run_command("g.region", save=orig_region, quiet=True)
 
     # Read all files into a list
     with open(tiles_filelist, "r") as file:
@@ -86,7 +102,7 @@ def main():
     rast_list = []
     for tiles in tiles_list:
         tiles_rast = f"{tiles.split('.')[0]}_tmp"
-        rm_rast.append(tiles_rast)
+        rm_rasters.append(tiles_rast)
         # Import data
         grass.run_command(
             "r.import",
@@ -107,24 +123,60 @@ def main():
             w = f"w+{edge_cut}",
         )
         tiles_rast_cut = tiles.split(".")[0]
+        rm_rasters.append(tiles_rast_cut)
         grass.run_command(
             "r.mapcalc",
             expression = f"{tiles_rast_cut} = {tiles_rast}",
         )
         rast_list.append(tiles_rast_cut)
 
-    # Patch raster to VRT
-    # Create file for input to buildvrt, in case of many input files
-    tmpfile = grass.tempfile()
-    with open(tmpfile, 'w') as f:
-        for rast in rast_list:
-            f.write(f"{rast}\n")
-    grass.message(_("Creating VRT ..."))
+    # Patch raster
+    if not keep_border_tile_edges:
+        patch_out = output
+    else:
+        patch_out = f"{output}_without_border_tile_edges_{ID}"
+        rm_rasters.append(patch_out)
+    # region to all tiles
     grass.run_command(
-        "r.buildvrt",
-        file = tmpfile,
-        output = output,
+        "g.region",
+        raster = rast_list
     )
+    grass.message(_("Patching tiles ..."))
+    grass.run_command(
+        "r.patch",
+        input = rast_list,
+        output = patch_out,
+    )
+
+    # If edges of border tiles should be kept
+    if keep_border_tile_edges:
+        # add width of cutted tile edges to region
+        grass.run_command(
+           "g.region",
+            n = f"n+{edge_cut}",
+            s = f"s-{edge_cut}",
+            e = f"e+{edge_cut}",
+            w = f"w-{edge_cut}",
+        )
+        tmpfile = grass.tempfile()
+        # Create file for input to buildvrt, in case of many input files
+        with open(tmpfile, 'w') as f:
+            for rast in rast_list:
+                f.write(f"{rast}_tmp\n")
+        buildvrt_out = f"vrt_all_no_edges_cut_{ID}"
+        rm_rasters.append(buildvrt_out)
+        grass.message(_("Creating VRT without cutted edges ..."))
+        grass.run_command(
+            "r.buildvrt",
+            file = tmpfile,
+            output = buildvrt_out,
+        )
+        grass.message(_("Patching tiles, while keeping border edges..."))
+        grass.run_command(
+            "r.patch",
+            input = f"{patch_out},{buildvrt_out}",
+            output = output
+        )
 
 
 if __name__ == "__main__":
