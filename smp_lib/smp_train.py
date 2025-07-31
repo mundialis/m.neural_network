@@ -30,6 +30,7 @@
 import os
 import shutil
 import sys
+from pathlib import Path
 
 import albumentations as A
 import pytorch_lightning as pl
@@ -90,7 +91,7 @@ class GdalImageDataset(BaseDataset):
                 mask_id = image_id
 
             # file exists?
-            if not os.path.exists(os.path.join(lbl_dir, mask_id)):
+            if not Path.exists(os.path.join(lbl_dir, mask_id)):
                 print(
                     f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> does not exist",
                 )
@@ -358,7 +359,7 @@ class PlModule(pl.LightningModule):
             self.model.save_pretrained(best_model_path, push_to_hub=False)
             if self.best_model_path:
                 try:
-                    os.rmdir(self.best_model_path)
+                    Path.rmdir(self.best_model_path)
                 except Exception:
                     shutil.rmtree(self.best_model_path, ignore_errors=True)
 
@@ -470,7 +471,7 @@ def smp_train(
 
     # loading the model
     if input_model_path:
-        if not os.path.exists(input_model_path):
+        if not Path.exists(input_model_path):
             print(f"ERROR: input model path {input_model_path} does not exist.")
             sys.exit(1)
 
