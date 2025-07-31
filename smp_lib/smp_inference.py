@@ -27,6 +27,7 @@
 # https://github.com/qubvel-org/segmentation_models.pytorch/blob/main/examples/upernet_inference_pretrained.ipynb
 
 import os
+from pathlib import Path
 
 import numpy as np
 import segmentation_models_pytorch as smp
@@ -35,9 +36,14 @@ from osgeo import gdal
 
 
 def read_image_gdal(filename, driver, output_file):
+    """Args:
+        filename (string): path to file to read with GDAL
+        driver (GDAL raster driver): GDAL driver to use for creating output raster
+        output_file (string): path to output raster file
+    """
     ds = gdal.Open(filename, gdal.GA_ReadOnly)
     if ds is None:
-        raise Exception(f"Unable to open file: {filename}")
+        raise ValueError(f"Unable to open file: {filename}")
 
     img = ds.ReadAsArray()
     # PyTorch works only on CHW format (Channel, Height, Width)
@@ -78,8 +84,8 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
     """
     x_test_dir = data_dir
 
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
+    if not Path.exists(output_path):
+        Path.mkdir(output_path)
 
     gdal.UseExceptions()
 

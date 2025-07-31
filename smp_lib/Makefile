@@ -20,4 +20,5 @@ $(ETCDIR)/%: % | $(ETCDIR)
 	$(INSTALL_DATA) $< $@
 
 install:
-	cp -r $(ETCDIR) $(INST_DIR)/etc
+	$(MKDIR) $(INST_DIR)/etc/$(PGM)/smp_lib
+	cp -r $(ETCDIR) $(INST_DIR)/etc/$(PGM)

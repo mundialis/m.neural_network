@@ -43,9 +43,12 @@ from torch.utils.data import Dataset as BaseDataset
 
 # from mmsegmentation LoadSingleRSImageFromFile()
 def read_image_gdal(filename):
+    """Args:
+        filename (string): path to file to read with GDAL 
+    """
     ds = gdal.Open(filename, gdal.GA_ReadOnly)
     if ds is None:
-        raise Exception(f"Unable to open file: {filename}")
+        raise ValueError(f"Unable to open file: {filename}")
 
     img = ds.ReadAsArray()
     # PyTorch works only on CHW format (Channel, Height, Width)
@@ -63,7 +66,13 @@ def read_image_gdal(filename):
 # assign a label to each pixel
 # https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset
 class GdalImageDataset(BaseDataset):
+    """
+        pytorch dataset using GDAL to read raster files
+    """
     def __init__(self, img_dir, lbl_dir, augmentation=None) -> None:
+        """
+            initialize the dataset
+        """
         # directory listing
         self.ids = os.listdir(img_dir)
         self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
@@ -97,9 +106,16 @@ class GdalImageDataset(BaseDataset):
         self.augmentation = augmentation
 
     def __len__(self) -> int:
+        """
+            return length of the dataset
+        """
         return len(self.ids)
 
     def __getitem__(self, i):
+        """get next item
+        Returns:
+            image, mask pair
+        """
         image = read_image_gdal(self.images_fps[i])
         mask = read_image_gdal(self.labels_fps[i])
 
@@ -169,15 +185,19 @@ def get_validation_augmentation(img_size=512):
     return A.Compose(test_transform)
 
 
-class plModule(pl.LightningModule):
+class PlModule(pl.LightningModule):
+    """
+    pytorch lightning module for training
+    """
     def __init__(
+        """
+            initialize the module
+        """
         self,
         model,
-        in_channels,
         out_classes,
         model_path_base,
         t_max,
-        **kwargs,
     ) -> None:
         super().__init__()
         self.model = model
@@ -395,7 +415,7 @@ def smp_train(
             see https://smp.readthedocs.io/en/latest/encoders.html
         encoder_weights (string): name of pretrained weights, default "imagenet"
         input_model_path (string): path to trained and locally saved model
-        output_model_pat (string): path to save new model
+        output_model_path (string): path to save new model
         epochs (int): number of epochs for training
         batch_size (int): batch size for training
 
@@ -486,9 +506,8 @@ def smp_train(
     t_max = epochs * len(train_loader)
 
     # arguments for smp model
-    mymodule = plModule(
+    mymodule = PlModule(
         model,
-        in_channels=in_channels,
         out_classes=out_classes,
         model_path_base=output_model_path,
         t_max=t_max,

@@ -25,6 +25,7 @@
 
 
 import os
+from pathlib import Path
 
 import albumentations as A
 import matplotlib.pyplot as plt
@@ -38,9 +39,12 @@ from torchmetrics.classification import MulticlassConfusionMatrix
 
 
 def read_image_gdal(filename):
+    """Args:
+        filename (string): path to file to read with GDAL 
+    """
     ds = gdal.Open(filename, gdal.GA_ReadOnly)
     if ds is None:
-        raise Exception(f"Unable to open file: {filename}")
+        raise ValueError(f"Unable to open file: {filename}")
 
     img = ds.ReadAsArray()
     # PyTorch works only on CHW format (Channel, Height, Width)
@@ -55,7 +59,13 @@ def read_image_gdal(filename):
 
 
 class GdalImageDataset(BaseDataset):
+    """
+        pytorch dataset using GDAL to read raster files
+    """
     def __init__(self, img_dir, lbl_dir, augmentation=None) -> None:
+        """
+            initialize the dataset
+        """
         # directory listing
         self.ids = os.listdir(img_dir)
         self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
@@ -88,9 +98,16 @@ class GdalImageDataset(BaseDataset):
         self.augmentation = augmentation
 
     def __len__(self) -> int:
+        """
+            return length of the dataset
+        """
         return len(self.ids)
 
     def __getitem__(self, i):
+        """get next item
+        Returns:
+            image, mask pair
+        """
         image = read_image_gdal(self.images_fps[i])
         mask = read_image_gdal(self.labels_fps[i])
 
@@ -135,15 +152,15 @@ def evaluate_model(
         confmat = BinaryConfusionMatrix(normalize="none").to(device)
 
     with torch.no_grad():
-        for images, masks in test_loader:
+        for im, ma in test_loader:
             # Move data to device
-            images = images.to(device)
+            images = im.to(device)
 
             # Normalize images
             images = images.float()
             images = (images - 125.5) / 100.2
 
-            masks = masks.to(device)
+            masks = ma.to(device)
 
             # Forward pass
             outputs = model(images)
@@ -196,8 +213,8 @@ def smp_test(data_dir, input_model_path, num_classes, class_names, output_path):
     if len(class_names) != num_classes:
         print("Number of class names does not match number of classes!")
 
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
+    if not Path.exists(output_path):
+        Path.mkdir(output_path)
 
     # hard-coded output file names
     plot_path = os.path.join(output_path, "confusion_matrix.png")
