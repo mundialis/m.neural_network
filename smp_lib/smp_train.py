@@ -388,6 +388,19 @@ def smp_train(
     see https://smp.readthedocs.io/en/latest/encoders.html
 
     Args:
+        data_dir (string): root folder with training data
+        img_size (int): size of the training images in pixels, e.g. 512
+        in_channels (int): number of input channels
+        out_classes (int): number of output classes
+        model_arch (string): model architecture,
+            see https://smp.readthedocs.io/en/latest/models.html
+        encoder_name (string): name of the encoder,
+            see https://smp.readthedocs.io/en/latest/encoders.html
+        encoder_weights (string): name of pretrained weights, default "imagenet"
+        input_model_path (string): path to trained and locally saved model
+        output_model_pat (string): path to save new model
+        epochs (int): number of epochs for training
+        batch_size (int): batch size for training
 
     """
 
