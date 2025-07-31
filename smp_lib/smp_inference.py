@@ -2,7 +2,7 @@
 #
 #############################################################################
 #
-# MODULE:      inference_pretrained_smp.py
+# MODULE:      smp_inference.py
 # AUTHOR(S):   Markus Metz, mundialis
 #
 # PURPOSE:     Apply a saved model from segmentation_models.pytorch

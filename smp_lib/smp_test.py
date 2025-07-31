@@ -2,7 +2,7 @@
 #
 #############################################################################
 #
-# MODULE:      test_saved_smp.py
+# MODULE:      smp_test.py
 # AUTHOR(S):   Markus Metz, mundialis
 #
 # PURPOSE:     Test a trained and saved model from segmentation_models.pytorch

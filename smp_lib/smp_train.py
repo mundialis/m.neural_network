@@ -357,7 +357,7 @@ class plModule(pl.LightningModule):
         # weight_decay should be in the range 0, 0.05
         optimizer = torch.optim.Adam(self.parameters(), lr=2e-4, weight_decay=0.0)
         scheduler = lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=self.t_max, eta_min=1e-5,
+            optimizer, T_max=self.t_max, eta_min=0.0,
         )
         return {
             "optimizer": optimizer,
