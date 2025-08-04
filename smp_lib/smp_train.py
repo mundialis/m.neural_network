@@ -242,10 +242,9 @@ class PlModule(pl.LightningModule):
         mask = mask.long()
 
         # Mask shape
-        if self.number_of_classes > 2:
-            assert mask.ndim == 3  # [batch_size, H, W]
-        else:
-            assert mask.ndim == 4  # [batch_size, H, W]
+        assert mask.ndim == 3  # [batch_size, H, W]
+
+        if self.number_of_classes == 2:
             # Check that mask values in between 0 and 1, NOT 0 and 255 for binary segmentation
             assert mask.max() <= 1.0
             assert mask.min() >= 0
