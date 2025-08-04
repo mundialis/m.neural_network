@@ -88,7 +88,7 @@ class GdalImageDataset(BaseDataset):
                 mask_id = image_id
 
             # file exists?
-            if not Path.exists(os.path.join(lbl_dir, mask_id)):
+            if not Path(os.path.join(lbl_dir, mask_id)).exists():
                 print(
                     f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> does not exist",
                 )
@@ -351,7 +351,7 @@ class PlModule(pl.LightningModule):
             self.model.save_pretrained(best_model_path, push_to_hub=False)
             if self.best_model_path:
                 try:
-                    Path.rmdir(self.best_model_path)
+                    Path(self.best_model_path).rmdir()
                 except Exception:
                     shutil.rmtree(self.best_model_path, ignore_errors=True)
 
@@ -463,7 +463,7 @@ def smp_train(
 
     # loading the model
     if input_model_path:
-        if not Path.exists(input_model_path):
+        if not Path(input_model_path).exists():
             print(f"ERROR: input model path {input_model_path} does not exist.")
             sys.exit(1)
 
