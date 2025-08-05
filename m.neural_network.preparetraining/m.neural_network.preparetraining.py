@@ -2,7 +2,7 @@
 """############################################################################
 #
 # MODULE:       m.neural_network.preparetraining
-# AUTHOR(S):    Guido Riembauer
+# AUTHOR(S):    Guido Riembauer, Victoria-Leandra Brunn
 # PURPOSE:      Prepares tiled imagery and labelled data for training and application
 #               in a Neural Network (NN).
 #
@@ -44,6 +44,15 @@
 # % required: yes
 # % label: Percentage of training tiles to be used as validation during training
 # % answer: 20
+# % guisection: Input
+# %end
+
+# %option
+# % key: test_percentage
+# % type: integer
+# % required: yes
+# % label: Percentage of training tiles to be used as testing data during training
+# % answer: 0
 # % guisection: Input
 # %end
 
@@ -120,7 +129,7 @@ def cleanup():
 def get_tile_infos(in_dir, ttype):
     """Read tile-wise directory and saves metadata in a list of dicts."""
     all_tiles = []
-    # get all training_tiles and split into training and validation
+    # get all training_tiles and split into training, validation and testing
     for tile in os.listdir(in_dir):
         tiledir = os.path.join(in_dir, tile)
         tiledict = {}
@@ -200,6 +209,7 @@ def main():
     train_dir_in = options["input_traindir"]
     apply_dir_in = options["input_applydir"]
     val_percentage = int(options["val_percentage"])
+    test_percentage = int(options["test_percentage"])
     nprocs = set_nprocs(int(options["nprocs"]))
     class_col = options["class_column"]
     class_values = options["class_values"].split(",")
@@ -229,6 +239,8 @@ def main():
     train_train_masks_dir = os.path.join(train_dir_out, "train_masks")
     train_val_images_dir = os.path.join(train_dir_out, "val_images")
     train_val_masks_dir = os.path.join(train_dir_out, "val_masks")
+    train_test_images_dir = os.path.join(train_dir_out, "test_images")
+    train_test_masks_dir = os.path.join(train_dir_out, "test_masks")
     train_singleband_vrt_dir = os.path.join(train_dir_out, "singleband_vrts")
     apply_train_img_dir = os.path.join(apply_dir_out, "train_images")
     apply_train_masks_dir = os.path.join(apply_dir_out, "train_masks")
@@ -242,6 +254,8 @@ def main():
         train_train_masks_dir,
         train_val_images_dir,
         train_val_masks_dir,
+        train_test_images_dir,
+        train_test_masks_dir,
         apply_train_img_dir,
         apply_train_masks_dir,
         apply_val_images_dir,
@@ -273,25 +287,37 @@ def main():
                     ),
                 )
 
-    # split into training and validation
+    # split into training, testing and validation
     num_val_tiles = round(val_percentage / 100.0 * len(all_train_tiles))
+    num_test_tiles = round(test_percentage / 100.0 * len(all_train_tiles))
     random.shuffle(all_train_tiles)
     val_tiles = all_train_tiles[:num_val_tiles]
-    train_tiles = [x for x in all_train_tiles if x not in val_tiles]
+    test_tiles = all_train_tiles[
+        num_val_tiles : num_val_tiles + num_test_tiles
+    ]
+    train_tiles = [
+        x
+        for x in all_train_tiles
+        if x not in val_tiles and x not in test_tiles
+    ]
     grass.message(
         _(
-            f"Selected {len(val_tiles)} tiles as validation tiles and "
+            f"Selected {len(val_tiles)} tiles as validation tiles, "
+            f"{len(test_tiles)} as testing tiles and "
             f"{len(train_tiles)} as training tiles.",
         ),
     )
     for d in val_tiles:
         d["type"] = "validation"
 
+    for d in test_tiles:
+        d["type"] = "testing"
+
     # prepare imagery/ndsm data as needed
     # argument list for parallel processing
     arglist = []
     args = []
-    for tiledict in train_tiles + val_tiles + all_apply_tiles:
+    for tiledict in train_tiles + val_tiles + test_tiles + all_apply_tiles:
         out_img_dir = None
         singleband_vrt_dir = None
         if tiledict["type"] == "training":
@@ -299,6 +325,9 @@ def main():
             singleband_vrt_dir = train_singleband_vrt_dir
         elif tiledict["type"] == "validation":
             out_img_dir = train_val_images_dir
+            singleband_vrt_dir = train_singleband_vrt_dir
+        elif tiledict["type"] == "testing":
+            out_img_dir = train_test_images_dir
             singleband_vrt_dir = train_singleband_vrt_dir
         elif tiledict["type"] == "apply":
             out_img_dir = apply_val_images_dir
@@ -333,12 +362,14 @@ def main():
     grass.message(_("Checking and rasterizing labels..."))
     queue = ParallelModuleQueue(nprocs=nprocs)
     try:
-        for tiledict in train_tiles + val_tiles:
+        for tiledict in train_tiles + val_tiles + test_tiles:
             outdir = None
             if tiledict["type"] == "training":
                 outdir = train_train_masks_dir
             elif tiledict["type"] == "validation":
                 outdir = train_val_masks_dir
+            elif tiledict["type"] == "testing":
+                outdir = train_test_masks_dir
             outfile = os.path.join(outdir, f"{tiledict['id']}.tif")
             new_mapset = f"tmp_mapset_{tiledict['id']}_{ID}"
             rm_dirs.append(os.path.join(gisdbase, location, new_mapset))

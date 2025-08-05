@@ -28,16 +28,15 @@
 
 # %option G_OPT_M_DIR
 # % key: data_dir
-# % label: Name of the input data directory containing subfolders with train and apply data
+# % label: Name of the input data directory containing subfolders with training data
 # % guisection: Input
 # %end
 
 # %option
 # % key: img_size
 # % type: integer
-# % required: no
+# % required: yes
 # % answer: 512
-# % multiple: no
 # % label: Image size in pixels
 # % guisection: Parameters
 # %end
@@ -112,14 +111,17 @@ import os
 import grass.script as grass
 
 # import module library
-grass.utils.set_path(modulename="m.neural_network", dirname="smp_lib", path="..")
+grass.utils.set_path(
+    modulename="m.neural_network", dirname="smp_lib", path=".."
+)
 from smp_lib.smp_train import smp_train
 
-def main():
 
+def main():
     """Run training"""
     # variables - the order of options values is obligatory
     model_dir_out = options["output_model_path"]
+    options["img_size"] = int(options["img_size"])
     options["in_channels"] = int(options["in_channels"])
     if options["batch_size"]:
         options["batch_size"] = int(options["batch_size"])
@@ -128,13 +130,17 @@ def main():
     if options["epochs"]:
         options["epochs"] = int(options["epochs"])
 
-    kwargs = {key: val for key, val in options.items() if val not in (None, "")}
+    kwargs = {
+        key: val for key, val in options.items() if val not in (None, "")
+    }
 
     grass.message("Training classification model...")
     smp_train(**kwargs)
 
+    grass.message(
+        f"Classification model is trained and safed to {model_dir_out}."
+    )
 
-    grass.message(f"Classification model is trained and safed to {model_dir_out}.")
 
 if __name__ == "__main__":
     options, flags = grass.parser()

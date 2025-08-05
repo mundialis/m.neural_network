@@ -73,7 +73,9 @@ class GdalImageDataset(BaseDataset):
         """Initialize the dataset."""
         # directory listing
         self.ids = os.listdir(img_dir)
-        self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
+        self.images_fps = [
+            os.path.join(img_dir, image_id) for image_id in self.ids
+        ]
 
         # file names of images and masks can have different endings
         mask_ids = []
@@ -96,7 +98,9 @@ class GdalImageDataset(BaseDataset):
 
             mask_ids.append(mask_id)
 
-        self.labels_fps = [os.path.join(lbl_dir, mask_id) for mask_id in mask_ids]
+        self.labels_fps = [
+            os.path.join(lbl_dir, mask_id) for mask_id in mask_ids
+        ]
         # for a huge number of files, read a textfile with filenames
 
         self.img_dir = img_dir
@@ -146,7 +150,9 @@ def get_training_augmentation(img_size=512):
             [
                 # A.CLAHE(p=1), # only grayscale or RGB
                 A.RandomBrightnessContrast(
-                    brightness_limit=0.5, contrast_limit=0.5, p=1,
+                    brightness_limit=0.5,
+                    contrast_limit=0.5,
+                    p=1,
                 ),
                 A.RandomGamma(p=1),
             ],
@@ -163,7 +169,9 @@ def get_training_augmentation(img_size=512):
         A.OneOf(
             [
                 A.RandomBrightnessContrast(
-                    brightness_limit=0.5, contrast_limit=0.5, p=1,
+                    brightness_limit=0.5,
+                    contrast_limit=0.5,
+                    p=1,
                 ),
                 # A.HueSaturationValue(p=1), # only grayscale or RGB
             ],
@@ -206,12 +214,14 @@ class PlModule(pl.LightningModule):
         if out_classes > 2:
             # Loss function for multi-class segmentation
             self.loss_fn = smp.losses.JaccardLoss(
-                smp.losses.MULTICLASS_MODE, from_logits=True,
+                smp.losses.MULTICLASS_MODE,
+                from_logits=True,
             )
         else:
             # Loss function for binary segmentation
             self.loss_fn = smp.losses.JaccardLoss(
-                smp.losses.BINARY_MODE, from_logits=True,
+                smp.losses.BINARY_MODE,
+                from_logits=True,
             )
 
         # Step metrics tracking
@@ -272,7 +282,10 @@ class PlModule(pl.LightningModule):
 
             # Compute true positives, false positives, false negatives, and true negatives
             tp, fp, fn, tn = smp.metrics.get_stats(
-                pred_mask, mask, mode="multiclass", num_classes=self.number_of_classes,
+                pred_mask,
+                mask,
+                mode="multiclass",
+                num_classes=self.number_of_classes,
             )
         else:
             # first convert mask values to probabilities, then
@@ -281,7 +294,9 @@ class PlModule(pl.LightningModule):
             pred_mask = (prob_mask > 0.5).float()
 
             # Compute true positives, false positives, false negatives, and true negatives
-            tp, fp, fn, tn = smp.metrics.get_stats(pred_mask, mask, mode="binary")
+            tp, fp, fn, tn = smp.metrics.get_stats(
+                pred_mask, mask, mode="binary"
+            )
 
         return {
             "loss": loss,
@@ -300,7 +315,11 @@ class PlModule(pl.LightningModule):
 
         # Per-image IoU and dataset IoU calculations
         per_image_iou = smp.metrics.iou_score(
-            tp, fp, fn, tn, reduction="micro-imagewise",
+            tp,
+            fp,
+            fn,
+            tn,
+            reduction="micro-imagewise",
         )
         dataset_iou = smp.metrics.iou_score(tp, fp, fn, tn, reduction="micro")
         dataset_acc = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
@@ -345,7 +364,9 @@ class PlModule(pl.LightningModule):
         # save best model monitoring validation loss
         if self.current_epoch > 4 and self.best_loss > self.current_loss:
             self.best_loss = self.current_loss
-            best_model_path = f"{self.model_path_base}_epoch{self.current_epoch}"
+            best_model_path = (
+                f"{self.model_path_base}_epoch{self.current_epoch}"
+            )
             print("\nsaving new best model...\n")
             self.model.save_pretrained(best_model_path, push_to_hub=False)
             if self.best_model_path:
@@ -367,9 +388,13 @@ class PlModule(pl.LightningModule):
 
     def configure_optimizers(self):
         # weight_decay should be in the range 0, 0.05
-        optimizer = torch.optim.Adam(self.parameters(), lr=2e-4, weight_decay=0.0)
+        optimizer = torch.optim.Adam(
+            self.parameters(), lr=2e-4, weight_decay=0.0
+        )
         scheduler = lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=self.t_max, eta_min=0.0,
+            optimizer,
+            T_max=self.t_max,
+            eta_min=0.0,
         )
         return {
             "optimizer": optimizer,
@@ -451,26 +476,39 @@ def smp_train(
 
     # pytorch dataloaders
     train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True, num_workers=4,
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4,
     )
     valid_loader = DataLoader(
-        valid_dataset, batch_size=batch_size, shuffle=False, num_workers=4,
+        valid_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=4,
     )
     test_loader = DataLoader(
-        test_dataset, batch_size=batch_size, shuffle=False, num_workers=4,
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=4,
     )
 
     # loading the model
     if input_model_path:
         if not Path(input_model_path).exists():
-            print(f"ERROR: input model path {input_model_path} does not exist.")
+            print(
+                f"ERROR: input model path {input_model_path} does not exist."
+            )
             sys.exit(1)
 
         print(f"Loading model saved at {input_model_path} ...")
         model = smp.from_pretrained(input_model_path)
 
         if not model:
-            print(f"ERROR: failed to load input model from {input_model_path}.")
+            print(
+                f"ERROR: failed to load input model from {input_model_path}."
+            )
             sys.exit(1)
     else:
         print(f"loading model {model_arch} with encoder {encoder_name} ...")

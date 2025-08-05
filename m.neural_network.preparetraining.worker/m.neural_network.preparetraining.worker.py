@@ -2,7 +2,7 @@
 """############################################################################
 #
 # MODULE:      m.neural_network.preparetraining.worker
-# AUTHOR(S):   Guido Riembauer
+# AUTHOR(S):   Guido Riembauer, Victoria-Leandra Brunn
 # PURPOSE:     Worker module for m.neural_network.preparetraining to check
 #              and rasterize label data
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
@@ -199,9 +199,13 @@ def main():
             attribute_column=class_col,
             quiet=True,
         )
+        # all items of class 2 are mapped to now empty class 0 to ensure binary classification
+        labelrast_bin = f"{labelrast_tmp}_bin"
+        exp = f"{labelrast_bin}=if({labelrast_tmp} == {class_values[0]}, 0, {labelrast_tmp})"
+        grass.run_command("r.mapcalc", expression=exp, quiet=True)
         # if there is any nodata left in the label, this will be assigned
         # to the no-class class
-        exp = f"{labelrast}=if(isnull({labelrast_tmp}),{no_class_value},{labelrast_tmp})"
+        exp = f"{labelrast}=if(isnull({labelrast_bin}),{no_class_value},{labelrast_bin})"
         grass.run_command("r.mapcalc", expression=exp, quiet=True)
 
     grass.run_command(

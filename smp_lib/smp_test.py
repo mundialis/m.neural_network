@@ -65,7 +65,9 @@ class GdalImageDataset(BaseDataset):
         """Initialize the dataset."""
         # directory listing
         self.ids = os.listdir(img_dir)
-        self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
+        self.images_fps = [
+            os.path.join(img_dir, image_id) for image_id in self.ids
+        ]
         # file names of images and masks can have different endings
         mask_ids = []
         for image_id in self.ids:
@@ -87,7 +89,9 @@ class GdalImageDataset(BaseDataset):
 
             mask_ids.append(mask_id)
 
-        self.labels_fps = [os.path.join(lbl_dir, mask_id) for mask_id in mask_ids]
+        self.labels_fps = [
+            os.path.join(lbl_dir, mask_id) for mask_id in mask_ids
+        ]
         # for a huge number of files, read a textfile with filenames
 
         self.img_dir = img_dir
@@ -141,7 +145,8 @@ def evaluate_model(
     # Initialize confusion matrix
     if num_classes > 2:
         confmat = MulticlassConfusionMatrix(
-            num_classes=num_classes, normalize="none",
+            num_classes=num_classes,
+            normalize="none",
         ).to(device)
     else:
         confmat = BinaryConfusionMatrix(normalize="none").to(device)
@@ -175,7 +180,8 @@ def evaluate_model(
     # Save confusion matrix plot if requested
     if save_plot_path:
         fig, ax = confmat.plot(
-            labels=class_names, add_text=True,
+            labels=class_names,
+            add_text=True,
         )  # Set add_text=True to show values in cells
         fig.set_size_inches(12, 10)
         # fig.tight_layout()
@@ -185,7 +191,9 @@ def evaluate_model(
     if save_norm_plot_path:
         cm_tensor_norm = cm_tensor / cm_tensor.sum(dim=-1, keepdim=True)
         fig, ax = confmat.plot(
-            val=cm_tensor_norm, labels=class_names, add_text=True,
+            val=cm_tensor_norm,
+            labels=class_names,
+            add_text=True,
         )  # Set add_text=True to show values in cells
         fig.set_size_inches(12, 10)
         # fig.tight_layout()
@@ -195,7 +203,9 @@ def evaluate_model(
     return cm_tensor
 
 
-def smp_test(data_dir, input_model_path, num_classes, class_names, output_path):
+def smp_test(
+    data_dir, input_model_path, num_classes, class_names, output_path
+):
     """Args:
     data_dir (string): root folder with training data
     input_model_path (string): path to trained and locally saved model
@@ -213,7 +223,9 @@ def smp_test(data_dir, input_model_path, num_classes, class_names, output_path):
 
     # hard-coded output file names
     plot_path = os.path.join(output_path, "confusion_matrix.png")
-    norm_plot_path = os.path.join(output_path, "confusion_matrix_normalized.png")
+    norm_plot_path = os.path.join(
+        output_path, "confusion_matrix_normalized.png"
+    )
     iou_path = os.path.join(output_path, "iou_per_class")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -232,7 +244,9 @@ def smp_test(data_dir, input_model_path, num_classes, class_names, output_path):
         augmentation=get_validation_augmentation(),
     )
 
-    test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False, num_workers=4)
+    test_loader = DataLoader(
+        test_dataset, batch_size=2, shuffle=False, num_workers=4
+    )
 
     # Compute confusion matrix and save plot
     print("evaluating the model ...")

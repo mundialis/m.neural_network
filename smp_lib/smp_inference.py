@@ -126,7 +126,9 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
             output_file = output_file.replace(".vrt", ".tif")
         elif output_file.endswith(".jp2"):
             output_file = output_file.replace(".jp2", ".tif")
-        elif not output_file.endswith(".tif") and not output_file.endswith(".jp2"):
+        elif not output_file.endswith(".tif") and not output_file.endswith(
+            ".jp2"
+        ):
             # only process tif, jp2 and vrt images
             continue
         # Load image
@@ -148,7 +150,10 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
 
         # Postprocess mask
         mask = torch.nn.functional.interpolate(
-            output_mask, size=image.shape[1:], mode="bilinear", align_corners=False,
+            output_mask,
+            size=image.shape[1:],
+            mode="bilinear",
+            align_corners=False,
         )
         if num_classes > 2:
             mask = mask[0].argmax(0).cpu().numpy()
@@ -177,7 +182,9 @@ if __name__ == "__main__":
 
     config = {}
     config["data_dir"] = confparser.get("settings.dataset", "data_dir")
-    config["num_classes"] = int(confparser.get("settings.dataset", "num_classes"))
+    config["num_classes"] = int(
+        confparser.get("settings.dataset", "num_classes")
+    )
     config["model_path"] = confparser.get("settings.model", "model_path")
     config["output_path"] = confparser.get("settings.output", "output_path")
 
