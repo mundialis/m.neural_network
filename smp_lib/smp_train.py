@@ -32,6 +32,7 @@ import shutil
 import sys
 from pathlib import Path
 
+import numpy as np
 import albumentations as A
 import pytorch_lightning as pl
 import segmentation_models_pytorch as smp
@@ -211,7 +212,7 @@ class PlModule(pl.LightningModule):
         self.mean = 125.5
         self.std = 100.2
 
-        if out_classes > 2:
+        if out_classes > 1:
             # Loss function for multi-class segmentation
             self.loss_fn = smp.losses.JaccardLoss(
                 smp.losses.MULTICLASS_MODE,
@@ -252,9 +253,12 @@ class PlModule(pl.LightningModule):
         mask = mask.long()
 
         # Mask shape
-        assert mask.ndim == 3  # [batch_size, H, W]
+        if self.number_of_classes > 1:
+            assert mask.ndim == 3  # [batch_size, H, W]
+        else:
+            mask = mask.unsqueeze(1)
+            assert mask.ndim == 4  # [batch_size, C, H, W]
 
-        if self.number_of_classes == 2:
             # Check that mask values in between 0 and 1, NOT 0 and 255 for binary segmentation
             assert mask.max() <= 1.0
             assert mask.min() >= 0
@@ -262,7 +266,7 @@ class PlModule(pl.LightningModule):
         # Predict mask logits
         logits_mask = self.forward(image)
 
-        if self.number_of_classes > 2:
+        if self.number_of_classes > 1:
             assert (
                 logits_mask.shape[1] == self.number_of_classes
             )  # [batch_size, number_of_classes, H, W]
@@ -273,7 +277,7 @@ class PlModule(pl.LightningModule):
         # Compute loss using given loss fn (pass original mask, not one-hot encoded)
         loss = self.loss_fn(logits_mask, mask)
 
-        if self.number_of_classes > 2:
+        if self.number_of_classes > 1:
             # Apply softmax to get probabilities for multi-class segmentation
             prob_mask = logits_mask.softmax(dim=1)
 
@@ -291,7 +295,8 @@ class PlModule(pl.LightningModule):
             # first convert mask values to probabilities, then
             # apply thresholding
             prob_mask = logits_mask.sigmoid()
-            pred_mask = (prob_mask > 0.5).float()
+            #pred_mask = (prob_mask > 0.5).float()
+            pred_mask = (prob_mask > 0.5).long()
 
             # Compute true positives, false positives, false negatives, and true negatives
             tp, fp, fn, tn = smp.metrics.get_stats(
@@ -494,6 +499,10 @@ def smp_train(
         num_workers=4,
     )
 
+    out_classes_model = out_classes
+    if out_classes == 2:
+        out_classes_model = 1
+
     # loading the model
     if input_model_path:
         if not Path(input_model_path).exists():
@@ -525,7 +534,7 @@ def smp_train(
             encoder_name=encoder_name,
             encoder_weights=encoder_weights,
             in_channels=in_channels,
-            classes=out_classes,
+            classes=out_classes_model,
             **model_kwargs,
         )
 
@@ -538,7 +547,7 @@ def smp_train(
     # arguments for smp model
     mymodule = PlModule(
         model,
-        out_classes=out_classes,
+        out_classes=out_classes_model,
         model_path_base=output_model_path,
         t_max=t_max,
     )
