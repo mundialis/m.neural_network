@@ -138,7 +138,7 @@ def main():
     smp_train(**kwargs)
 
     grass.message(
-        f"Classification model is trained and safed to {model_dir_out}."
+        f"Classification model is trained and saved to {model_dir_out}."
     )
 
 

@@ -1,9 +1,35 @@
 <h2>DESCRIPTION</h2>
 
-<em>m.neural_network.train</em> 
+<em>m.neural_network.train</em> trains or fine-tunes a neural network using the 
+<a href="https://github.com/qubvel-org/segmentation_models.pytorch">segmentation_models.pytorch</a>
+framework for semantic segmentation.
 
-<h2>Notes</h2>
-It is expected that all data lie in the directory structure and naming format as created by <a href="m.neural_network.preparedata">m.neural_network.preparedata</a>.
+<p>
+A new model can be trained by specifying the options 
+<em>in_channels</em>, <em>out_classes</em> <em>model_arch</em>, 
+<em>encoder_name</em>, <em>encoder_weights</em>, <em>in_channels</em>. 
+A locally saved model can be further trained (fine-tuned) by giving the 
+path to the previously saved model. For more information about available 
+encoder-decoder combinations, see the <a href="https://smp.readthedocs.io/en/latest/">smp documentation.</a>
+
+<p>
+A larger <em>batchsize</em> is generally better for training, but 
+requires more GPU RAM. A bit of experimentation is needed to find a 
+batch size that still fits into the GPU RAM.
+
+<h2>NOTES</h2>
+It is expected that all data lie in the directory structure and naming 
+format as created by <a 
+href="m.neural_network.preparedata">m.neural_network.preparedata</a>.
+
+<p>
+This module requires a number of Python packages for AI applications:
+<ul>
+    <li>pytorch
+    <li>segmentation_models.pytorch
+    <li>pytorch_lightning
+    <li>albumentations
+</ul>
 
 <h2>EXAMPLES</h2>
 
