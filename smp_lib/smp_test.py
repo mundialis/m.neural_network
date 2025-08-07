@@ -35,7 +35,10 @@ import torch
 from osgeo import gdal
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as BaseDataset
-from torchmetrics.classification import MulticlassConfusionMatrix
+from torchmetrics.classification import (
+    MulticlassConfusionMatrix,
+    BinaryConfusionMatrix,
+)
 
 
 def read_image_gdal(filename):
@@ -65,9 +68,7 @@ class GdalImageDataset(BaseDataset):
         """Initialize the dataset."""
         # directory listing
         self.ids = os.listdir(img_dir)
-        self.images_fps = [
-            os.path.join(img_dir, image_id) for image_id in self.ids
-        ]
+        self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
         # file names of images and masks can have different endings
         mask_ids = []
         for image_id in self.ids:
@@ -81,7 +82,7 @@ class GdalImageDataset(BaseDataset):
                 mask_id = image_id
 
             # file exists?
-            if not Path.exists(os.path.join(lbl_dir, mask_id)):
+            if not Path(os.path.join(lbl_dir, mask_id)).exists():
                 print(
                     f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> does not exist",
                 )
@@ -89,9 +90,7 @@ class GdalImageDataset(BaseDataset):
 
             mask_ids.append(mask_id)
 
-        self.labels_fps = [
-            os.path.join(lbl_dir, mask_id) for mask_id in mask_ids
-        ]
+        self.labels_fps = [os.path.join(lbl_dir, mask_id) for mask_id in mask_ids]
         # for a huge number of files, read a textfile with filenames
 
         self.img_dir = img_dir
@@ -203,9 +202,7 @@ def evaluate_model(
     return cm_tensor
 
 
-def smp_test(
-    data_dir, input_model_path, num_classes, class_names, output_path
-):
+def smp_test(data_dir, input_model_path, num_classes, class_names, output_path):
     """Args:
     data_dir (string): root folder with training data
     input_model_path (string): path to trained and locally saved model
@@ -218,14 +215,12 @@ def smp_test(
     if len(class_names) != num_classes:
         print("Number of class names does not match number of classes!")
 
-    if not Path.exists(output_path):
-        Path.mkdir(output_path)
+    if not Path(output_path).exists():
+        Path(output_path).mkdir()
 
     # hard-coded output file names
     plot_path = os.path.join(output_path, "confusion_matrix.png")
-    norm_plot_path = os.path.join(
-        output_path, "confusion_matrix_normalized.png"
-    )
+    norm_plot_path = os.path.join(output_path, "confusion_matrix_normalized.png")
     iou_path = os.path.join(output_path, "iou_per_class")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
