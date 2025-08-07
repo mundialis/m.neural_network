@@ -283,10 +283,10 @@ def smp_test(data_dir, input_model_path, num_classes, class_names, output_path):
         for i, iou in enumerate(iou_per_class):
             class_name = class_names[i] if class_names else f"Class {i}"
             print(f"IoU for {class_name}: {iou:.4f}", file=f)
-        print(f"mFscore: {np.nanmean(fscore_per_class):.4f}", file=f)
+        print(f"mF-score: {np.nanmean(fscore_per_class):.4f}", file=f)
         for i, fscore in enumerate(fscore_per_class):
             class_name = class_names[i] if class_names else f"Class {i}"
-            print(f"F score for {class_name}: {fscore:.4f}", file=f)
+            print(f"F-score for {class_name}: {fscore:.4f}", file=f)
 
     outfile = os.path.join(output_path, "confusion_matrix.csv")
     np.savetxt(outfile, cm_np, delimiter=";")
