@@ -3,7 +3,7 @@
 #
 # MODULE:       m.neural_network.train
 # AUTHOR(S):    Victoria-Leandra Brunn
-# PURPOSE:      Trains a U-Net for a binary tree/ no-tree classification based 
+# PURPOSE:      Trains a neural network for semantic segmentation based 
 #               on a smp framework and scripts by Markus Metz and Lina Krisztian
 #               including the steps initial training and finetuning.
 #
@@ -17,7 +17,7 @@
 """
 
 # %Module
-# % description: Trains a U-Net for a binary tree/ no-tree classification including the steps initial training and finetuning.
+# % description: Trains a neural network for semantic segmentation including the steps for initial training and finetuning.
 # % keyword: raster
 # % keyword: vector
 # % keyword: training
