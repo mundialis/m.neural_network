@@ -242,10 +242,7 @@ def main():
     train_test_images_dir = os.path.join(train_dir_out, "test_images")
     train_test_masks_dir = os.path.join(train_dir_out, "test_masks")
     train_singleband_vrt_dir = os.path.join(train_dir_out, "singleband_vrts")
-    apply_train_img_dir = os.path.join(apply_dir_out, "train_images")
-    apply_train_masks_dir = os.path.join(apply_dir_out, "train_masks")
-    apply_val_images_dir = os.path.join(apply_dir_out, "val_images")
-    apply_val_masks_dir = os.path.join(apply_dir_out, "val_masks")
+    apply_img_dir = os.path.join(apply_dir_out, "apply_images")
     apply_singleband_vrt_dir = os.path.join(apply_dir_out, "singleband_vrts")
     for c_dir in [
         train_dir_out,
@@ -256,10 +253,7 @@ def main():
         train_val_masks_dir,
         train_test_images_dir,
         train_test_masks_dir,
-        apply_train_img_dir,
-        apply_train_masks_dir,
-        apply_val_images_dir,
-        apply_val_masks_dir,
+        apply_img_dir,
         train_singleband_vrt_dir,
         apply_singleband_vrt_dir,
     ]:
@@ -330,7 +324,7 @@ def main():
             out_img_dir = train_test_images_dir
             singleband_vrt_dir = train_singleband_vrt_dir
         elif tiledict["type"] == "apply":
-            out_img_dir = apply_val_images_dir
+            out_img_dir = apply_img_dir
             singleband_vrt_dir = apply_singleband_vrt_dir
         tiledict["out_img_dir"] = out_img_dir
         args = [

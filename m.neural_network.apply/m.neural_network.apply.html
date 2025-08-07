@@ -1,14 +1,14 @@
 <h2>DESCRIPTION</h2>
 
-<em>m.neural_network.test</em> tests a neural network using the 
+<em>m.neural_network.apply</em> applies a locally safed neural network using the 
 <a href="https://github.com/qubvel-org/segmentation_models.pytorch">segmentation_models.pytorch</a>
-framework for semantic segmentation and provides statistics for quality assessment.
+framework for semantic segmentation to new data set.
 
 <p>
-A locally safed model is tested by providing a directory with test images 
-<em>data_dir</em>, the path where the model can be found <em>input_model_path</em>
-and specifying the options <em>num_classes</em> and <em>class_names</em>.
-The statistics are saved to <em>output_path</em>.
+A locally safed model is applied by providing a directory with images 
+<em>data_dir</em>, the path where the model is stored <em>input_model_path</em>
+and specifying the options <em>num_classes</em>.
+The output is saved to <em>output_path</em>.
 
 <h2>NOTES</h2>
 It is expected that all data lie in the directory structure and naming 
@@ -17,7 +17,7 @@ href="m.neural_network.preparedata">m.neural_network.preparedata</a>.
 <h2>EXAMPLES</h2>
 
 <div class="code"><pre>
-  m.neural_network.test data_dir=nn_data_with_labels/prepare_out/train/ input_model_path=nn_data_with_labels/ output_path=nn_data_with_labels/test_output/
+  m.neural_network.apply data_dir=nn_data_with_labels/prepare_out/train/ input_model_path=nn_data_with_labels/ output_path=nn_data_with_labels/apply_output/
 </pre></div>
 
 
@@ -40,4 +40,4 @@ href="m.neural_network.preparedata">m.neural_network.preparedata</a>.
 </ul>
 
 <h2>AUTHORS</h2>
-Victoria-Leandra Brunn, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Victoria-Leandra Brunn, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>
