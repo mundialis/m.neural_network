@@ -167,25 +167,3 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
         seg_map = None
 
     print("done")
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Train a model from segmentation_models.pytorch",
-    )
-    parser.add_argument("configfile", help="Path to configfile.")
-
-    args = parser.parse_args()
-
-    confparser = configparser.ConfigParser()
-    confparser.read(args.configfile)
-
-    config = {}
-    config["data_dir"] = confparser.get("settings.dataset", "data_dir")
-    config["num_classes"] = int(
-        confparser.get("settings.dataset", "num_classes")
-    )
-    config["model_path"] = confparser.get("settings.model", "model_path")
-    config["output_path"] = confparser.get("settings.output", "output_path")
-
-    main(config)
