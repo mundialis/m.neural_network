@@ -6,7 +6,7 @@ framework for semantic segmentation.
 
 <p>
 A new model can be trained by specifying the options 
-<em>in_channels</em>, <em>out_classes</em> <em>model_arch</em>, 
+<em>img_size</em>, <em>out_classes</em> <em>model_arch</em>, 
 <em>encoder_name</em>, <em>encoder_weights</em>, <em>in_channels</em>. 
 A locally saved model can be further trained (fine-tuned) by giving the 
 path to the previously saved model. For more information about available 
@@ -25,7 +25,7 @@ href="m.neural_network.preparedata">m.neural_network.preparedata</a>.
 <h2>EXAMPLES</h2>
 
 <div class="code"><pre>
-  m.neural_network.train 
+  m.neural_network.train data_dir=nn_data_with_labels/prepare_out/train/ output_model_path=nn_data_with_labels/
 </pre></div>
 
 

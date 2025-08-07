@@ -1,14 +1,23 @@
 <h2>DESCRIPTION</h2>
 
-<em>m.neural_network.test</em> 
+<em>m.neural_network.test</em> tests a neural network using the 
+<a href="https://github.com/qubvel-org/segmentation_models.pytorch">segmentation_models.pytorch</a>
+framework for semantic segmentation and provides statistics for quality assessment.
 
-<h2>Notes</h2>
-It is expected that all data lie in the directory structure and naming format as created by <a href="m.neural_network.preparedata">m.neural_network.preparedata</a>.
+<p>
+A locally safed model is tested by providing a directory with test images 
+<em>data_dir</em>, the path where the model can be found <em>input_model_path</em>
+and specifying the options <em>num_classes</em> and <em>class_names</em>.
+The statistics are saved to <em>output_path</em>.
 
+<h2>NOTES</h2>
+It is expected that all data lie in the directory structure and naming 
+format as created by <a 
+href="m.neural_network.preparedata">m.neural_network.preparedata</a>.
 <h2>EXAMPLES</h2>
 
 <div class="code"><pre>
-  m.neural_network.test 
+  m.neural_network.test data_dir=nn_data_with_labels/prepare_out_2/train/ input_model_path=nn_data_with_labels/ output_path=nn_data_with_labels/test_output/
 </pre></div>
 
 
@@ -22,10 +31,13 @@ It is expected that all data lie in the directory structure and naming format as
 </em>
 
 <h2>REQUIREMENTS</h2>
- <ul>
+<ul>
   <li>GDAL and OGR Python bindings</li>
-   <li><a href="https://pypi.org/project/grass-gis-helpers/">grass-gis-helpers</a> Python library >= 2.2.0</li>
- </ul>
+  <li><a href="https://pytorch.org/get-started/locally/">pytorch</a>
+  <li><a href="https://pypi.org/project/segmentation-models-pytorch/">segmentation_models.pytorch</a>
+  <li><a href="https://pypi.org/project/pytorch-lightning/">pytorch-lightning</a>
+  <li><a href="https://pypi.org/project/albumentations/">albumentations</a>
+</ul>
 
 <h2>AUTHORS</h2>
 Victoria-Leandra Brunn, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>

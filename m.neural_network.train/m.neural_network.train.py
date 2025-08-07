@@ -3,7 +3,7 @@
 #
 # MODULE:       m.neural_network.train
 # AUTHOR(S):    Victoria-Leandra Brunn
-# PURPOSE:      Trains a neural network for semantic segmentation based 
+# PURPOSE:      Trains a neural network for semantic segmentation based
 #               on a smp framework and scripts by Markus Metz and Lina Krisztian
 #               including the steps initial training and finetuning.
 #
@@ -105,8 +105,6 @@
 # % required: yes
 # % label: Name of the output model directory.
 # %end
-
-import os
 
 import grass.script as grass
 

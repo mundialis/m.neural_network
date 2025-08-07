@@ -3,7 +3,7 @@
 #
 # MODULE:       m.neural_network.test
 # AUTHOR(S):    Victoria-Leandra Brunn
-# PURPOSE:      Test a U-Net for a binary tree/ no-tree classification based 
+# PURPOSE:      Tests a neural network for segmantic segmentation based
 #               on a smp framework and scripts by Markus Metz and Lina Krisztian.
 #
 # COPYRIGHT:	(C) 2025 by mundialis
@@ -29,11 +29,11 @@
 # % guisection: Input
 # %end
 
-# %option
-# % key: input_model_path
+#  %option G_OPT_M_DIR
 # % type: string
 # % required: yes
 # % label: Name of the input model directory
+# % guisection: Input
 # %end
 
 # %option
