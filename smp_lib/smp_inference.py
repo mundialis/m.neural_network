@@ -84,8 +84,8 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
     """
     x_test_dir = data_dir
 
-    if not Path.exists(output_path):
-        Path.mkdir(output_path)
+    if not Path(output_path).exists():
+        Path(output_path).mkdir()
 
     gdal.UseExceptions()
 
