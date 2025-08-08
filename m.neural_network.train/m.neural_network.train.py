@@ -53,6 +53,7 @@
 # % key: out_classes
 # % type: integer
 # % required: no
+# % answer: 2
 # % label: Number of classes for classification: tree/ no-tree (default 2)
 # %end
 
@@ -61,6 +62,7 @@
 # % type: string
 # % required: no
 # % multiple: no
+# % answer: Unet
 # % label: Model architecture for classification (default Unet)
 # %end
 
@@ -68,6 +70,7 @@
 # % key: encoder_name
 # % type: string
 # % required: no
+# % answer: resnet34
 # % label: Encoder for the classification (default resnet34)
 # %end
 
@@ -75,6 +78,7 @@
 # % key: encoder_weights
 # % type: string
 # % required: no
+# % answer: imagenet
 # % label: Weights for encoder (default imagenet)
 # %end
 
@@ -82,6 +86,7 @@
 # % key: epochs
 # % type: integer
 # % required: no
+# % answer: 50
 # % label: Number of training epochs (default 50)
 # %end
 
@@ -89,6 +94,7 @@
 # % key: batch_size
 # % type: integer
 # % required: no
+# % answer: 8
 # % label: Number of tiles used per training unit (default 8)
 # %end
 
