@@ -109,7 +109,23 @@
 # % guisection: Output
 # %end
 
+# %flag
+# % key: t
+# % label: Only training
+# % description: Option for all input data should be used as training data for the neural network
+# %end
+
+# %flag
+# % key: a
+# % label: Only application
+# % description: Option for only neural network application and no data are prepared for training
+# %end
+
 # %option G_OPT_M_NPROCS
+# %end
+
+# %rules
+# % exclusive: -t, -a
 # %end
 
 import atexit
@@ -192,7 +208,12 @@ def main() -> None:
     tile_overlap = int(options["tile_overlap"])
     segmentation_minsize = int(options["segmentation_minsize"])
     segmentation_threshold = float(options["segmentation_threshold"])
-    train_percentage = int(options["train_percentage"])
+    if flags["a"]:
+        train_percentage = 0 # no training, only application preparation
+    elif flags["t"]:
+        train_percentage = 100 # all input for training
+    else:
+        train_percentage = int(options["train_percentage"])
     output_dir = options["output_dir"]
     nprocs = set_nprocs(int(options["nprocs"]))
     if options["suffix"]:
