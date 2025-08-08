@@ -68,7 +68,7 @@ from smp_lib.smp_test import smp_test
 
 
 def main():
-    """Run training"""
+    """Run training."""
     # variables
     output_path = options["output_path"]
     class_names = options["class_names"]
@@ -83,7 +83,7 @@ def main():
 
     grass.message(
         f"Testing the model with the {num_classes} classes "
-        f"{class_names} completed."
+        f"{class_names} completed. Statistics are stored under {output_path}.",
     )
 
 

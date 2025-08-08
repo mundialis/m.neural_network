@@ -3,7 +3,7 @@
 #
 # MODULE:       m.neural_network.apply
 # AUTHOR(S):    Victoria-Leandra Brunn
-# PURPOSE:      Applies a neural network for semantic segmentation on a 
+# PURPOSE:      Applies a neural network for semantic segmentation on a
 #               untrained data set based on a smp framework and scripts
 #               by Markus Metz and Lina Krisztian.
 #
@@ -27,7 +27,7 @@
 
 # %option G_OPT_M_DIR
 # % key: data_dir
-# % label: Name of the input data directory containing unlabled images
+# % label: Name of the input data directory containing subfolder with unlabled images
 # % guisection: Input
 # %end
 
@@ -53,6 +53,8 @@
 # % label: Name of the output directory
 # %end
 
+import os
+
 import grass.script as grass
 
 # import module library
@@ -61,11 +63,14 @@ from smp_lib.smp_inference import smp_infer
 
 
 def main():
-    """Run inference"""
+    """Run inference."""
     # variables
     output_path = options["output_path"]
     if options["num_classes"]:
         options["num_classes"] = int(options["num_classes"])
+    data_dir = options["data_dir"]
+    apply_dir = os.path.join(data_dir, "test_images")
+    options["data_dir"] = apply_dir
 
     kwargs = {key: val for key, val in options.items() if val not in (None, "")}
 
@@ -73,7 +78,7 @@ def main():
     smp_infer(**kwargs)
 
     grass.message(
-        f"Applying model completed."
+        f"Applying model completed. Results in {output_path}.",
     )
 
 

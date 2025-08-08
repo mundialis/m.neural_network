@@ -8,3 +8,6 @@ The `m.neural_network` toolset consists of following modules:
   * `m.neural_network.preparedata.worker_export`: Worker module for `m.neural_network.preparedata` to export data
 * `m.neural_network.preparetraining`: prepare training data for use in model training
   * `m.neural_network.preparetraining.worker`: Worker module for `m.neural_network.preparetraining` to check and rasterize label data
+* `m.neural_network.train`: training of a semantic segmentation model with smp libraries
+* `m.neural_network.test`: calculation of statistics for quality assessment
+* `m.neural_network.apply`: application of a trained model to new data
