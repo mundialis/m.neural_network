@@ -138,32 +138,32 @@ def get_training_augmentation(img_size=512):
         A.Affine(
             scale=(0.5, 1.5),
             rotate=(-180, 180),
-            shear=(-45, 45),
-            translate_percent=(-0.4, 0.4),
+            shear=(-10, 10),
+            translate_percent=(-0.1, 0.1),
             border_mode=0,
-            p=1,
+            p=0.4,
         ),
         A.PadIfNeeded(min_height=img_size, min_width=img_size),
         A.RandomCrop(height=img_size, width=img_size, p=0.5),
-        A.GaussNoise(p=0.9),
-        A.Perspective(p=0.8),
+        A.GaussNoise(p=0.5),
+        A.Perspective(p=0.5),
         A.OneOf(
             [
                 # A.CLAHE(p=1), # only grayscale or RGB
                 A.RandomBrightnessContrast(
                     brightness_limit=0.5,
                     contrast_limit=0.5,
-                    p=1,
+                    p=0.5,
                 ),
-                A.RandomGamma(p=1),
+                A.RandomGamma(p=0.5),
             ],
             p=0.9,
         ),
         A.OneOf(
             [
-                A.Sharpen(p=1),
-                A.Blur(blur_limit=3, p=1),
-                A.MotionBlur(blur_limit=3, p=1),
+                A.Sharpen(p=0.5),
+                A.Blur(blur_limit=3, p=0.5),
+                A.MotionBlur(blur_limit=3, p=0.5),
             ],
             p=0.9,
         ),
@@ -172,7 +172,7 @@ def get_training_augmentation(img_size=512):
                 A.RandomBrightnessContrast(
                     brightness_limit=0.5,
                     contrast_limit=0.5,
-                    p=1,
+                    p=0.5,
                 ),
                 # A.HueSaturationValue(p=1), # only grayscale or RGB
             ],
