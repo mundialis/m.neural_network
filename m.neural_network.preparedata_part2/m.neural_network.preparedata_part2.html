@@ -1,13 +1,13 @@
 <h2>DESCRIPTION</h2>
 
-<em>m.neural_network.preparetraining</em> prepares imagery and labelled data for training and application of a neural network.
-<p>While <a href="m.neural_network.preparedata">m.neural_network.preparedata</a> initially provides a setup for labelling tiles of imagery,
-<em>m.neural_network.preparetraining</em> rasterizes the vector labels and restructures the imagery data.
+<em>m.neural_network.preparedata_part2</em> prepares imagery and labelled data for training and application of a neural network.
+<p>While <a href="m.neural_network.preparedata_part1">m.neural_network.preparedata_part1</a> initially provides a setup for labelling tiles of imagery,
+<em>m.neural_network.preparedata_part2</em> rasterizes the vector labels and restructures the imagery data.
 
 <h2>Notes</h2>
-It is expected that all data lie in the directory structure and naming format as created by <a href="m.neural_network.preparedata">m.neural_network.preparedata</a>.
-This data is provided to <em>m.neural_network.preparetraining</em> via the <em>input_traindir</em> and <em>input_applydir</em> parameters.
-<em>m.neural_network.preparetraining</em> creates a new directory with the two directories <em>train</em> and <em>apply</em>. Each of these contains
+It is expected that all data lie in the directory structure and naming format as created by <a href="m.neural_network.preparedata_part1">m.neural_network.preparedata_part1</a>.
+This data is provided to <em>m.neural_network.preparedata_part2</em> via the <em>input_traindir</em> and <em>input_applydir</em> parameters.
+<em>m.neural_network.preparedata_part2</em> creates a new directory with the two directories <em>train</em> and <em>apply</em>. Each of these contains
 the following directories/data:
 
  <ul>
@@ -19,15 +19,15 @@ the following directories/data:
   <li><em>tile_XX_YY.vrt:</em> (only in the <em>train</em> dir): One multiband tile .vrt is stored here for the NN model to read in the number of bands.</li>
  </ul>
 <p>
-In order to save diskspace, all imagery is stored as .vrts, so the original datasets (created by <a href="m.neural_network.preparedata">m.neural_network.preparedata</a>) should
-  not be moved (or <em>m.neural_network.preparetraining</em> should be run again afterwards).
+In order to save diskspace, all imagery is stored as .vrts, so the original datasets (created by <a href="m.neural_network.preparedata_part1">m.neural_network.preparedata_part1</a>) should
+  not be moved (or <em>m.neural_network.preparedata_part2</em> should be run again afterwards).
 </p>
 <p>
   The user can indicate what percentage of the training tiles are used for validation and testing (during training) with the <em>val_percentage</em> and <em>test_percentage</em> parameter.
 </p>
 <p>
-  It is not possible to run <em>m.neural_network.preparetraining</em> repeatedly with the same <em>output</em> directory, as the training/validation split up happens during runtime.
-  Hence, <em>m.neural_network.preparetraining</em> expects that the <em>output</em> directory does not exist.
+  It is not possible to run <em>m.neural_network.preparedata_part2</em> repeatedly with the same <em>output</em> directory, as the training/validation split up happens during runtime.
+  Hence, <em>m.neural_network.preparedata_part2</em> expects that the <em>output</em> directory does not exist.
 </p>
 <p>
   With the <em>class_values</em> and the <em>no_class_value</em> parameters, the user defines the allowed range of values in the <em>class_column</em> of the labelled data. In
@@ -43,7 +43,7 @@ In order to save diskspace, all imagery is stored as .vrts, so the original data
 <h2>EXAMPLES</h2>
 
 <div class="code"><pre>
-  m.neural_network.preparetraining input_traindir=nn_data_with_labels/train input_applydir=nn_data_with_labels/apply nprocs=6 class_column=class_number class_values=2 no_class_value=1 output=nn_data_structured
+  m.neural_network.preparedata_part2 input_traindir=nn_data_with_labels/train input_applydir=nn_data_with_labels/apply nprocs=6 class_column=class_number class_values=2 no_class_value=1 output=nn_data_structured
 </pre></div>
 
 

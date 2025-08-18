@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:      m.neural_network.preparetraining.worker
+# MODULE:      m.neural_network.preparedata_part2.worker
 # AUTHOR(S):   Guido Riembauer, Victoria-Leandra Brunn
-# PURPOSE:     Worker module for m.neural_network.preparetraining to check
+# PURPOSE:     Worker module for m.neural_network.preparedata_part2 to check
 #              and rasterize label data
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team.
@@ -16,7 +16,7 @@
 """
 
 # %Module
-# % description: Worker module for m.neural_network.preparetraining to check and rasterize label data
+# % description: Worker module for m.neural_network.preparedata_part2 to check and rasterize label data
 # % keyword: raster
 # % keyword: statistics
 # %end

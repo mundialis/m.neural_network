@@ -69,7 +69,7 @@ def main():
     if options["num_classes"]:
         options["num_classes"] = int(options["num_classes"])
     data_dir = options["data_dir"]
-    apply_dir = os.path.join(data_dir, "test_images")
+    apply_dir = os.path.join(data_dir, "apply_images")
     options["data_dir"] = apply_dir
 
     kwargs = {key: val for key, val in options.items() if val not in (None, "")}

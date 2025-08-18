@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:       m.neural_network.preparedata
+# MODULE:       m.neural_network.preparedata_part1
 # AUTHOR(S):    Anika Weinmann, Guido Riembauer and Victoria-Leandra Brunn
 # PURPOSE:      Prepare training data as first step for the process of
 #               creating a neural network.
@@ -109,6 +109,9 @@
 # % guisection: Output
 # %end
 
+# %option G_OPT_M_NPROCS
+# %end
+
 # %flag
 # % key: t
 # % label: Only training
@@ -121,12 +124,13 @@
 # % description: Option for only neural network application and no data are prepared for training
 # %end
 
-# %option G_OPT_M_NPROCS
+# %rules
+# % exclusive: -t,-a
+# % excludes: -t, train_percentage
+# % excludes: -a, train_percentage
 # %end
 
-# %rules
-# % exclusive: -t, -a
-# %end
+
 
 import atexit
 import json
@@ -147,7 +151,6 @@ ID = grass.tempname(8)
 rm_files = list()
 ORIG_REGION = None
 rm_dirs = []
-
 
 def cleanup() -> None:
     """Clean up function calling general clean up from grass_gis_helpers."""
@@ -220,7 +223,7 @@ def main() -> None:
         suffix = options["suffix"]
 
     # get addon etc path
-    etc_path = get_lib_path(modname="m.neural_network.preparedata")
+    etc_path = get_lib_path(modname="m.neural_network.preparedata_part1")
     if etc_path is None:
         grass.fatal("Unable to find qml files!")
 
@@ -261,6 +264,7 @@ def main() -> None:
     num_tiles_row = round(reg["rows"] / (tile_size - tile_overlap) + 0.5)
     num_tiles_col = round(reg["cols"] / (tile_size - tile_overlap) + 0.5)
     num_zeros = max([len(str(num_tiles_row)), len(str(num_tiles_col))])
+    num_tiles_total = num_tiles_col * num_tiles_row
 
     # loop over tiles
     queue = ParallelModuleQueue(nprocs=nprocs)
@@ -288,7 +292,7 @@ def main() -> None:
                 # worker to request the null cells to get the info if the tile
                 # can be a training data tile
                 worker_nullcells = Module(
-                    "m.neural_network.preparedata.worker_nullcells",
+                    "m.neural_network.preparedata_part1.worker_nullcells",
                     n=north,
                     s=south,
                     e=east,
@@ -352,10 +356,20 @@ def main() -> None:
             tiles_wo_data.append(num)
 
     # random split into train and apply data tiles
-    num_tr_tiles = round(train_percentage / 100.0 * len(possible_tr_data))
+    num_tr_tiles = round(train_percentage / 100.0 * num_tiles_total)
+    if len(possible_tr_data) < num_tr_tiles:
+        num_tr_tiles = len(possible_tr_data)
+        true_train_percentage = round(num_tr_tiles/num_tiles_total * 100)
+        grass.warning(_("Too many border tiles including null values. To "
+                        "ensure valid train tiles, the train percentage is "
+                        f"reduced to {true_train_percentage}."))
+        
     random.shuffle(possible_tr_data)
     tr_tiles = possible_tr_data[:num_tr_tiles]
-    ap_tiles = [x for x in tiles_with_data if x not in tr_tiles]
+    if train_percentage == 100:
+        ap_tiles = []
+    else:
+        ap_tiles = [x for x in tiles_with_data if x not in tr_tiles]
     # loop over training data
     queue_export_tr = ParallelModuleQueue(nprocs=nprocs)
     try:
@@ -377,7 +391,7 @@ def main() -> None:
             geojson_dict["features"][tr_tile]["properties"]["path"] = tile_path
             # worker for export
             worker_export_tr = Module(
-                "m.neural_network.preparedata.worker_export",
+                "m.neural_network.preparedata_part1.worker_export",
                 image_bands=image_bands,
                 ndsm=ndsm,
                 tile_name=tile_name,
@@ -413,7 +427,7 @@ def main() -> None:
             geojson_dict["features"][ap_tile]["properties"]["path"] = tile_path
             # worker for export
             worker_export_ap = Module(
-                "m.neural_network.preparedata.worker_export",
+                "m.neural_network.preparedata_part1.worker_export",
                 image_bands=image_bands,
                 tile_name=tile_name,
                 ndsm=ndsm,

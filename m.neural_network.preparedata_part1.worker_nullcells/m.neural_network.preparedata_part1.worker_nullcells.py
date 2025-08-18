@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:      m.neural_network.preparedata.worker_nullcells
+# MODULE:      m.neural_network.preparedata_part1.worker_nullcells
 # AUTHOR(S):   Guido Riembauer, Anika Weinmann
-# PURPOSE:     Worker module for m.neural_network.preparedata to check null
+# PURPOSE:     Worker module for m.neural_network.preparedata_part1 to check null
 #              cells
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team.
@@ -16,7 +16,7 @@
 """
 
 # %Module
-# % description: Worker module for m.neural_network.preparedata to check null cells.
+# % description: Worker module for m.neural_network.preparedata_part1 to check null cells.
 # % keyword: raster
 # % keyword: statistics
 # %end

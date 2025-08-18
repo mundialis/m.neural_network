@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:       m.neural_network.preparetraining
+# MODULE:       m.neural_network.preparedata_part2
 # AUTHOR(S):    Guido Riembauer, Victoria-Leandra Brunn
 # PURPOSE:      Prepares tiled imagery and labelled data for training and application
 #               in a Neural Network (NN).
@@ -29,12 +29,14 @@
 # %option G_OPT_M_DIR
 # % key: input_traindir
 # % label: Name of the input training data directory containing subfolders with imagery and labels per tile
+# % required: no
 # % guisection: Input
 # %end
 
 # %option G_OPT_M_DIR
 # % key: input_applydir
 # % label: Name of the input apply data directory containing subfolders with imagery per tile
+# % required: no
 # % guisection: Input
 # %end
 
@@ -97,6 +99,10 @@
 # %end
 
 # %option G_OPT_M_NPROCS
+# %end
+
+# %rules
+# % required: input_traindir, input_applydir
 # %end
 
 import atexit
@@ -233,85 +239,104 @@ def main():
 
     rm_dirs.append(output)
     # create folders if they dont exist
-    train_dir_out = os.path.join(output, "train")
-    apply_dir_out = os.path.join(output, "apply")
-    train_train_img_dir = os.path.join(train_dir_out, "train_images")
-    train_train_masks_dir = os.path.join(train_dir_out, "train_masks")
-    train_val_images_dir = os.path.join(train_dir_out, "val_images")
-    train_val_masks_dir = os.path.join(train_dir_out, "val_masks")
-    train_test_images_dir = os.path.join(train_dir_out, "test_images")
-    train_test_masks_dir = os.path.join(train_dir_out, "test_masks")
-    train_singleband_vrt_dir = os.path.join(train_dir_out, "singleband_vrts")
-    apply_img_dir = os.path.join(apply_dir_out, "apply_images")
-    apply_singleband_vrt_dir = os.path.join(apply_dir_out, "singleband_vrts")
-    for c_dir in [
-        train_dir_out,
-        apply_dir_out,
-        train_train_img_dir,
-        train_train_masks_dir,
-        train_val_images_dir,
-        train_val_masks_dir,
-        train_test_images_dir,
-        train_test_masks_dir,
-        apply_img_dir,
-        train_singleband_vrt_dir,
-        apply_singleband_vrt_dir,
-    ]:
-        os.makedirs(c_dir, exist_ok=True)
+    if train_dir_in:
+        train_dir_out = os.path.join(output, "train")
+        train_train_img_dir = os.path.join(train_dir_out, "train_images")
+        train_train_masks_dir = os.path.join(train_dir_out, "train_masks")
+        train_val_images_dir = os.path.join(train_dir_out, "val_images")
+        train_val_masks_dir = os.path.join(train_dir_out, "val_masks")
+        train_test_images_dir = os.path.join(train_dir_out, "test_images")
+        train_test_masks_dir = os.path.join(train_dir_out, "test_masks")
+        train_singleband_vrt_dir = os.path.join(train_dir_out, "singleband_vrts")
+        for c_dir in [
+            train_dir_out,
+            train_train_img_dir,
+            train_train_masks_dir,
+            train_val_images_dir,
+            train_val_masks_dir,
+            train_test_images_dir,
+            train_test_masks_dir,
+            train_singleband_vrt_dir,
+        ]:
+            os.makedirs(c_dir, exist_ok=True)
+    else:
+        grass.warning(_("No input training data directory given."))
 
-    all_train_tiles = get_tile_infos(train_dir_in, ttype="training")
-    all_apply_tiles = get_tile_infos(apply_dir_in, ttype="apply")
+    if apply_dir_in:
+        apply_dir_out = os.path.join(output, "apply")
+        apply_img_dir = os.path.join(apply_dir_out, "apply_images")
+        apply_singleband_vrt_dir = os.path.join(apply_dir_out, "singleband_vrts")
+        for c_dir in [
+            apply_dir_out,
+            apply_img_dir,
+            apply_singleband_vrt_dir,
+        ]:
+            os.makedirs(c_dir, exist_ok=True)
+    else:
+        grass.warning(_("No input apply data directory given."))
 
-    # check the train tiles for wrong values in the label file
-    train_gpkgs = [tile["label_gpkg"] for tile in all_train_tiles]
-    allowed_vals_str = set([*class_values, no_class_value])
-    allowed_vals = [int(i) for i in allowed_vals_str]
-    for gpkg in train_gpkgs:
-        driver = ogr.GetDriverByName("GPKG")
-        ds = driver.Open(gpkg, 0)
-        layer = ds.GetLayer()
-        for feature in layer:
-            val = feature.GetField(class_col)
-            if val not in allowed_vals:
-                grass.fatal(
-                    _(
-                        f"File {gpkg} contains unexpected value {val} "
-                        f"in column {class_col}. Allowed values are "
-                        f"{allowed_vals}.",
-                    ),
-                )
+    tile_dict_all = []
+    if apply_dir_in:
+        all_apply_tiles = get_tile_infos(apply_dir_in, ttype="apply")
+        tile_dict_all+=all_apply_tiles
 
-    # split into training, testing and validation
-    num_val_tiles = round(val_percentage / 100.0 * len(all_train_tiles))
-    num_test_tiles = round(test_percentage / 100.0 * len(all_train_tiles))
-    random.shuffle(all_train_tiles)
-    val_tiles = all_train_tiles[:num_val_tiles]
-    test_tiles = all_train_tiles[
-        num_val_tiles : num_val_tiles + num_test_tiles
-    ]
-    train_tiles = [
-        x
-        for x in all_train_tiles
-        if x not in val_tiles and x not in test_tiles
-    ]
-    grass.message(
-        _(
-            f"Selected {len(val_tiles)} tiles as validation tiles, "
-            f"{len(test_tiles)} as testing tiles and "
-            f"{len(train_tiles)} as training tiles.",
-        ),
-    )
-    for d in val_tiles:
-        d["type"] = "validation"
+    if train_dir_in:
+        all_train_tiles = get_tile_infos(train_dir_in, ttype="training")
 
-    for d in test_tiles:
-        d["type"] = "testing"
+        # check the train tiles for wrong values in the label file
+        train_gpkgs = [tile["label_gpkg"] for tile in all_train_tiles]
+        allowed_vals_str = set([*class_values, no_class_value])
+        allowed_vals = [int(i) for i in allowed_vals_str]
+        for gpkg in train_gpkgs:
+            driver = ogr.GetDriverByName("GPKG")
+            ds = driver.Open(gpkg, 0)
+            layer = ds.GetLayer()
+            for feature in layer:
+                val = feature.GetField(class_col)
+                if val not in allowed_vals:
+                    grass.fatal(
+                        _(
+                            f"File {gpkg} contains unexpected value {val} "
+                            f"in column {class_col}. Allowed values are "
+                            f"{allowed_vals}.",
+                        ),
+                    )
+
+        # split into training, testing and validation
+        num_val_tiles = round(val_percentage / 100.0 * len(all_train_tiles))
+        num_test_tiles = round(test_percentage / 100.0 * len(all_train_tiles))
+        random.shuffle(all_train_tiles)
+        val_tiles = all_train_tiles[:num_val_tiles]
+        test_tiles = all_train_tiles[
+            num_val_tiles : num_val_tiles + num_test_tiles
+        ]
+        train_tiles = [
+            x
+            for x in all_train_tiles
+            if x not in val_tiles and x not in test_tiles
+        ]
+        grass.message(
+            _(
+                f"Selected {len(val_tiles)} tiles as validation tiles, "
+                f"{len(test_tiles)} as testing tiles and "
+                f"{len(train_tiles)} as training tiles.",
+            ),
+        )
+        for d in val_tiles:
+            d["type"] = "validation"
+
+        for d in test_tiles:
+            d["type"] = "testing"
+
+        tile_dict_all+=train_tiles
+        tile_dict_all+=val_tiles
+        tile_dict_all+=test_tiles
 
     # prepare imagery/ndsm data as needed
     # argument list for parallel processing
     arglist = []
     args = []
-    for tiledict in train_tiles + val_tiles + test_tiles + all_apply_tiles:
+    for tiledict in tile_dict_all:
         out_img_dir = None
         singleband_vrt_dir = None
         if tiledict["type"] == "training":
@@ -336,12 +361,6 @@ def main():
         ]
         arglist.append(args)
 
-    # a single .vrt should be placed next to the train dirs for the NN code
-    # to read the number of bands
-    example_args = arglist[0]
-    example_args[0] = train_dir_out
-    build_vrts(*example_args)
-
     # execute in Parallel
     # source: https://miguendes.me/how-to-pass-multiple-arguments-to-a-map
     # -function-in-python#problem-2-passing-multiple-parameters-to-
@@ -353,43 +372,44 @@ def main():
         pool.starmap(build_vrts, arglist)
 
     # loop over tiles
-    grass.message(_("Checking and rasterizing labels..."))
-    queue = ParallelModuleQueue(nprocs=nprocs)
-    try:
-        for tiledict in train_tiles + val_tiles + test_tiles:
-            outdir = None
-            if tiledict["type"] == "training":
-                outdir = train_train_masks_dir
-            elif tiledict["type"] == "validation":
-                outdir = train_val_masks_dir
-            elif tiledict["type"] == "testing":
-                outdir = train_test_masks_dir
-            outfile = os.path.join(outdir, f"{tiledict['id']}.tif")
-            new_mapset = f"tmp_mapset_{tiledict['id']}_{ID}"
-            rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
-            worker = Module(
-                "m.neural_network.preparetraining.worker",
-                input=tiledict["label_gpkg"],
-                img_path=tiledict["dop_tif"],
-                class_values=class_values,
-                no_class_value=no_class_value,
-                class_column=class_col,
-                output=outfile,
-                new_mapset=new_mapset,
-                run_=False,
-            )
-            worker.stdout_ = grass.PIPE
-            worker.stderr_ = grass.PIPE
-            queue.put(worker)
-        queue.wait()
-    except Exception:
-        check_parallel_errors(queue)
-    # needed to catch the warnings from the worker
-    check_parallel_warnings(queue)
-    verify_mapsets(cur_mapset)
+    if train_dir_in:
+        grass.message(_("Checking and rasterizing labels..."))
+        queue = ParallelModuleQueue(nprocs=nprocs)
+        try:
+            for tiledict in train_tiles + val_tiles + test_tiles:
+                outdir = None
+                if tiledict["type"] == "training":
+                    outdir = train_train_masks_dir
+                elif tiledict["type"] == "validation":
+                    outdir = train_val_masks_dir
+                elif tiledict["type"] == "testing":
+                    outdir = train_test_masks_dir
+                outfile = os.path.join(outdir, f"{tiledict['id']}.tif")
+                new_mapset = f"tmp_mapset_{tiledict['id']}_{ID}"
+                rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
+                worker = Module(
+                    "m.neural_network.preparedata_part2.worker",
+                    input=tiledict["label_gpkg"],
+                    img_path=tiledict["dop_tif"],
+                    class_values=class_values,
+                    no_class_value=no_class_value,
+                    class_column=class_col,
+                    output=outfile,
+                    new_mapset=new_mapset,
+                    run_=False,
+                )
+                worker.stdout_ = grass.PIPE
+                worker.stderr_ = grass.PIPE
+                queue.put(worker)
+            queue.wait()
+        except Exception:
+            check_parallel_errors(queue)
+        # needed to catch the warnings from the worker
+        check_parallel_warnings(queue)
+        verify_mapsets(cur_mapset)
     # only keep the output if everything worked
     rm_dirs.remove(output)
-    grass.message(_("Training data preparation completed."))
+    grass.message(_("Data preparation completed."))
 
 
 if __name__ == "__main__":
