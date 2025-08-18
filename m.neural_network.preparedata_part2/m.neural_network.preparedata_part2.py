@@ -388,7 +388,7 @@ def main():
                 new_mapset = f"tmp_mapset_{tiledict['id']}_{ID}"
                 rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
                 worker = Module(
-                    "m.neural_network.preparedata_part2.worker",
+                    "m.neural_network.preparedata_part2.worker_label",
                     input=tiledict["label_gpkg"],
                     img_path=tiledict["dop_tif"],
                     class_values=class_values,

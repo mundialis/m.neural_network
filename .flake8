@@ -13,4 +13,4 @@ per-file-ignores =
     ./m.neural_network.preparedata_part1.worker_nullcells/m.neural_network.preparedata_part1.worker_nullcells.py: F821,E501
     ./m.neural_network.preparedata_part1.worker_export/m.neural_network.preparedata_part1.worker_export.py: E501
     ./m.neural_network.preparedata_part2/m.neural_network.preparedata_part2.py: E501,F821
-    ./m.neural_network.preparedata_part2.worker/m.neural_network.preparedata_part2.worker.py: E501,F821
+    ./m.neural_network.preparedata_part2.worker_label/m.neural_network.preparedata_part2.worker_label.py: E501,F821

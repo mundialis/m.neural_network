@@ -4,7 +4,7 @@
 # MODULE:       m.neural_network.test
 # AUTHOR(S):    Victoria-Leandra Brunn
 # PURPOSE:      Tests a neural network for semantic segmentation based
-#               on a smp framework and scripts by Markus Metz and Lina Krisztian.
+#               on a smp framework and scripts.
 #
 # COPYRIGHT:	(C) 2025 by mundialis
 #
@@ -17,7 +17,6 @@
 # %Module
 # % description: Tests a U-Net for a binary tree/ no-tree classification and provides statistical validation parameters.
 # % keyword: raster
-# % keyword: vector
 # % keyword: test
 # % keyword: neural network
 # % keyword: classification
@@ -68,22 +67,23 @@ from smp_lib.smp_test import smp_test
 
 
 def main():
-    """Run training."""
+    """Run testing."""
     # variables
-    output_path = options["output_path"]
-    class_names = options["class_names"]
+    kwargs = {}
+    kwargs["data_dir"] = options["data_dir"]
+    kwargs["input_model_path"] = options["input_model_path"]
     if options["num_classes"]:
-        options["num_classes"] = int(options["num_classes"])
-        num_classes = options["num_classes"]
-
-    kwargs = {key: val for key, val in options.items() if val not in (None, "")}
+        kwargs["num_classes"] = int(options["num_classes"])
+    kwargs["class_names"] = options["class_names"]
+    kwargs["output_path"] = options["output_path"]
 
     grass.message("Testing classification model...")
     smp_test(**kwargs)
 
     grass.message(
-        f"Testing the model with the {num_classes} classes "
-        f"{class_names} completed. Statistics are stored under {output_path}.",
+        f"Testing the model with the {kwargs['num_classes']} classes "
+        f"{kwargs['class_names']} completed. Statistics are stored under "
+        f"{kwargs['output_path']}.",
     )
 
 

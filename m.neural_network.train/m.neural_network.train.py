@@ -4,8 +4,8 @@
 # MODULE:       m.neural_network.train
 # AUTHOR(S):    Victoria-Leandra Brunn
 # PURPOSE:      Trains a neural network for semantic segmentation based
-#               on a smp framework and scripts by Markus Metz and Lina Krisztian
-#               including the steps initial training and finetuning.
+#               on a smp framework and scripts including the steps initial
+#               training and finetuning.
 #
 # COPYRIGHT:	(C) 2025 by mundialis
 #
@@ -19,7 +19,6 @@
 # %Module
 # % description: Trains a neural network for semantic segmentation including the steps for initial training and finetuning.
 # % keyword: raster
-# % keyword: vector
 # % keyword: training
 # % keyword: finetuning
 # % keyword: neural network
@@ -124,25 +123,27 @@ from smp_lib.smp_train import smp_train
 def main():
     """Run training"""
     # variables - the order of options values is obligatory
-    model_dir_out = options["output_model_path"]
-    options["img_size"] = int(options["img_size"])
-    options["in_channels"] = int(options["in_channels"])
-    if options["batch_size"]:
-        options["batch_size"] = int(options["batch_size"])
+    kwargs = {}
+    kwargs["data_dir"] = options["data_dir"]
+    kwargs["img_size"] = int(options["img_size"])
+    kwargs["in_channels"] = int(options["in_channels"])
     if options["out_classes"]:
-        options["out_classes"] = int(options["out_classes"])
+        kwargs["out_classes"] = int(options["out_classes"])
+    kwargs["model_arch"] = options["model_arch"]
+    kwargs["encoder_name"] = options["encoder_name"]
+    kwargs["encoder_weights"] = options["encoder_weights"]
+    kwargs["input_model_path"] = options["input_model_path"]
+    kwargs["output_model_path"] = options["output_model_path"]
     if options["epochs"]:
-        options["epochs"] = int(options["epochs"])
-
-    kwargs = {
-        key: val for key, val in options.items() if val not in (None, "")
-    }
+        kwargs["epochs"] = int(options["epochs"])
+    if options["batch_size"]:
+        kwargs["batch_size"] = int(options["batch_size"])
 
     grass.message("Training classification model...")
     smp_train(**kwargs)
 
     grass.message(
-        f"Classification model is trained and saved to {model_dir_out}."
+        f"Classification model is trained and saved to {kwargs['output_model_path']}."
     )
 
 

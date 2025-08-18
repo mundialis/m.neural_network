@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:      m.neural_network.preparedata_part2.worker
+# MODULE:      m.neural_network.preparedata_part2.worker_label
 # AUTHOR(S):   Guido Riembauer, Victoria-Leandra Brunn
 # PURPOSE:     Worker module for m.neural_network.preparedata_part2 to check
 #              and rasterize label data
