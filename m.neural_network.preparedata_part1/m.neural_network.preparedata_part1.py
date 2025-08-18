@@ -364,8 +364,8 @@ def main() -> None:
             _(
                 "Too many border tiles including null values. To "
                 "ensure valid train tiles, the train percentage is "
-                f"reduced to {true_train_percentage}."
-            )
+                f"reduced to {true_train_percentage}.",
+            ),
         )
 
     random.shuffle(possible_tr_data)
@@ -389,7 +389,9 @@ def main() -> None:
             )
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update geojson values
-            geojson_dict["features"][tr_tile]["properties"]["training"] = "TODO"
+            geojson_dict["features"][tr_tile]["properties"][
+                "training"
+            ] = "TODO"
             geojson_dict["features"][tr_tile]["properties"]["path"] = tile_path
             # worker for export
             worker_export_tr = Module(

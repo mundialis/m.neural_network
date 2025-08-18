@@ -114,12 +114,14 @@
 import grass.script as grass
 
 # import module library
-grass.utils.set_path(modulename="m.neural_network", dirname="smp_lib", path="..")
+grass.utils.set_path(
+    modulename="m.neural_network", dirname="smp_lib", path="..",
+)
 from smp_lib.smp_train import smp_train
 
 
 def main():
-    """Run training"""
+    """Run training."""
     # variables - the order of options values is obligatory
     kwargs = {}
     kwargs["data_dir"] = options["data_dir"]
@@ -141,7 +143,7 @@ def main():
     smp_train(**kwargs)
 
     grass.message(
-        f"Classification model is trained and saved to {kwargs['output_model_path']}."
+        f"Classification model is trained and saved to {kwargs['output_model_path']}.",
     )
 
 

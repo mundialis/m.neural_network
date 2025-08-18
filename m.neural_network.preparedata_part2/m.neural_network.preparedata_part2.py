@@ -247,7 +247,9 @@ def main():
         train_val_masks_dir = os.path.join(train_dir_out, "val_masks")
         train_test_images_dir = os.path.join(train_dir_out, "test_images")
         train_test_masks_dir = os.path.join(train_dir_out, "test_masks")
-        train_singleband_vrt_dir = os.path.join(train_dir_out, "singleband_vrts")
+        train_singleband_vrt_dir = os.path.join(
+            train_dir_out, "singleband_vrts",
+        )
         for c_dir in [
             train_dir_out,
             train_train_img_dir,
@@ -265,7 +267,9 @@ def main():
     if apply_dir_in:
         apply_dir_out = os.path.join(output, "apply")
         apply_img_dir = os.path.join(apply_dir_out, "apply_images")
-        apply_singleband_vrt_dir = os.path.join(apply_dir_out, "singleband_vrts")
+        apply_singleband_vrt_dir = os.path.join(
+            apply_dir_out, "singleband_vrts",
+        )
         for c_dir in [
             apply_dir_out,
             apply_img_dir,
@@ -307,9 +311,13 @@ def main():
         num_test_tiles = round(test_percentage / 100.0 * len(all_train_tiles))
         random.shuffle(all_train_tiles)
         val_tiles = all_train_tiles[:num_val_tiles]
-        test_tiles = all_train_tiles[num_val_tiles:num_val_tiles + num_test_tiles]
+        test_tiles = all_train_tiles[
+            num_val_tiles : num_val_tiles + num_test_tiles
+        ]
         train_tiles = [
-            x for x in all_train_tiles if x not in val_tiles and x not in test_tiles
+            x
+            for x in all_train_tiles
+            if x not in val_tiles and x not in test_tiles
         ]
         grass.message(
             _(

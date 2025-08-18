@@ -67,13 +67,15 @@ def read_image_gdal(filename):
 # assign a label to each pixel
 # https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset
 class GdalImageDataset(BaseDataset):
-    """pytorch dataset using GDAL to read raster files."""
+    """Pytorch dataset using GDAL to read raster files."""
 
     def __init__(self, img_dir, lbl_dir, augmentation=None) -> None:
         """Initialize the dataset."""
         # directory listing
         self.ids = os.listdir(img_dir)
-        self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
+        self.images_fps = [
+            os.path.join(img_dir, image_id) for image_id in self.ids
+        ]
 
         # file names of images and masks can have different endings
         mask_ids = []
@@ -97,7 +99,9 @@ class GdalImageDataset(BaseDataset):
 
             mask_ids.append(mask_id)
 
-        self.labels_fps = [os.path.join(lbl_dir, mask_id) for mask_id in mask_ids]
+        self.labels_fps = [
+            os.path.join(lbl_dir, mask_id) for mask_id in mask_ids
+        ]
         # for a huge number of files, read a textfile with filenames
 
         self.img_dir = img_dir
@@ -128,6 +132,7 @@ class GdalImageDataset(BaseDataset):
 
 # training set images augmentation
 def get_training_augmentation(img_size=512):
+    """Define training augmentation."""
     train_transform = [
         A.HorizontalFlip(p=0.5),
         A.VerticalFlip(p=0.5),
@@ -187,7 +192,7 @@ def get_validation_augmentation(img_size=512):
 
 
 class PlModule(pl.LightningModule):
-    """pytorch lightning module for training."""
+    """Pytorch lightning module for training."""
 
     def __init__(
         self,
@@ -234,12 +239,14 @@ class PlModule(pl.LightningModule):
         self.t_max = t_max
 
     def forward(self, image):
+        """Forward."""
         # Normalize image
         image = image.float()
         image = (image - self.mean) / self.std
         return self.model(image)
 
     def shared_step(self, batch, stage):
+        """Check mask as steps for train and apply data."""
         image, mask = batch
 
         # Ensure that image dimensions are correct
@@ -298,7 +305,9 @@ class PlModule(pl.LightningModule):
 
             # Compute true positives, false positives, false negatives,
             # and true negatives
-            tp, fp, fn, tn = smp.metrics.get_stats(pred_mask, mask, mode="binary")
+            tp, fp, fn, tn = smp.metrics.get_stats(
+                pred_mask, mask, mode="binary",
+            )
 
         return {
             "loss": loss,
@@ -309,6 +318,7 @@ class PlModule(pl.LightningModule):
         }
 
     def shared_epoch_end(self, outputs, stage):
+        """Share epoch end."""
         # Aggregate step metrics
         tp = torch.cat([x["tp"] for x in outputs])
         fp = torch.cat([x["fp"] for x in outputs])
@@ -345,20 +355,24 @@ class PlModule(pl.LightningModule):
         self.log_dict(metrics, prog_bar=False)
 
     def training_step(self, batch, batch_idx):
+        """Train step."""
         train_loss_info = self.shared_step(batch, "train")
         self.training_step_outputs.append(train_loss_info)
         return train_loss_info
 
     def on_train_epoch_end(self):
+        """Train epoch end."""
         self.shared_epoch_end(self.training_step_outputs, "train")
         self.training_step_outputs.clear()
 
     def validation_step(self, batch, batch_idx):
+        """Validate step."""
         valid_loss_info = self.shared_step(batch, "valid")
         self.validation_step_outputs.append(valid_loss_info)
         return valid_loss_info
 
     def on_validation_epoch_end(self):
+        """Validate epoch end."""
         self.shared_epoch_end(self.validation_step_outputs, "valid")
         self.validation_step_outputs.clear()
 
@@ -366,7 +380,9 @@ class PlModule(pl.LightningModule):
         # save best model monitoring validation loss
         if self.current_epoch > 4 and self.best_loss > self.current_loss:
             self.best_loss = self.current_loss
-            best_model_path = f"{self.model_path_base}_epoch{self.current_epoch}"
+            best_model_path = (
+                f"{self.model_path_base}_epoch{self.current_epoch}"
+            )
             print("\nsaving new best model...\n")
             self.model.save_pretrained(best_model_path, push_to_hub=False)
             if self.best_model_path:
@@ -378,17 +394,22 @@ class PlModule(pl.LightningModule):
             self.best_model_path = best_model_path
 
     def test_step(self, batch, batch_idx):
+        """Test step."""
         test_loss_info = self.shared_step(batch, "test")
         self.test_step_outputs.append(test_loss_info)
         return test_loss_info
 
     def on_test_epoch_end(self):
+        """Test epoch end."""
         self.shared_epoch_end(self.test_step_outputs, "test")
         self.test_step_outputs.clear()
 
     def configure_optimizers(self):
+        """Configure optimizers."""
         # weight_decay should be in the range 0, 0.05
-        optimizer = torch.optim.Adam(self.parameters(), lr=2e-4, weight_decay=0.0)
+        optimizer = torch.optim.Adam(
+            self.parameters(), lr=2e-4, weight_decay=0.0,
+        )
         scheduler = lr_scheduler.CosineAnnealingLR(
             optimizer,
             T_max=self.t_max,
@@ -484,14 +505,18 @@ def smp_train(
     # loading the model
     if input_model_path:
         if not Path(input_model_path).exists():
-            print(f"ERROR: input model path {input_model_path} does not exist.")
+            print(
+                f"ERROR: input model path {input_model_path} does not exist.",
+            )
             sys.exit(1)
 
         print(f"Loading model saved at {input_model_path} ...")
         model = smp.from_pretrained(input_model_path)
 
         if not model:
-            print(f"ERROR: failed to load input model from {input_model_path}.")
+            print(
+                f"ERROR: failed to load input model from {input_model_path}.",
+            )
             sys.exit(1)
     else:
         print(f"loading model {model_arch} with encoder {encoder_name} ...")

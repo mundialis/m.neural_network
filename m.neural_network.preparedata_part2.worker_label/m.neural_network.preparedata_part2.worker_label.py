@@ -205,9 +205,7 @@ def main():
         grass.run_command("r.mapcalc", expression=exp, quiet=True)
         # if there is any nodata left in the label, this will be assigned
         # to the no-class class
-        exp = (
-            f"{labelrast}=if(isnull({labelrast_bin}),{no_class_value},{labelrast_bin})"
-        )
+        exp = f"{labelrast}=if(isnull({labelrast_bin}),{no_class_value},{labelrast_bin})"
         grass.run_command("r.mapcalc", expression=exp, quiet=True)
 
     grass.run_command(

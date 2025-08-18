@@ -128,7 +128,9 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
             output_file = output_file.replace(".vrt", ".tif")
         elif output_file.endswith(".jp2"):
             output_file = output_file.replace(".jp2", ".tif")
-        elif not output_file.endswith(".tif") and not output_file.endswith(".jp2"):
+        elif not output_file.endswith(".tif") and not output_file.endswith(
+            ".jp2",
+        ):
             # only process tif, jp2 and vrt images
             continue
         # Load image
