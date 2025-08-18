@@ -16,7 +16,7 @@
 #############################################################################
 """
 # %Module
-# % description: Tests a U-Net for a binary tree/ no-tree classification and provides statistical validation parameters.
+# % description: Applies a neural network for semantic segmentation.
 # % keyword: raster
 # % keyword: vector
 # % keyword: apply
