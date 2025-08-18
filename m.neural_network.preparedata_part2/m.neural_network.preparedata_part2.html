@@ -16,7 +16,6 @@ the following directories/data:
   <li><em>val_images:</em>: contains tilewise multiband .vrt-files with all imagery bands and an ndsm band to be used for validation. This directory holds data both in the <em>train</em> and <em>apply</em> dirs. In the <em>train</em> dir, this data is used for validation during training, while in the <em>apply</em> dir, this directory holds all imagery used for prediction.</li>
   <li><em>val_masks:</em>: contains tilewise rasterized .tif label files to be used for training. This directory is empty in the <em>apply</em> dir.</li>
   <li><em>singleband_vrts:</em>: contains singleband .vrts for each imagery band of each tile. They are stored here as a basis to create the tilewise multiband .vrts.</li>
-  <li><em>tile_XX_YY.vrt:</em> (only in the <em>train</em> dir): One multiband tile .vrt is stored here for the NN model to read in the number of bands.</li>
  </ul>
 <p>
 In order to save diskspace, all imagery is stored as .vrts, so the original datasets (created by <a href="m.neural_network.preparedata_part1">m.neural_network.preparedata_part1</a>) should
