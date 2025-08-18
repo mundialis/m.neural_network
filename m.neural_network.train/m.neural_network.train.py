@@ -102,7 +102,7 @@
 # % key: input_model_path
 # % type: string
 # % required: no
-# % label: Name of the input model directory.
+# % label: Name of the input model directory for finetuning.
 # %end
 
 # %option
