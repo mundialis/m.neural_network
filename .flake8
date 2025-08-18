@@ -9,8 +9,12 @@ exclude = .git
 max-line-length = 87
 
 per-file-ignores =
+    ./m.neural_network.test/m.neural_network.test.py: E501,E402
+    ./m.neural_network.apply/m.neural_network.apply.py: E402
+    ./m.neural_network.train/m.neural_network.train.py: E501,E402
     ./m.neural_network.preparedata_part1/m.neural_network.preparedata_part1.py: E501,F821
     ./m.neural_network.preparedata_part1.worker_nullcells/m.neural_network.preparedata_part1.worker_nullcells.py: F821,E501
     ./m.neural_network.preparedata_part1.worker_export/m.neural_network.preparedata_part1.worker_export.py: E501
     ./m.neural_network.preparedata_part2/m.neural_network.preparedata_part2.py: E501,F821
     ./m.neural_network.preparedata_part2.worker_label/m.neural_network.preparedata_part2.worker_label.py: E501,F821
+    ./smp_lib/smp_train.py: E501

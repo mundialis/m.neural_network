@@ -114,9 +114,7 @@
 import grass.script as grass
 
 # import module library
-grass.utils.set_path(
-    modulename="m.neural_network", dirname="smp_lib", path=".."
-)
+grass.utils.set_path(modulename="m.neural_network", dirname="smp_lib", path="..")
 from smp_lib.smp_train import smp_train
 
 

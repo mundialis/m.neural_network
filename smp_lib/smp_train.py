@@ -32,7 +32,6 @@ import shutil
 import sys
 from pathlib import Path
 
-import numpy as np
 import albumentations as A
 import pytorch_lightning as pl
 import segmentation_models_pytorch as smp
@@ -74,9 +73,7 @@ class GdalImageDataset(BaseDataset):
         """Initialize the dataset."""
         # directory listing
         self.ids = os.listdir(img_dir)
-        self.images_fps = [
-            os.path.join(img_dir, image_id) for image_id in self.ids
-        ]
+        self.images_fps = [os.path.join(img_dir, image_id) for image_id in self.ids]
 
         # file names of images and masks can have different endings
         mask_ids = []
@@ -93,15 +90,14 @@ class GdalImageDataset(BaseDataset):
             # file exists?
             if not Path(os.path.join(lbl_dir, mask_id)).exists():
                 print(
-                    f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> does not exist",
+                    f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> "
+                    "does not exist",
                 )
                 sys.exit(1)
 
             mask_ids.append(mask_id)
 
-        self.labels_fps = [
-            os.path.join(lbl_dir, mask_id) for mask_id in mask_ids
-        ]
+        self.labels_fps = [os.path.join(lbl_dir, mask_id) for mask_id in mask_ids]
         # for a huge number of files, read a textfile with filenames
 
         self.img_dir = img_dir
@@ -259,7 +255,8 @@ class PlModule(pl.LightningModule):
             mask = mask.unsqueeze(1)
             assert mask.ndim == 4  # [batch_size, C, H, W]
 
-            # Check that mask values in between 0 and 1, NOT 0 and 255 for binary segmentation
+            # Check that mask values in between 0 and 1, NOT 0 and 255 for
+            # binary segmentation
             assert mask.max() <= 1.0
             assert mask.min() >= 0
 
@@ -284,7 +281,8 @@ class PlModule(pl.LightningModule):
             # Convert probabilities to predicted class labels
             pred_mask = prob_mask.argmax(dim=1)
 
-            # Compute true positives, false positives, false negatives, and true negatives
+            # Compute true positives, false positives, false negatives,
+            # and true negatives
             tp, fp, fn, tn = smp.metrics.get_stats(
                 pred_mask,
                 mask,
@@ -295,13 +293,12 @@ class PlModule(pl.LightningModule):
             # first convert mask values to probabilities, then
             # apply thresholding
             prob_mask = logits_mask.sigmoid()
-            #pred_mask = (prob_mask > 0.5).float()
+            # pred_mask = (prob_mask > 0.5).float()
             pred_mask = (prob_mask > 0.5).long()
 
-            # Compute true positives, false positives, false negatives, and true negatives
-            tp, fp, fn, tn = smp.metrics.get_stats(
-                pred_mask, mask, mode="binary"
-            )
+            # Compute true positives, false positives, false negatives,
+            # and true negatives
+            tp, fp, fn, tn = smp.metrics.get_stats(pred_mask, mask, mode="binary")
 
         return {
             "loss": loss,
@@ -369,9 +366,7 @@ class PlModule(pl.LightningModule):
         # save best model monitoring validation loss
         if self.current_epoch > 4 and self.best_loss > self.current_loss:
             self.best_loss = self.current_loss
-            best_model_path = (
-                f"{self.model_path_base}_epoch{self.current_epoch}"
-            )
+            best_model_path = f"{self.model_path_base}_epoch{self.current_epoch}"
             print("\nsaving new best model...\n")
             self.model.save_pretrained(best_model_path, push_to_hub=False)
             if self.best_model_path:
@@ -393,9 +388,7 @@ class PlModule(pl.LightningModule):
 
     def configure_optimizers(self):
         # weight_decay should be in the range 0, 0.05
-        optimizer = torch.optim.Adam(
-            self.parameters(), lr=2e-4, weight_decay=0.0
-        )
+        optimizer = torch.optim.Adam(self.parameters(), lr=2e-4, weight_decay=0.0)
         scheduler = lr_scheduler.CosineAnnealingLR(
             optimizer,
             T_max=self.t_max,
@@ -453,9 +446,6 @@ def smp_train(
     x_valid_dir = os.path.join(data_dir, "val_images")
     y_valid_dir = os.path.join(data_dir, "val_masks")
 
-    x_test_dir = os.path.join(data_dir, "test_images")
-    y_test_dir = os.path.join(data_dir, "test_masks")
-
     torch.set_float32_matmul_precision("medium")
 
     gdal.UseExceptions()
@@ -473,12 +463,6 @@ def smp_train(
         augmentation=get_validation_augmentation(img_size),
     )
 
-    test_dataset = GdalImageDataset(
-        x_test_dir,
-        y_test_dir,
-        augmentation=get_validation_augmentation(img_size),
-    )
-
     # pytorch dataloaders
     train_loader = DataLoader(
         train_dataset,
@@ -492,12 +476,6 @@ def smp_train(
         shuffle=False,
         num_workers=4,
     )
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=4,
-    )
 
     out_classes_model = out_classes
     if out_classes == 2:
@@ -506,18 +484,14 @@ def smp_train(
     # loading the model
     if input_model_path:
         if not Path(input_model_path).exists():
-            print(
-                f"ERROR: input model path {input_model_path} does not exist."
-            )
+            print(f"ERROR: input model path {input_model_path} does not exist.")
             sys.exit(1)
 
         print(f"Loading model saved at {input_model_path} ...")
         model = smp.from_pretrained(input_model_path)
 
         if not model:
-            print(
-                f"ERROR: failed to load input model from {input_model_path}."
-            )
+            print(f"ERROR: failed to load input model from {input_model_path}.")
             sys.exit(1)
     else:
         print(f"loading model {model_arch} with encoder {encoder_name} ...")

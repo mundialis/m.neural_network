@@ -131,7 +131,6 @@
 # %end
 
 
-
 import atexit
 import json
 import os
@@ -151,6 +150,7 @@ ID = grass.tempname(8)
 rm_files = list()
 ORIG_REGION = None
 rm_dirs = []
+
 
 def cleanup() -> None:
     """Clean up function calling general clean up from grass_gis_helpers."""
@@ -212,9 +212,9 @@ def main() -> None:
     segmentation_minsize = int(options["segmentation_minsize"])
     segmentation_threshold = float(options["segmentation_threshold"])
     if flags["a"]:
-        train_percentage = 0 # no training, only application preparation
+        train_percentage = 0  # no training, only application preparation
     elif flags["t"]:
-        train_percentage = 100 # all input for training
+        train_percentage = 100  # all input for training
     else:
         train_percentage = int(options["train_percentage"])
     output_dir = options["output_dir"]
@@ -359,11 +359,15 @@ def main() -> None:
     num_tr_tiles = round(train_percentage / 100.0 * num_tiles_total)
     if len(possible_tr_data) < num_tr_tiles:
         num_tr_tiles = len(possible_tr_data)
-        true_train_percentage = round(num_tr_tiles/num_tiles_total * 100)
-        grass.warning(_("Too many border tiles including null values. To "
-                        "ensure valid train tiles, the train percentage is "
-                        f"reduced to {true_train_percentage}."))
-        
+        true_train_percentage = round(num_tr_tiles / num_tiles_total * 100)
+        grass.warning(
+            _(
+                "Too many border tiles including null values. To "
+                "ensure valid train tiles, the train percentage is "
+                f"reduced to {true_train_percentage}."
+            )
+        )
+
     random.shuffle(possible_tr_data)
     tr_tiles = possible_tr_data[:num_tr_tiles]
     if train_percentage == 100:
@@ -385,9 +389,7 @@ def main() -> None:
             )
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update geojson values
-            geojson_dict["features"][tr_tile]["properties"][
-                "training"
-            ] = "TODO"
+            geojson_dict["features"][tr_tile]["properties"]["training"] = "TODO"
             geojson_dict["features"][tr_tile]["properties"]["path"] = tile_path
             # worker for export
             worker_export_tr = Module(

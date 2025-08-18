@@ -53,7 +53,7 @@ def read_image_gdal(filename, driver, output_file):
 
     width = ds.RasterXSize
     height = ds.RasterYSize
-    channel = ds.RasterCount  # should be 1
+    # channel = ds.RasterCount  # should be 1
     trans = ds.GetGeoTransform()
     proj = ds.GetProjection()
 
@@ -107,8 +107,10 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
     images_fps = [os.path.join(x_test_dir, image_id) for image_id in ids]
 
     # only tif, jp2 and vrt
-    # TODO: Statt alle tif, vrt oder jp2 Dateien in einem Ordner zu nehmen, eine Textdatei mit den Dateinamen einlesen
-    # Note: in der Textdatei könnten auch GDAL subdatasets, z.B. NETCDF:"sst.nc":tos definiert werden.
+    # TODO: Statt alle tif, vrt oder jp2 Dateien in einem Ordner zu nehmen, eine
+    # Textdatei mit den Dateinamen einlesen
+    # Note: in der Textdatei könnten auch GDAL subdatasets,
+    # z.B. NETCDF:"sst.nc":tos definiert werden.
     """
     os.chdir(x_test_dir)
     ids = sorted(
@@ -126,9 +128,7 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
             output_file = output_file.replace(".vrt", ".tif")
         elif output_file.endswith(".jp2"):
             output_file = output_file.replace(".jp2", ".tif")
-        elif not output_file.endswith(".tif") and not output_file.endswith(
-            ".jp2"
-        ):
+        elif not output_file.endswith(".tif") and not output_file.endswith(".jp2"):
             # only process tif, jp2 and vrt images
             continue
         # Load image

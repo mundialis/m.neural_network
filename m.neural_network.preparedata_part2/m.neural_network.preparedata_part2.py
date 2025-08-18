@@ -278,7 +278,7 @@ def main():
     tile_dict_all = []
     if apply_dir_in:
         all_apply_tiles = get_tile_infos(apply_dir_in, ttype="apply")
-        tile_dict_all+=all_apply_tiles
+        tile_dict_all += all_apply_tiles
 
     if train_dir_in:
         all_train_tiles = get_tile_infos(train_dir_in, ttype="training")
@@ -307,13 +307,9 @@ def main():
         num_test_tiles = round(test_percentage / 100.0 * len(all_train_tiles))
         random.shuffle(all_train_tiles)
         val_tiles = all_train_tiles[:num_val_tiles]
-        test_tiles = all_train_tiles[
-            num_val_tiles : num_val_tiles + num_test_tiles
-        ]
+        test_tiles = all_train_tiles[num_val_tiles:num_val_tiles + num_test_tiles]
         train_tiles = [
-            x
-            for x in all_train_tiles
-            if x not in val_tiles and x not in test_tiles
+            x for x in all_train_tiles if x not in val_tiles and x not in test_tiles
         ]
         grass.message(
             _(
@@ -328,9 +324,9 @@ def main():
         for d in test_tiles:
             d["type"] = "testing"
 
-        tile_dict_all+=train_tiles
-        tile_dict_all+=val_tiles
-        tile_dict_all+=test_tiles
+        tile_dict_all += train_tiles
+        tile_dict_all += val_tiles
+        tile_dict_all += test_tiles
 
     # prepare imagery/ndsm data as needed
     # argument list for parallel processing

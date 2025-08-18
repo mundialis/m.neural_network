@@ -26,6 +26,7 @@
 
 import os
 from pathlib import Path
+import sys
 
 import albumentations as A
 import matplotlib.pyplot as plt
@@ -84,7 +85,8 @@ class GdalImageDataset(BaseDataset):
             # file exists?
             if not Path(os.path.join(lbl_dir, mask_id)).exists():
                 print(
-                    f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> does not exist",
+                    f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> "
+                    "does not exist",
                 )
                 sys.exit(1)
 
@@ -239,9 +241,7 @@ def smp_test(data_dir, input_model_path, num_classes, class_names, output_path):
         augmentation=get_validation_augmentation(),
     )
 
-    test_loader = DataLoader(
-        test_dataset, batch_size=2, shuffle=False, num_workers=4
-    )
+    test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False, num_workers=4)
 
     # Compute confusion matrix and save plot
     print("evaluating the model ...")
