@@ -59,6 +59,7 @@ import grass.script as grass
 grass.utils.set_path(
     modulename="m.neural_network", dirname="smp_lib", path="..",
 )
+# pylint: disable=C0413
 from smp_lib.smp_inference import smp_infer
 
 

@@ -81,9 +81,9 @@ class GdalImageDataset(BaseDataset):
         mask_ids = []
         for image_id in self.ids:
             if image_id.endswith("_image.vrt"):
-                mask_ids = image_id.replace("_image.vrt", "_label.tif")
+                mask_id = image_id.replace("_image.vrt", "_label.tif")
             elif image_id.endswith("_image.tif"):
-                mask_ids = image_id.replace("_image.tif", "_label.tif")
+                mask_id = image_id.replace("_image.tif", "_label.tif")
             elif image_id.endswith(".vrt"):
                 mask_id = image_id.replace(".vrt", ".tif")
             else:
