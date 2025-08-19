@@ -27,11 +27,14 @@
 The <em>m.neural_network</em> toolset consists of several modules.
 
 <ul>
-<li><a href="m.neural_network.preparedata.html">m.neural_network.preparedata</a>: Prepares and exports tiles for the label process</li>
-<li><a href="m.neural_network.preparedata.worker_export.html">m.neural_network.preparedata.worker_export</a>: Worker for parallel processing for exporting for <b>m.neural_network.preparedata</b></li>
-<li><a href="m.neural_network.preparedata.worker_nullcells.html">m.neural_network.preparedata.worker_nullcells</a>: Worker to analyse the number of null cells in parallel for <b>m.neural_network.preparedata</b></li>
-<li><a href="m.neural_network.preparetraining.html">m.neural_network.preparetraining</a>: Prepares imagery and labelled data for training and application of a neural network.</li>
-<li><a href="m.neural_network.preparetraining.worker.html">m.neural_network.preparetraining</a>: Worker to rasterize labelled data in parallel for <b>m.neural_network.preparetraining</b><</li>
+<li><a href="m.neural_network.preparedata_part1.html">m.neural_network.preparedata_part1</a>: Prepares and exports tiles for the label process</li>
+<li><a href="m.neural_network.preparedata_part1.worker_export.html">m.neural_network.preparedata_part1.worker_export</a>: Worker for parallel processing for exporting for <b>m.neural_network.preparedata_part1</b></li>
+<li><a href="m.neural_network.preparedata_part1.worker_nullcells.html">m.neural_network.preparedata_part1.worker_nullcells</a>: Worker to analyse the number of null cells in parallel for <b>m.neural_network.preparedata_part1</b></li>
+<li><a href="m.neural_network.preparedata_part2.html">m.neural_network.preparedata_part2</a>: Prepares imagery and labelled data for training and application of a neural network.</li>
+<li><a href="m.neural_network.preparedata_part2.worker_label.html">m.neural_network.preparedata_part2</a>: Worker to rasterize labelled data in parallel for <b>m.neural_network.preparedata_part2</b></li>
+<li><a href="m.neural_network.train.html">m.neural_network.train</a>: training of a semantic segmentation model with smp libraries</li>
+<li><a href="m.neural_network.test.html">m.neural_nework.test</a>: calculation of statistics for quality assessment</li>
+<li><a href="m.neural_network.apply.html">m.neural_network.apply</a>: application of a trained model to new data</li>
 </ul>
 
 <h2>REQUIREMENTS</h2>
@@ -41,12 +44,17 @@ The following Python libraries are needed.
 <ul>
   <li>grass-gis-helpers>=2.2.0</li>
   <li>GDAL/OGR and Python bindings</li>
+  <li><a href="https://pytorch.org/get-started/locally/">pytorch</a>
+  <li><a href="https://pypi.org/project/segmentation-models-pytorch/">segmentation_models.pytorch</a>
+  <li><a href="https://pypi.org/project/pytorch-lightning/">pytorch-lightning</a>
+  <li><a href="https://pypi.org/project/albumentations/">albumentations</a>
 </ul>
 
 <h2>AUTHORS</h2>
 
 Anika Weinmann, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>, weinmann at mundialis.de
 <p>Guido Riembauer, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>, riembauer at mundialis.de</p>
+<p>Markus Metz, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>, metz at mundialis.de</p>
 <p>Victoria-Leandra Brunn, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>, brunn at mundialis.de</p>
 
 </div>

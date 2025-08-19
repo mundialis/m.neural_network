@@ -1,0 +1,51 @@
+<h2>DESCRIPTION</h2>
+
+<em>m.neural_network.train</em> trains or fine-tunes a neural network using the 
+<a href="https://github.com/qubvel-org/segmentation_models.pytorch">segmentation_models.pytorch</a>
+framework for semantic segmentation.
+
+<p>
+A new model can be trained by specifying the options 
+<em>img_size</em>, <em>out_classes</em>, <em>model_arch</em>, 
+<em>encoder_name</em>, <em>encoder_weights</em>, <em>in_channels</em>. 
+A locally saved model can be further trained (fine-tuned) by giving the 
+path to the previously saved model. For more information about available 
+encoder-decoder combinations, see the <a href="https://smp.readthedocs.io/en/latest/">smp documentation.</a>
+
+<p>
+A larger <em>batchsize</em> is generally better for training, but 
+requires more GPU RAM. A bit of experimentation is needed to find a 
+batch size that still fits into the GPU RAM.
+
+<h2>NOTES</h2>
+It is expected that all data lie in the directory structure and naming 
+format as created by <a 
+href="m.neural_network.preparedata_part1">m.neural_network.preparedata_part1</a>.
+
+<h2>EXAMPLES</h2>
+
+<div class="code"><pre>
+  m.neural_network.train data_dir=path/to/data/train/ output_model_path=path/to/model
+</pre></div>
+
+
+<h2>SEE ALSO</h2>
+
+<em>
+<a href="https://grass.osgeo.org/grass-stable/manuals/v.import.html">v.import</a>,
+<a href="https://grass.osgeo.org/grass-stable/manuals/g.region.html">g.region</a>
+<a href="https://grass.osgeo.org/grass-stable/manuals/r.mapcalc.html">r.mapcalc</a>,
+<a href="https://grass.osgeo.org/grass-stable/manuals/v.to.rast.html">v.to.rast</a>,
+</em>
+
+<h2>REQUIREMENTS</h2>
+<ul>
+  <li>GDAL and OGR Python bindings</li>
+  <li><a href="https://pytorch.org/get-started/locally/">pytorch</a>
+  <li><a href="https://pypi.org/project/segmentation-models-pytorch/">segmentation_models.pytorch</a>
+  <li><a href="https://pypi.org/project/pytorch-lightning/">pytorch-lightning</a>
+  <li><a href="https://pypi.org/project/albumentations/">albumentations</a>
+</ul>
+
+<h2>AUTHORS</h2>
+Victoria-Leandra Brunn, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:      m.neural_network.preparedata.worker_export
+# MODULE:      m.neural_network.preparedata_part1.worker_export
 # AUTHOR(S):   Guido Riembauer, Anika Weinmann
-# PURPOSE:     Worker module for m.neural_network.preparedata to export data
+# PURPOSE:     Worker module for m.neural_network.preparedata_part1 to export data
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team.
 #
@@ -15,7 +15,7 @@
 """
 
 # %Module
-# % description: Worker module for m.neural_network.preparedata to export data.
+# % description: Worker module for m.neural_network.preparedata_part1 to export data.
 # % keyword: raster
 # % keyword: export
 # % keyword: segmentation
@@ -140,7 +140,7 @@ def main() -> None:
     tr_flag = flags["t"]
 
     # get addon etc path
-    etc_path = get_lib_path(modname="m.neural_network.preparedata")
+    etc_path = get_lib_path(modname="m.neural_network.preparedata_part1")
     if etc_path is None:
         grass.fatal("Unable to find qml files!")
 
