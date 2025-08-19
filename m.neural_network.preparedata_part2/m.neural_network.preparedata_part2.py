@@ -311,9 +311,7 @@ def main():
         num_test_tiles = round(test_percentage / 100.0 * len(all_train_tiles))
         random.shuffle(all_train_tiles)
         val_tiles = all_train_tiles[:num_val_tiles]
-        test_tiles = all_train_tiles[
-            num_val_tiles : num_val_tiles + num_test_tiles
-        ]
+        test_tiles = all_train_tiles[num_val_tiles:num_val_tiles+num_test_tiles]
         train_tiles = [
             x
             for x in all_train_tiles
