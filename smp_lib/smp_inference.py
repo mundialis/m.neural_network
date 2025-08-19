@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-#
-#############################################################################
+"""############################################################################
 #
 # MODULE:      smp_inference.py
 # AUTHOR(S):   Markus Metz, mundialis
+# PURPOSE:     Apply a saved model from segmentation_models.pytorch.
 #
-# PURPOSE:     Apply a saved model from segmentation_models.pytorch
 # COPYRIGHT:   (C) 2025 by mundialis GmbH & Co. KG
 #
 # This program is free software; you can redistribute it and/or modify
@@ -18,7 +17,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-############################################################################
+#############################################################################
+"""
 
 # after a model from segmentation_models.pytorch has been trained (and finetuned)
 # use this locally saved model for inference

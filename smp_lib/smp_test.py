@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-#
-#############################################################################
+"""############################################################################
 #
 # MODULE:      smp_test.py
 # AUTHOR(S):   Markus Metz, mundialis
+# PURPOSE:     Test a trained and saved model from segmentation_models.pytorch.
 #
-# PURPOSE:     Test a trained and saved model from segmentation_models.pytorch
 # COPYRIGHT:   (C) 2025 by mundialis GmbH & Co. KG
 #
 # This program is free software; you can redistribute it and/or modify
@@ -18,27 +17,28 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-############################################################################
+#############################################################################
+"""
 
 # test a saved model: use a test dataset to compute a confusion matrix
 # and IoU per class
 
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
-import albumentations as A
+import albumentations
 import matplotlib.pyplot as plt
 import numpy as np
-from osgeo import gdal
 import segmentation_models_pytorch as smp
 import torch
+from osgeo import gdal
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as BaseDataset
 from torchmetrics.classification import (
-    MulticlassConfusionMatrix,
     BinaryConfusionMatrix,
+    MulticlassConfusionMatrix,
 )
 
 
@@ -128,9 +128,9 @@ class GdalImageDataset(BaseDataset):
 def get_validation_augmentation():
     """Add paddings to make image shape divisible by 32."""
     test_transform = [
-        A.PadIfNeeded(512, 512),
+        albumentations.PadIfNeeded(512, 512),
     ]
-    return A.Compose(test_transform)
+    return albumentations.Compose(test_transform)
 
 
 def evaluate_model(

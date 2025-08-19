@@ -4,6 +4,7 @@ ignore = [
     "A001", # shadowing variables
     "ANN001", # missing type annotation
     "ANN201", # Missing return type annotation for public function
+    "ANN204", # Missing return type annotation for special method `__getitem__`
     "BLE001", # catch blind exception
     "D205",
     "E402", # import after file join
@@ -13,8 +14,11 @@ ignore = [
     "FURB103", # `open` and `write` should be replaced by `Path(vrt).write_text(data, encoding="utf-8")`
     "INT001",
     "PLR0912", # allow > 12 branches (if/for/else/...)
+    "PLR0913", # Too many arguments in function definition (7 > 5)
     "PLR0914",
     "PLR0915",
+    "PLR0917", # Too many positional arguments (7/5)
+    "PLR2004", # e.g. Magic value used in comparison, consider replacing `100` with a constant variable
     "PLW0602",
     "PLW0603",
     "PTH103",
@@ -24,7 +28,9 @@ ignore = [
     "PTH120", # `os.path.dirname()` should be replaced by `Path.parent`
     "PTH123",
     "PTH208",
+    "S101", # Use of `assert` detected
     "S605", # using shell
+    "TRY003", # Avoid specifying long messages outside the exception class
     "F821", 
     "D203", 
     "D213",]

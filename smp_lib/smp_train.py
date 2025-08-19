@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-#
-#############################################################################
+"""############################################################################
 #
 # MODULE:      lib for semantic segmentation training with smp
 # AUTHOR(S):   Markus Metz, mundialis
+# PURPOSE:     Train a model from segmentation_models.pytorch.
 #
-# PURPOSE:     Train a model from segmentation_models.pytorch
 # COPYRIGHT:   (C) 2025 by mundialis GmbH & Co. KG
 #
-# This program is free software; you can redistribute it and/or modify
+# This program is free software. You can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
@@ -18,7 +17,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-############################################################################
+#############################################################################
+"""
 
 # train a model from segmentation_models.pytorch
 # use segmentation_models_pytorch tools and pytorch lightning for training
@@ -32,7 +32,7 @@ import shutil
 import sys
 from pathlib import Path
 
-import albumentations as A
+import albumentations
 import pytorch_lightning as pl
 import segmentation_models_pytorch as smp
 import torch
@@ -134,9 +134,9 @@ class GdalImageDataset(BaseDataset):
 def get_training_augmentation(img_size=512):
     """Define training augmentation."""
     train_transform = [
-        A.HorizontalFlip(p=0.5),
-        A.VerticalFlip(p=0.5),
-        A.Affine(
+        albumentations.HorizontalFlip(p=0.5),
+        albumentations.VerticalFlip(p=0.5),
+        albumentations.Affine(
             scale=(0.5, 1.5),
             rotate=(-180, 180),
             shear=(-10, 10),
@@ -144,51 +144,51 @@ def get_training_augmentation(img_size=512):
             border_mode=0,
             p=0.4,
         ),
-        A.PadIfNeeded(min_height=img_size, min_width=img_size),
-        A.RandomCrop(height=img_size, width=img_size, p=0.5),
-        A.GaussNoise(p=0.5),
-        A.Perspective(p=0.5),
-        A.OneOf(
+        albumentations.PadIfNeeded(min_height=img_size, min_width=img_size),
+        albumentations.RandomCrop(height=img_size, width=img_size, p=0.5),
+        albumentations.GaussNoise(p=0.5),
+        albumentations.Perspective(p=0.5),
+        albumentations.OneOf(
             [
-                # A.CLAHE(p=1), # only grayscale or RGB
-                A.RandomBrightnessContrast(
+                # albumentations.CLAHE(p=1), # only grayscale or RGB
+                albumentations.RandomBrightnessContrast(
                     brightness_limit=0.5,
                     contrast_limit=0.5,
                     p=0.5,
                 ),
-                A.RandomGamma(p=0.5),
+                albumentations.RandomGamma(p=0.5),
             ],
             p=0.9,
         ),
-        A.OneOf(
+        albumentations.OneOf(
             [
-                A.Sharpen(p=0.5),
-                A.Blur(blur_limit=3, p=0.5),
-                A.MotionBlur(blur_limit=3, p=0.5),
+                albumentations.Sharpen(p=0.5),
+                albumentations.Blur(blur_limit=3, p=0.5),
+                albumentations.MotionBlur(blur_limit=3, p=0.5),
             ],
             p=0.9,
         ),
-        A.OneOf(
+        albumentations.OneOf(
             [
-                A.RandomBrightnessContrast(
+                albumentations.RandomBrightnessContrast(
                     brightness_limit=0.5,
                     contrast_limit=0.5,
                     p=0.5,
                 ),
-                # A.HueSaturationValue(p=1), # only grayscale or RGB
+                # albumentations.HueSaturationValue(p=1), # only grayscale or RGB
             ],
             p=0.9,
         ),
     ]
-    return A.Compose(train_transform)
+    return albumentations.Compose(train_transform)
 
 
 def get_validation_augmentation(img_size=512):
     """Add paddings to make image shape divisible by 32."""
     test_transform = [
-        A.PadIfNeeded(img_size, img_size),
+        albumentations.PadIfNeeded(img_size, img_size),
     ]
-    return A.Compose(test_transform)
+    return albumentations.Compose(test_transform)
 
 
 class PlModule(pl.LightningModule):
@@ -245,7 +245,7 @@ class PlModule(pl.LightningModule):
         image = (image - self.mean) / self.std
         return self.model(image)
 
-    def shared_step(self, batch, stage):
+    def shared_step(self, batch):
         """Check mask as steps for train and apply data."""
         image, mask = batch
 
@@ -354,7 +354,7 @@ class PlModule(pl.LightningModule):
         self.current_loss = dataset_loss
         self.log_dict(metrics, prog_bar=False)
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch):
         """Train step."""
         train_loss_info = self.shared_step(batch, "train")
         self.training_step_outputs.append(train_loss_info)
@@ -365,7 +365,7 @@ class PlModule(pl.LightningModule):
         self.shared_epoch_end(self.training_step_outputs, "train")
         self.training_step_outputs.clear()
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch):
         """Validate step."""
         valid_loss_info = self.shared_step(batch, "valid")
         self.validation_step_outputs.append(valid_loss_info)
@@ -393,7 +393,7 @@ class PlModule(pl.LightningModule):
 
             self.best_model_path = best_model_path
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch):
         """Test step."""
         test_loss_info = self.shared_step(batch, "test")
         self.test_step_outputs.append(test_loss_info)
