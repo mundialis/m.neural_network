@@ -209,7 +209,11 @@ def evaluate_model(
 
 
 def smp_test(
-    data_dir, input_model_path, num_classes, class_names, output_path,
+    data_dir,
+    input_model_path,
+    num_classes,
+    class_names,
+    output_path,
 ):
     """Args:
     data_dir (string): root folder with training data
@@ -229,7 +233,8 @@ def smp_test(
     # hard-coded output file names
     plot_path = os.path.join(output_path, "confusion_matrix.png")
     norm_plot_path = os.path.join(
-        output_path, "confusion_matrix_normalized.png",
+        output_path,
+        "confusion_matrix_normalized.png",
     )
     iou_path = os.path.join(output_path, "iou_per_class")
 
@@ -250,7 +255,10 @@ def smp_test(
     )
 
     test_loader = DataLoader(
-        test_dataset, batch_size=2, shuffle=False, num_workers=4,
+        test_dataset,
+        batch_size=2,
+        shuffle=False,
+        num_workers=4,
     )
 
     # Compute confusion matrix and save plot

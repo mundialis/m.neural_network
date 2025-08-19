@@ -248,7 +248,8 @@ def main():
         train_test_images_dir = os.path.join(train_dir_out, "test_images")
         train_test_masks_dir = os.path.join(train_dir_out, "test_masks")
         train_singleband_vrt_dir = os.path.join(
-            train_dir_out, "singleband_vrts",
+            train_dir_out,
+            "singleband_vrts",
         )
         for c_dir in [
             train_dir_out,
@@ -268,7 +269,8 @@ def main():
         apply_dir_out = os.path.join(output, "apply")
         apply_img_dir = os.path.join(apply_dir_out, "apply_images")
         apply_singleband_vrt_dir = os.path.join(
-            apply_dir_out, "singleband_vrts",
+            apply_dir_out,
+            "singleband_vrts",
         )
         for c_dir in [
             apply_dir_out,

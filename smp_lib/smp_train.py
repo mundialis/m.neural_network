@@ -306,7 +306,9 @@ class PlModule(pl.LightningModule):
             # Compute true positives, false positives, false negatives,
             # and true negatives
             tp, fp, fn, tn = smp.metrics.get_stats(
-                pred_mask, mask, mode="binary",
+                pred_mask,
+                mask,
+                mode="binary",
             )
 
         return {
@@ -408,7 +410,9 @@ class PlModule(pl.LightningModule):
         """Configure optimizers."""
         # weight_decay should be in the range 0, 0.05
         optimizer = torch.optim.Adam(
-            self.parameters(), lr=2e-4, weight_decay=0.0,
+            self.parameters(),
+            lr=2e-4,
+            weight_decay=0.0,
         )
         scheduler = lr_scheduler.CosineAnnealingLR(
             optimizer,
