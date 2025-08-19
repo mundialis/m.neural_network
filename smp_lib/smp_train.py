@@ -245,7 +245,8 @@ class PlModule(pl.LightningModule):
         image = (image - self.mean) / self.std
         return self.model(image)
 
-    def shared_step(self, batch):
+    # ruff:noqa:ARG002 # Unused method argument
+    def shared_step(self, batch, stage):
         """Check mask as steps for train and apply data."""
         image, mask = batch
 
@@ -356,7 +357,8 @@ class PlModule(pl.LightningModule):
         self.current_loss = dataset_loss
         self.log_dict(metrics, prog_bar=False)
 
-    def training_step(self, batch):
+    # ruff:noqa:ARG002 # Unused method argument
+    def training_step(self, batch, batch_idx):
         """Train step."""
         train_loss_info = self.shared_step(batch, "train")
         self.training_step_outputs.append(train_loss_info)
@@ -367,7 +369,8 @@ class PlModule(pl.LightningModule):
         self.shared_epoch_end(self.training_step_outputs, "train")
         self.training_step_outputs.clear()
 
-    def validation_step(self, batch):
+    # ruff:noqa:ARG002 # Unused method argument
+    def validation_step(self, batch, batch_idx):
         """Validate step."""
         valid_loss_info = self.shared_step(batch, "valid")
         self.validation_step_outputs.append(valid_loss_info)
@@ -395,7 +398,8 @@ class PlModule(pl.LightningModule):
 
             self.best_model_path = best_model_path
 
-    def test_step(self, batch):
+    # ruff:noqa:ARG002 # Unused method argument
+    def test_step(self, batch, batch_idx):
         """Test step."""
         test_loss_info = self.shared_step(batch, "test")
         self.test_step_outputs.append(test_loss_info)
