@@ -43,7 +43,7 @@
 # % type: integer
 # % required: no
 # % description: edge width of tiles in cells, which will be cut of before patching (tile_overlap of grid)
-# % answer: 128
+# % answer: 64
 # %end
 
 # %option G_OPT_R_OUTPUT
@@ -92,7 +92,7 @@ def main():
     # save original region
     ORIG_REGION = f"original_region_{ID}"
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
-    
+
     reg = grass.region()
     res = reg["nsres"]
     edge_cut_meter = edge_cut * res
