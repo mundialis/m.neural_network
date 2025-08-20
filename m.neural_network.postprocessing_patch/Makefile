@@ -1,6 +1,6 @@
 MODULE_TOPDIR = ../..
 
-PGM = r.postprocessing.patch
+PGM = m.neural_network.postprocessing_patch
 
 include $(MODULE_TOPDIR)/include/Make/Script.make
 

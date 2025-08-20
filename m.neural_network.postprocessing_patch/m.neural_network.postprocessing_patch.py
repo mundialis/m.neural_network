@@ -2,7 +2,7 @@
 """
 ############################################################################
 #
-# MODULE:      r.postprocessing.patch
+# MODULE:      m.neural_network.postprocessing_patch
 # AUTHOR(S):   Lina Krisztian
 
 # PURPOSE:     Patches tiles resulting from neural network inference
@@ -29,8 +29,8 @@
 
 # %option G_OPT_F_INPUT
 # % key: tiles_filelist
-# % required: yes
-# % description: list of tiles, which should be patched (filename)
+# % required: no
+# % description: list of tiles, which should be patched (filename) (if not files within tiles_path should be used)
 # %end
 
 # %option G_OPT_M_DIR
@@ -95,8 +95,11 @@ def main():
     grass.run_command("g.region", save=orig_region, quiet=True)
 
     # Read all files into a list
-    with open(tiles_filelist, "r") as file:
-        tiles_list = [line.strip() for line in file]
+    if tiles_filelist:
+        with open(tiles_filelist, "r") as file:
+            tiles_list = [line.strip() for line in file]
+    else:
+        tiles_list = [f for f in os.listdir(tiles_path) if f.endswith(".tif")]
     
     grass.message(_("Importing tiles and cutting of edges ..."))
     rast_list = []
