@@ -1,4 +1,4 @@
-MODULE_TOPDIR = ../..
+MODULE_TOPDIR = ../../..
 
 PGM = m.neural_network.postprocessing_patch
 
