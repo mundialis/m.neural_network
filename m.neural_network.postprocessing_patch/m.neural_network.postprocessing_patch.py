@@ -40,10 +40,10 @@
 
 # %option
 # % key: edge_cut
-# % type: double
+# % type: integer
 # % required: no
-# % description: edge width of tiles in meter, which will be cut of before patching
-# % answer: 0
+# % description: edge width of tiles in cells, which will be cut of before patching (tile_overlap of grid)
+# % answer: 128
 # %end
 
 # %option G_OPT_R_OUTPUT
@@ -85,13 +85,17 @@ def main():
 
     tiles_filelist = options["tiles_filelist"]
     tiles_path = options["tiles_path"]
-    edge_cut = options["edge_cut"]
+    edge_cut = int(options["edge_cut"])
     output = options["output"]
     keep_border_tile_edges = flags["b"]
 
     # save original region
     ORIG_REGION = f"original_region_{ID}"
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
+    
+    reg = grass.region()
+    res = reg["nsres"]
+    edge_cut_meter = edge_cut * res
 
     # Read all files into a list
     if tiles_filelist:
@@ -119,10 +123,10 @@ def main():
         )
         grass.run_command(
             "g.region",
-            n=f"n-{edge_cut}",
-            s=f"s+{edge_cut}",
-            e=f"e-{edge_cut}",
-            w=f"w+{edge_cut}",
+            n=f"n-{edge_cut_meter}",
+            s=f"s+{edge_cut_meter}",
+            e=f"e-{edge_cut_meter}",
+            w=f"w+{edge_cut_meter}",
         )
         tiles_rast_cut = tiles.split(".")[0]
         rm_rasters.append(tiles_rast_cut)
@@ -152,10 +156,10 @@ def main():
         # add width of cutted tile edges to region
         grass.run_command(
             "g.region",
-            n=f"n+{edge_cut}",
-            s=f"s-{edge_cut}",
-            e=f"e+{edge_cut}",
-            w=f"w-{edge_cut}",
+            n=f"n+{edge_cut_meter}",
+            s=f"s-{edge_cut_meter}",
+            e=f"e+{edge_cut_meter}",
+            w=f"w-{edge_cut_meter}",
         )
         tmpfile = grass.tempfile()
         # Create file for input to buildvrt, in case of many input files
