@@ -50,6 +50,7 @@
 # % key: output
 # % required: yes
 # % description: patched tiles output
+# % answer: classification_patch
 # %end
 
 # %flag
