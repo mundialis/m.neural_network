@@ -107,7 +107,11 @@ def main():
 
     grass.message(_("Importing tiles and cutting of edges ..."))
     rast_list = []
-    for tiles in tiles_list:
+    tot_num_tiles = len(tiles_list)
+    for num_tiles_ind, tiles in enumerate(tiles_list):
+        if num_tiles_ind % 50 == 0 or num_tiles_ind == tot_num_tiles:
+            percent = int(100 * num_tiles_ind / tot_num_tiles)
+            grass.message(f"{percent}%")
         tiles_rast = f"{tiles.split('.')[0]}_tmp"
         rm_rasters.append(tiles_rast)
         # Import data
@@ -115,6 +119,7 @@ def main():
             "r.import",
             input=os.path.join(tiles_path, tiles),
             output=tiles_rast,
+            quiet=True,
         )
         # Cut edges
         grass.run_command(
@@ -134,6 +139,7 @@ def main():
         grass.run_command(
             "r.mapcalc",
             expression=f"{tiles_rast_cut} = {tiles_rast}",
+            quiet=True,
         )
         rast_list.append(tiles_rast_cut)
 
