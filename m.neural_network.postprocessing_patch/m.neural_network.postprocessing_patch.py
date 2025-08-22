@@ -109,7 +109,7 @@ def main():
     rast_list = []
     tot_num_tiles = len(tiles_list)
     for num_tiles_ind, tiles in enumerate(tiles_list):
-        if num_tiles_ind % 50 == 0 or num_tiles_ind == tot_num_tiles:
+        if num_tiles_ind % 50 == 0 or num_tiles_ind == (tot_num_tiles-1):
             percent = int(100 * num_tiles_ind / tot_num_tiles)
             grass.message(f"{percent}%")
         tiles_rast = f"{tiles.split('.')[0]}_tmp"
