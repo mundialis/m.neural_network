@@ -1,0 +1,6 @@
+albumentations
+matplotlib
+segmentation_models.pytorch
+torch
+pytorch-lightning
+# Note: torch/pytorch-lightning might require numpy==1.26.4

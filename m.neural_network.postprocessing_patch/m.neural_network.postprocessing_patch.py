@@ -82,7 +82,7 @@ def cleanup():
 
 def main():
     """r.postprocessing.patch main function."""
-    global ID, ORIG_REGION, rm_rasters
+    global ORIG_REGION
 
     tiles_filelist = options["tiles_filelist"]
     tiles_path = options["tiles_path"]
@@ -109,7 +109,7 @@ def main():
     rast_list = []
     tot_num_tiles = len(tiles_list)
     for num_tiles_ind, tiles in enumerate(tiles_list):
-        if num_tiles_ind % 50 == 0 or num_tiles_ind == tot_num_tiles:
+        if num_tiles_ind % 50 == 0 or num_tiles_ind == (tot_num_tiles - 1):
             percent = int(100 * num_tiles_ind / tot_num_tiles)
             grass.message(f"{percent}%")
         tiles_rast = f"{tiles.split('.')[0]}_tmp"
@@ -171,8 +171,7 @@ def main():
         tmpfile = grass.tempfile()
         # Create file for input to buildvrt, in case of many input files
         with open(tmpfile, "w", encoding="utf-8") as f:
-            for rast in rast_list:
-                f.write(f"{rast}_tmp\n")
+            f.writelines(f"{rast}_tmp\n" for rast in rast_list)
         buildvrt_out = f"vrt_all_no_edges_cut_{ID}"
         rm_rasters.append(buildvrt_out)
         grass.message(_("Creating VRT without cutted edges ..."))
