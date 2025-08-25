@@ -82,7 +82,7 @@ def cleanup():
 
 def main():
     """r.postprocessing.patch main function."""
-    global ID, ORIG_REGION, rm_rasters
+    global ORIG_REGION
 
     tiles_filelist = options["tiles_filelist"]
     tiles_path = options["tiles_path"]

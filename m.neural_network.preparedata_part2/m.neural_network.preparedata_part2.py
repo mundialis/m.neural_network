@@ -210,7 +210,7 @@ def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
 
 def main():
     """Run training and apply data preparation."""
-    global ORIG_REGION, rm_dirs
+    global ORIG_REGION
 
     train_dir_in = options["input_traindir"]
     apply_dir_in = options["input_applydir"]

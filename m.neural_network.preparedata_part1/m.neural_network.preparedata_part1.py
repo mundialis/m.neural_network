@@ -202,7 +202,7 @@ def main() -> None:
     with DOPs and nDOM split in train and apply tiles. Exporting tiles
     regarding to tileindex.
     """
-    global ORIG_REGION, rm_files
+    global ORIG_REGION
 
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
