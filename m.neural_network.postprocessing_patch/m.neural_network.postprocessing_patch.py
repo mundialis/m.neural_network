@@ -171,8 +171,7 @@ def main():
         tmpfile = grass.tempfile()
         # Create file for input to buildvrt, in case of many input files
         with open(tmpfile, "w", encoding="utf-8") as f:
-            for rast in rast_list:
-                f.write(f"{rast}_tmp\n")
+            f.writelines(f"{rast}_tmp\n" for rast in rast_list)
         buildvrt_out = f"vrt_all_no_edges_cut_{ID}"
         rm_rasters.append(buildvrt_out)
         grass.message(_("Creating VRT without cutted edges ..."))

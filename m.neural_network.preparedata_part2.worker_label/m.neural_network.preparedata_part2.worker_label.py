@@ -123,7 +123,7 @@ def main():
     output = options["output"]
 
     # switch to the new mapset
-    GISRC, NEWGISRC, old_mapset = switch_to_new_mapset(NEW_MAPSET)
+    GISRC, NEWGISRC, _old_mapset = switch_to_new_mapset(NEW_MAPSET)
     # get extent from reference img file
     info = gdal.Info(img_file, format="json")
     south = info["cornerCoordinates"]["lowerLeft"][1]
