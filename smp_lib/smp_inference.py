@@ -161,7 +161,7 @@ def smp_infer(data_dir, input_model_path, num_classes, output_path):
         )
         # Evaluate model output to discrete classes
         # + preserve nan values as no-data value
-        # (here no-data value 255)
+        # (here the no-data value is 255)
         if num_classes > 2:
             nan_mask = np.all(np.isnan(mask[0].cpu().numpy()), 0)
             mask = mask[0].argmax(0).cpu().numpy()
