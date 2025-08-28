@@ -42,7 +42,7 @@ from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as BaseDataset
 
-# from mmsegmentation LoadSingleRSImageFromFile()
+
 def read_image_gdal(filename):
     """Args:
     filename (string): path to file to read with GDAL.
