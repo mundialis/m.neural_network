@@ -556,7 +556,9 @@ def smp_train(
 
     # logger for training metrics
     logger = CSVLogger(
-        Path("./"), name=None, version=output_train_metrics_path,
+        Path("./"),
+        name=None,
+        version=output_train_metrics_path,
     )
 
     # checkpoint callback
