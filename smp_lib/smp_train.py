@@ -556,12 +556,12 @@ def smp_train(
 
     # logger for training metrics
     p_abs = Path(output_train_metrics_path).absolute()
-    p_base = os.path.basename(p_abs)
-    p_dir = os.path.dirname(p_abs)
+    p_base = Path(p_abs).name
+    p_dir = Path(p_abs).parent
     logger = CSVLogger(
-        Path(p_dir),
+        p_dir,
         name=None,
-        version=p_base,
+        version=f"{p_base}",
     )
 
     # checkpoint callback
