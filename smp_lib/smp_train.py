@@ -555,12 +555,13 @@ def smp_train(
     print("setting up pl trainer ...")
 
     # logger for training metrics
-    # the first argument save_dir is set to the current directory
-    # to avoid creation of nested directories like lightning_logs/version_0/
+    p_abs = Path(output_train_metrics_path).absolute()
+    p_base = os.path.basename(p_abs)
+    p_dir = os.path.dirname(p_abs)
     logger = CSVLogger(
-        Path("./"),
+        Path(p_dir),
         name=None,
-        version=output_train_metrics_path,
+        version=p_base,
     )
 
     # checkpoint callback
