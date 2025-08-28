@@ -555,7 +555,9 @@ def smp_train(
     print("setting up pl trainer ...")
 
     # logger for training metrics
-    logger = CSVLogger(Path("./"), name=None, version=output_train_metrics_path)
+    logger = CSVLogger(
+        Path("./"), name=None, version=output_train_metrics_path
+    )
 
     # checkpoint callback
     # https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.callbacks.ModelCheckpoint.html#lightning.pytorch.callbacks.ModelCheckpoint
