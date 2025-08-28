@@ -581,4 +581,8 @@ def smp_train(
         val_dataloaders=valid_loader,
     )
 
-    mymodule.model.save_pretrained(output_model_path, push_to_hub=False)
+    if mymodule.best_model_path:
+        # rename best_model_path to output_model_path
+        Path(mymodule.best_model_path).rename(output_model_path)
+    else:
+        mymodule.model.save_pretrained(output_model_path, push_to_hub=False)
