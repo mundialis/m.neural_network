@@ -40,7 +40,7 @@ from osgeo import gdal
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as BaseDataset
-
+from pytorch_lightning.loggers import CSVLogger
 
 # from mmsegmentation LoadSingleRSImageFromFile()
 def read_image_gdal(filename):
@@ -328,29 +328,19 @@ class PlModule(pl.LightningModule):
         fn = torch.cat([x["fn"] for x in outputs])
         tn = torch.cat([x["tn"] for x in outputs])
 
-        # Per-image IoU and dataset IoU calculations
-        per_image_iou = smp.metrics.iou_score(
-            tp,
-            fp,
-            fn,
-            tn,
-            reduction="micro-imagewise",
-        )
+        # metric calculations
         dataset_iou = smp.metrics.iou_score(tp, fp, fn, tn, reduction="micro")
         dataset_acc = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
-        dataset_prec = smp.metrics.precision(tp, fp, fn, tn, reduction="macro")
-        dataset_recall = smp.metrics.recall(tp, fp, fn, tn, reduction="macro")
+        dataset_f1 = smp.metrics.f1_score(tp, fp, fn, tn, reduction="macro")
 
         # loss
         loss = torch.stack([x["loss"] for x in outputs])
         dataset_loss = torch.mean(loss)
 
         metrics = {
-            f"{stage}_per_image_iou": per_image_iou,
             f"{stage}_dataset_iou": dataset_iou,
             f"{stage}_dataset_accuracy": dataset_acc,
-            f"{stage}_dataset_precision": dataset_prec,
-            f"{stage}_dataset_recall": dataset_recall,
+            f"{stage}_dataset_f1_score": dataset_f1,
             f"{stage}_dataset_loss": dataset_loss,
         }
 
@@ -443,6 +433,7 @@ def smp_train(
     encoder_weights="imagenet",
     input_model_path=None,
     output_model_path=None,
+    output_train_metrics_path=None,
     epochs=50,
     batch_size=8,
 ):
@@ -460,6 +451,7 @@ def smp_train(
         encoder_weights (string): name of pretrained weights, default "imagenet"
         input_model_path (string): path to trained and locally saved model
         output_model_path (string): path to save new model
+        output_train_metrics_path (string): path to save training metrics
         epochs (int): number of epochs for training
         batch_size (int): batch size for training
 
@@ -562,6 +554,9 @@ def smp_train(
 
     print("setting up pl trainer ...")
 
+    # logger for training metrics
+    logger = CSVLogger(Path("./"), name=None, version=output_train_metrics_path)
+
     # checkpoint callback
     # https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.callbacks.ModelCheckpoint.html#lightning.pytorch.callbacks.ModelCheckpoint
     # After training finishes, use best_model_path to retrieve the path to the best checkpoint file and best_model_score to retrieve its score.
@@ -573,8 +568,10 @@ def smp_train(
     # validation iou, precision, recall are all and always 0
     # without this callback, metrics improve as expected
     trainer = pl.Trainer(
+        logger=logger,
         max_epochs=epochs,
         log_every_n_steps=1,
+        enable_checkpointing=False
     )
 
     print("training ...")
