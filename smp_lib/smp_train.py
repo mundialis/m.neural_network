@@ -37,10 +37,10 @@ import pytorch_lightning as pl
 import segmentation_models_pytorch as smp
 import torch
 from osgeo import gdal
+from pytorch_lightning.loggers import CSVLogger
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as BaseDataset
-from pytorch_lightning.loggers import CSVLogger
 
 # from mmsegmentation LoadSingleRSImageFromFile()
 def read_image_gdal(filename):
@@ -571,7 +571,7 @@ def smp_train(
         logger=logger,
         max_epochs=epochs,
         log_every_n_steps=1,
-        enable_checkpointing=False
+        enable_checkpointing=False,
     )
 
     print("training ...")
