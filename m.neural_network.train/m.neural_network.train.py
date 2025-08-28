@@ -111,7 +111,19 @@
 # % label: Name of the output model directory.
 # %end
 
+# %option
+# % key: output_train_metrics_path
+# % type: string
+# % required: yes
+# % label: Name of the output directory containing the metrics of the training.
+# %end
+
+
+import os
+
 import grass.script as grass
+import matplotlib.pyplot as plt
+import pandas as pd
 
 # import module library
 grass.utils.set_path(
@@ -119,8 +131,34 @@ grass.utils.set_path(
     dirname="smp_lib",
     path="..",
 )
+
+
 # pylint: disable=C0413
 from smp_lib.smp_train import smp_train
+
+
+def plot_curve(epoch, y_train, y_val, y_label, outpath, ylim=None):
+    """Plot metric curves."""
+    plt.figure()
+    # query non-Nan values -> val and train metrics saved alternating per row
+    plt.plot(
+        epoch.drop_duplicates(),
+        y_train.dropna(),
+        "blue",
+        label="Training",
+    )
+    plt.plot(
+        epoch.drop_duplicates(),
+        y_val.dropna(),
+        "orange",
+        label="Validation",
+    )
+    if ylim:
+        plt.ylim(ylim)
+    plt.xlabel("Epoch")
+    plt.ylabel(y_label)
+    plt.legend()
+    plt.savefig(outpath)
 
 
 def main():
@@ -137,6 +175,7 @@ def main():
     kwargs["encoder_weights"] = options["encoder_weights"]
     kwargs["input_model_path"] = options["input_model_path"]
     kwargs["output_model_path"] = options["output_model_path"]
+    kwargs["output_train_metrics_path"] = options["output_train_metrics_path"]
     if options["epochs"]:
         kwargs["epochs"] = int(options["epochs"])
     if options["batch_size"]:
@@ -145,8 +184,52 @@ def main():
     grass.message("Training classification model...")
     smp_train(**kwargs)
 
+    # -- Create plots from train metrics
+    train_metrics_file = os.path.join(
+        options["output_train_metrics_path"],
+        "metrics.csv",
+    )
+    train_metrics = pd.read_csv(train_metrics_file, sep=",", header=0)
+    # Loss curve
+    plot_curve(
+        train_metrics["epoch"],
+        train_metrics["train_dataset_loss"],
+        train_metrics["valid_dataset_loss"],
+        "Loss",
+        os.path.join(options["output_train_metrics_path"], "loss.png"),
+    )
+    # Accuracy curve
+    plot_curve(
+        train_metrics["epoch"],
+        train_metrics["train_dataset_accuracy"],
+        train_metrics["valid_dataset_accuracy"],
+        "Accuracy",
+        os.path.join(options["output_train_metrics_path"], "accuracy.png"),
+        ylim=[0, 1],
+    )
+    # IoU curve
+    plot_curve(
+        train_metrics["epoch"],
+        train_metrics["train_dataset_iou"],
+        train_metrics["valid_dataset_iou"],
+        "Intersection over Union (IoU)",
+        os.path.join(options["output_train_metrics_path"], "iou.png"),
+        ylim=[0, 1],
+    )
+
+    # F1 curve
+    plot_curve(
+        train_metrics["epoch"],
+        train_metrics["train_dataset_f1"],
+        train_metrics["valid_dataset_f1"],
+        "F1 score",
+        os.path.join(options["output_train_metrics_path"], "f1_score.png"),
+        ylim=[0, 1],
+    )
+
     grass.message(
-        f"Classification model is trained and saved to {kwargs['output_model_path']}.",
+        f"Classification model is trained and saved to {options['output_model_path']}.\n"
+        f"Training metrics are saved here {options['output_train_metrics_path']}.",
     )
 
 
