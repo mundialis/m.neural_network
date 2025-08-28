@@ -235,6 +235,7 @@ class PlModule(pl.LightningModule):
         self.best_loss = 1000
         self.current_loss = 1000
         self.best_model_path = None
+        self.best_epoch = -1
         self.model_path_base = model_path_base.rstrip("/")
         self.t_max = t_max
 
@@ -387,6 +388,7 @@ class PlModule(pl.LightningModule):
                     shutil.rmtree(self.best_model_path, ignore_errors=True)
 
             self.best_model_path = best_model_path
+            self.best_epoch = self.current_epoch
 
     # ruff:noqa:ARG002 # Unused method argument
     def test_step(self, batch, batch_idx):
@@ -593,3 +595,6 @@ def smp_train(
         Path(mymodule.best_model_path).rename(output_model_path)
     else:
         mymodule.model.save_pretrained(output_model_path, push_to_hub=False)
+
+    if mymodule.best_epoch > 0:
+        print(f"best epoch: {mymodule.best_epoch}")
