@@ -216,7 +216,6 @@ def main():
         os.path.join(options["output_train_metrics_path"], "iou.png"),
         ylim=[0, 1],
     )
-
     # F1 curve
     plot_curve(
         train_metrics["epoch"],
@@ -228,8 +227,8 @@ def main():
     )
 
     grass.message(
-        f"Classification model is trained and saved to {options['output_model_path']}.\n"
-        f"Training metrics are saved here {options['output_train_metrics_path']}.",
+        f"Classification model is trained and saved to {options['output_model_path']}\n"
+        f"Training metrics are saved here {options['output_train_metrics_path']}",
     )
 
 
