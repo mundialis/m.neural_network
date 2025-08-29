@@ -28,8 +28,8 @@
 # https://github.com/qubvel-org/segmentation_models.pytorch/blob/main/examples/camvid_segmentation_multiclass.ipynb
 
 import os
-import shutil
 import sys
+import shutil
 from pathlib import Path
 
 import albumentations
@@ -94,6 +94,7 @@ class GdalImageDataset(BaseDataset):
                 print(
                     f"ERROR: label file <{os.path.join(lbl_dir, mask_id)}> "
                     "does not exist",
+                    file=sys.stderr,
                 )
                 sys.exit(1)
 
@@ -379,7 +380,7 @@ class PlModule(pl.LightningModule):
             best_model_path = (
                 f"{self.model_path_base}_epoch{self.current_epoch}"
             )
-            print("\nsaving new best model...\n")
+            print("\nsaving new best model...\n", file=sys.stderr)
             self.model.save_pretrained(best_model_path, push_to_hub=False)
             if self.best_model_path:
                 try:
@@ -459,7 +460,7 @@ def smp_train(
 
     """
     if output_model_path is None:
-        print("ERROR: output model path is required.")
+        print("ERROR: output model path is required.", file=sys.stderr)
         sys.exit(1)
 
     # dataset definitions
@@ -509,6 +510,7 @@ def smp_train(
         if not Path(input_model_path).exists():
             print(
                 f"ERROR: input model path {input_model_path} does not exist.",
+                file=sys.stderr,
             )
             sys.exit(1)
 
@@ -518,10 +520,14 @@ def smp_train(
         if not model:
             print(
                 f"ERROR: failed to load input model from {input_model_path}.",
+                file=sys.stderr,
             )
             sys.exit(1)
     else:
-        print(f"loading model {model_arch} with encoder {encoder_name} ...")
+        print(
+            f"loading model {model_arch} with encoder {encoder_name} ...",
+            file=sys.stderr,
+        )
         # handling special cases
         model_kwargs = {}
         if batch_size < 6 and model_arch.lower() in {"upernet", "manet"}:
@@ -554,7 +560,7 @@ def smp_train(
     )
     # small batchsizes: do not use batchnorm because pytorch batch_norm fails with small batch sizes
 
-    print("setting up pl trainer ...")
+    print("setting up pl trainer ...", file=sys.stderr)
 
     # logger for training metrics
     p_abs = Path(output_train_metrics_path).absolute()
@@ -583,7 +589,7 @@ def smp_train(
         enable_checkpointing=False,
     )
 
-    print("training ...")
+    print("training ...", file=sys.stderr)
     trainer.fit(
         mymodule,
         train_dataloaders=train_loader,
@@ -597,4 +603,4 @@ def smp_train(
         mymodule.model.save_pretrained(output_model_path, push_to_hub=False)
 
     if mymodule.best_epoch > 0:
-        print(f"best epoch: {mymodule.best_epoch}")
+        print(f"best epoch: {mymodule.best_epoch}", file=sys.stderr)
