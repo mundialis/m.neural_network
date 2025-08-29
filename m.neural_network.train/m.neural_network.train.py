@@ -184,6 +184,9 @@ def main():
     grass.message("Training classification model...")
     smp_train(**kwargs)
 
+    # -- Remove not needed README.me created by smp
+    os.remove(os.path.join(options["output_model_path"], "README.md"))
+
     # -- Create plots from train metrics
     train_metrics_file = os.path.join(
         options["output_train_metrics_path"],
