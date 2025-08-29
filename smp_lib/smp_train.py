@@ -28,8 +28,8 @@
 # https://github.com/qubvel-org/segmentation_models.pytorch/blob/main/examples/camvid_segmentation_multiclass.ipynb
 
 import os
-import sys
 import shutil
+import sys
 from pathlib import Path
 
 import albumentations
