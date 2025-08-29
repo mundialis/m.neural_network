@@ -228,7 +228,7 @@ def main():
 
     grass.message(
         f"Classification model is trained and saved to {options['output_model_path']}\n"
-        f"Training metrics are saved here {options['output_train_metrics_path']}",
+        f"Training metrics are saved to {options['output_train_metrics_path']}",
     )
 
 
