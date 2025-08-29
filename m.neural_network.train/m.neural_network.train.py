@@ -219,8 +219,8 @@ def main():
     # F1 curve
     plot_curve(
         train_metrics["epoch"],
-        train_metrics["train_dataset_f1"],
-        train_metrics["valid_dataset_f1"],
+        train_metrics["train_dataset_f1_score"],
+        train_metrics["valid_dataset_f1_score"],
         "F1 score",
         os.path.join(options["output_train_metrics_path"], "f1_score.png"),
         ylim=[0, 1],
