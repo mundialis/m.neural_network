@@ -121,6 +121,9 @@
 
 import os
 
+# pylint: disable=C0413
+import pathlib
+
 import grass.script as grass
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -133,7 +136,6 @@ grass.utils.set_path(
 )
 
 
-# pylint: disable=C0413
 from smp_lib.smp_train import smp_train
 
 
@@ -185,7 +187,9 @@ def main():
     smp_train(**kwargs)
 
     # -- Remove not needed README.me created by smp
-    os.remove(os.path.join(options["output_model_path"], "README.md"))
+    pathlib.Path(
+        os.path.join(options["output_model_path"], "README.md"),
+    ).unlink()
 
     # -- Create plots from train metrics
     train_metrics_file = os.path.join(
