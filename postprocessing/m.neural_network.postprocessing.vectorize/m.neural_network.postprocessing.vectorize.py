@@ -79,7 +79,7 @@ rm_vectors = []
 
 # cleanup function
 def cleanup():
-    """Cleanup fuction"""
+    """Cleanup fuction."""
     general_cleanup(
         orig_region=orig_region,
         rm_rasters=rm_rasters,
