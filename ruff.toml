@@ -30,6 +30,7 @@ ignore = [
     "PTH208",
     "S101", # Use of `assert` detected
     "S605", # using shell
+    "S608", # Possible SQL injection vector through string-based query construction
     "TRY003", # Avoid specifying long messages outside the exception class
     "F821", 
     "D203", 

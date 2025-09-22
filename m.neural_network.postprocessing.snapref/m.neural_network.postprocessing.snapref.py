@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""
-############################################################################
+"""############################################################################
 #
 # MODULE:      m.neural_network.postprocessing.snapref
-# AUTHOR(S):   Lina Krisztian
+# AUTHOR(S):   Lina Krisztian.
 
 # PURPOSE:     Merges classification vector with reference data.
 # COPYRIGHT:   (C) 2025 by mundialis GmbH & Co. KG and the GRASS Development
@@ -47,7 +46,7 @@
 # %option G_OPT_DB_COLUMN
 # % key: class_col
 # % required: yes
-# % description: Attribute column containig attribute of class number´
+# % description: Attribute column containig attribute of class number
 # % answer: class_number
 # %end
 
@@ -95,7 +94,6 @@
 import atexit
 
 import grass.script as grass
-
 from grass_gis_helpers.cleanup import general_cleanup
 
 # initialize global variables
@@ -113,17 +111,13 @@ def cleanup():
 
 def get_attributes(vecmap):
     """Get Attributes."""
-    class_col_list = list(
-        list(grass.parse_command("v.db.select", map=vecmap, separator=","))[
-            0
-        ].split(",")
+    return list(
+        next(iter(grass.parse_command("v.db.select", map=vecmap, separator=","))).split(","),
     )
-    return class_col_list
 
 
 def main():
-    """Main function of m.neural_network.postprocessing.snapref"""
-
+    """Run the main function of m.neural_network.postprocessing.snapref."""
     # check if v.rmarea installed
     if not grass.find_program("v.rmarea", "--help"):
         grass.fatal(
@@ -131,8 +125,8 @@ def main():
                 "The 'v.rmarea' addon was not found, "
                 "install it first:\n"
                 "g.extension v.rmarea "
-                "url=https://github.com/mundialis/v.rmarea"
-            )
+                "url=https://github.com/mundialis/v.rmarea",
+            ),
         )
 
     classification = options["a_input_classification"]
@@ -269,14 +263,12 @@ def main():
     class_col_list.remove("cat")
     for col in class_col_list:
         grass.run_command(
-            "v.db.renamecolumn", map=output, column=f"a_{col},{col}"
+            "v.db.renamecolumn", map=output, column=f"a_{col},{col}",
         )
     # Remove all attributes from reference
     ref_col_list = get_attributes(reference)
     del_col_list = [f"b_{el}" for el in ref_col_list]
-    del_col_list.append("a_cat")
-    del_col_list.append("compact")
-    del_col_list.append(f"b_{ref_bin_col}")
+    del_col_list.extend(("a_cat", "compact", f"b_{ref_bin_col}"))
     grass.run_command(
         "v.db.dropcolumn",
         map=output,

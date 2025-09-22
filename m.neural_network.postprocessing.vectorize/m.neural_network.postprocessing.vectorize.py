@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""
-############################################################################
+"""############################################################################
 #
 # MODULE:      m.neural_network.postprocessing.vectorize
-# AUTHOR(S):   Lina Krisztian
+# AUTHOR(S):   Lina Krisztian.
 
 # PURPOSE:     Vectorizes classification raster output and clean up results
 # COPYRIGHT:   (C) 2025 by mundialis GmbH & Co. KG and the GRASS Development
@@ -66,7 +65,6 @@
 import atexit
 
 import grass.script as grass
-
 from grass_gis_helpers.cleanup import general_cleanup
 
 # initialize global variables
@@ -87,7 +85,7 @@ def cleanup():
 
 
 def main():
-    """Main function of m.neural_network.postprocessing.vectorize."""
+    """Run the main function of m.neural_network.postprocessing.vectorize."""
     global orig_region
 
     classification_rast = options["input"]
