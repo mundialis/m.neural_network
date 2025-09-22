@@ -132,11 +132,11 @@ def main():
     # no "s" flag because this creates artifacts at the corners of the raster
     grass.run_command(
         "r.to.vect",
-        input = classification_rast_clean,
-        output = classification_vect_tmp1,
-        type = "area",
-        column = "class_number",
-        flags = "c",
+        input=classification_rast_clean,
+        output=classification_vect_tmp1,
+        type="area",
+        column="class_number",
+        flags="c",
     )
 
     # Generalize:
