@@ -88,7 +88,7 @@ def cleanup():
 
 
 def main():
-    """Main function of m.neural_network.postprocessing.vectorize"""
+    """Main function of m.neural_network.postprocessing.vectorize."""
     global ID, orig_region, rm_rasters, rm_vectors
 
     classification_rast = options["input"]
