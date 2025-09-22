@@ -112,7 +112,9 @@ def cleanup():
 def get_attributes(vecmap):
     """Get Attributes."""
     return list(
-        next(iter(grass.parse_command("v.db.select", map=vecmap, separator=","))).split(","),
+        next(
+            iter(grass.parse_command("v.db.select", map=vecmap, separator=","))
+        ).split(","),
     )
 
 
@@ -263,7 +265,9 @@ def main():
     class_col_list.remove("cat")
     for col in class_col_list:
         grass.run_command(
-            "v.db.renamecolumn", map=output, column=f"a_{col},{col}",
+            "v.db.renamecolumn",
+            map=output,
+            column=f"a_{col},{col}",
         )
     # Remove all attributes from reference
     ref_col_list = get_attributes(reference)
