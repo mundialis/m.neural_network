@@ -1,0 +1,29 @@
+<h2>DESCRIPTION</h2>
+
+<em>m.neural_network.postprocessing.vectorize </em> vectorizes the classification raster output and clean results: remove small areas, if set straighten lines.
+
+<h2>NOTE</h2>
+Requires GRASS 8.5 for the new <em>-c</em> flag of <em>r.to.vect</em>
+
+
+<h2>EXAMPLE</h2>
+
+<h3>Vectorize and cleanup given classification</h3>
+<div class="code"><pre>
+m.neural_network.postprocessing.vectorize input=classification_patch output=classification_vect
+</pre></div>
+
+<h3>Vectorize and cleanup given classification, including straightening of lines</h3>
+<div class="code"><pre>
+m.neural_network.postprocessing.vectorize input=classification_patch output=classification_vect generalize_thres=0.2
+</pre></div>
+
+
+<h2>SEE ALSO</h2>
+<em>
+<a href="r.to.vect.html">r.to.vect</a>,
+</em>
+
+<h2>AUTHORS</h2>
+
+Lina Krisztian, <a href="https://www.mundialis.de/">mundialis</a>
