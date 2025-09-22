@@ -127,7 +127,6 @@ import pathlib
 import grass.script as grass
 import matplotlib.pyplot as plt
 import pandas as pd
-
 from geo_neural_network.smp_lib.smp_train import smp_train
 
 
