@@ -100,7 +100,6 @@ def main():
     orig_region = f"original_region_{ID}"
     grass.run_command("g.region", save=orig_region, quiet=True)
 
-
     grass.run_command(
             "g.region",
             raster = classification_rast,
