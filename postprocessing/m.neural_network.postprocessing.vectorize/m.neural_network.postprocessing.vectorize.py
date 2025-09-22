@@ -102,7 +102,7 @@ def main():
 
     grass.run_command(
             "g.region",
-            raster = classification_rast,
+            raster=classification_rast,
         )
 
     if not options["generalize_thres"]:
