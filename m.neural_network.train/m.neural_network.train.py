@@ -127,16 +127,7 @@ import pathlib
 import grass.script as grass
 import matplotlib.pyplot as plt
 import pandas as pd
-
-# import module library
-grass.utils.set_path(
-    modulename="m.neural_network",
-    dirname="smp_lib",
-    path="..",
-)
-
-
-from smp_lib.smp_train import smp_train
+from geo_neural_network.smp_lib.smp_train import smp_train
 
 
 def plot_curve(epoch, y_train, y_val, y_label, outpath, ylim=None):
