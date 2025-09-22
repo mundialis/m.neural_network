@@ -1,5 +1,6 @@
 geo_neural_network
+gdal
 grass_gis_helpers
 matplotlib
-osgeo
+ogr
 pandas
