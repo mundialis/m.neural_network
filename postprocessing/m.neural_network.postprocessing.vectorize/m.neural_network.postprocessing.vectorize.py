@@ -148,11 +148,11 @@ def main():
         rm_vectors.append(classification_vect_tmp_s1)
         grass.run_command(
             "v.generalize",
-            input = classification_vect_tmp1,
-            output = classification_vect_tmp_s1,
-            type = "area",
-            method = "chaiken",
-            threshold = generalize_thres,
+            input=classification_vect_tmp1,
+            output=classification_vect_tmp_s1,
+            type="area",
+            method="chaiken",
+            threshold=generalize_thres,
         )
 
         # restore corners
