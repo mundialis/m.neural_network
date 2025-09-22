@@ -108,21 +108,18 @@ rm_vectors = []
 def cleanup():
     """Cleanup fuction."""
     general_cleanup(
-        rm_vectors = rm_vectors,
+        rm_vectors=rm_vectors,
     )
 
 
 def get_attributes(vecmap):
     class_col_list = list(
-        list(
-            grass.parse_command(
-                "v.db.select",
-                map = vecmap,
-                separator= ","
-                )
-            )[0].split(",")
-        )
+        list(grass.parse_command("v.db.select", map=vecmap, separator=","))[
+            0
+        ].split(",")
+    )
     return class_col_list
+
 
 def main():
     """Main function of m.neural_network.postprocessing.snapref"""
@@ -155,35 +152,35 @@ def main():
     rm_vectors.append(ref_select_of_class)
     grass.run_command(
         "v.select",
-        ainput = reference,
-        atype = "area",
-        binput = classification,
-        btype = "area",
-        out = ref_select_of_class,
-        operator = "overlap",
+        ainput=reference,
+        atype="area",
+        binput=classification,
+        btype="area",
+        out=ref_select_of_class,
+        operator="overlap",
     )
 
     # Dissolve reference data
     ref_bin_col = f"ref_binary_{ID}"
     grass.run_command(
         "v.db.addcolumn",
-        map = ref_select_of_class,
-        column = f"{ref_bin_col} integer",
+        map=ref_select_of_class,
+        column=f"{ref_bin_col} integer",
     )
     grass.run_command(
         "v.db.update",
-        map = ref_select_of_class,
-        column = ref_bin_col,
-        value = 1,
+        map=ref_select_of_class,
+        column=ref_bin_col,
+        value=1,
     )
     ref_select_of_class_diss = f"ref_select_of_class_diss_{ID}"
     rm_vectors.append(ref_select_of_class_diss)
     grass.run_command(
         "v.extract",
-        input = ref_select_of_class,
-        output = ref_select_of_class_diss,
-        dissolve_column = ref_bin_col,
-        flags = "d",
+        input=ref_select_of_class,
+        output=ref_select_of_class_diss,
+        dissolve_column=ref_bin_col,
+        flags="d",
     )
 
     # merge data
@@ -191,28 +188,28 @@ def main():
     rm_vectors.append(classification_with_ref)
     grass.run_command(
         "v.overlay",
-        ainput = classification,
-        binput = ref_select_of_class_diss,
-        output = classification_with_ref,
-        operator = "or",
-        snap = 0.000001,
+        ainput=classification,
+        binput=ref_select_of_class_diss,
+        output=classification_with_ref,
+        operator="or",
+        snap=0.000001,
     )
 
     # set dummy value for null-value of merge_col of reference data (no reference data)
     grass.run_command(
         "v.db.update",
-        map = classification_with_ref,
-        column = merge_col,
-        value = merge_col_null_value,
-        where = f"{merge_col} is null"
+        map=classification_with_ref,
+        column=merge_col,
+        value=merge_col_null_value,
+        where=f"{merge_col} is null",
     )
 
     # Compute compactness
     grass.run_command(
         "v.to.db",
-        map = classification_with_ref,
-        column = "compact",
-        option = "compact",
+        map=classification_with_ref,
+        column="compact",
+        option="compact",
     )
 
     # Cleanup within reference areas
@@ -220,13 +217,12 @@ def main():
     rm_vectors.append(classification_with_ref_clean_1)
     grass.run_command(
         "v.rmarea",
-        input = classification_with_ref,
-        output = classification_with_ref_clean_1,
-        column = merge_col,
-        where = rmarea_where_inside,
-        threshold = rmarea_thres_inside,
-        flags = "n",
-
+        input=classification_with_ref,
+        output=classification_with_ref_clean_1,
+        column=merge_col,
+        where=rmarea_where_inside,
+        threshold=rmarea_thres_inside,
+        flags="n",
     )
 
     # Cleanup outside reference areas
@@ -234,39 +230,36 @@ def main():
     rm_vectors.append(classification_with_ref_clean_2)
     grass.run_command(
         "v.rmarea",
-        input = classification_with_ref_clean_1,
-        output = classification_with_ref_clean_2,
-        column = merge_col,
-        where = rmarea_where_outside,
-        threshold = rmarea_thres_outside,
-        flags = "n",
-
+        input=classification_with_ref_clean_1,
+        output=classification_with_ref_clean_2,
+        column=merge_col,
+        where=rmarea_where_outside,
+        threshold=rmarea_thres_outside,
+        flags="n",
     )
 
     # Dissolve areas of same class number
-    classification_with_ref_clean_diss = f"classification_with_ref_clean_diss_{ID}"
+    classification_with_ref_clean_diss = (
+        f"classification_with_ref_clean_diss_{ID}"
+    )
     rm_vectors.append(classification_with_ref_clean_diss)
     grass.run_command(
         "v.extract",
-        input = classification_with_ref_clean_2,
-        output = classification_with_ref_clean_diss,
-        dissolve_column = class_col,
-        flags = "d",
+        input=classification_with_ref_clean_2,
+        output=classification_with_ref_clean_diss,
+        dissolve_column=class_col,
+        flags="d",
     )
-
 
     # Cut to region extent (cut of reference data outside of classification AOI)
     region_vect = f"region_vect_{ID}"
     rm_vectors.append(region_vect)
-    grass.run_command(
-        "v.in.region",
-        output = region_vect
-    )
+    grass.run_command("v.in.region", output=region_vect)
     grass.run_command(
         "v.clip",
-        input = classification_with_ref_clean_diss,
-        output = output,
-        clip = region_vect,
+        input=classification_with_ref_clean_diss,
+        output=output,
+        clip=region_vect,
     )
 
     # -- Cleanup attributes
@@ -277,9 +270,7 @@ def main():
     class_col_list.remove("cat")
     for col in class_col_list:
         grass.run_command(
-            "v.db.renamecolumn",
-            map = output,
-            column = f"a_{col},{col}"
+            "v.db.renamecolumn", map=output, column=f"a_{col},{col}"
         )
     # Remove all attributes from reference
     ref_col_list = get_attributes(reference)
@@ -289,8 +280,8 @@ def main():
     del_col_list.append(f"b_{ref_bin_col}")
     grass.run_command(
         "v.db.dropcolumn",
-        map = output,
-        columns = del_col_list,
+        map=output,
+        columns=del_col_list,
     )
 
 

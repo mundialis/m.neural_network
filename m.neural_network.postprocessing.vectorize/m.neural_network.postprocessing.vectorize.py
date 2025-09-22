@@ -101,9 +101,9 @@ def main():
     grass.run_command("g.region", save=orig_region, quiet=True)
 
     grass.run_command(
-            "g.region",
-            raster=classification_rast,
-        )
+        "g.region",
+        raster=classification_rast,
+    )
 
     if not options["generalize_thres"]:
         rinfo = grass.raster_info(classification_rast)
@@ -211,21 +211,21 @@ def main():
     rm_vectors.append(classification_vect_tmp2)
     grass.run_command(
         "v.generalize",
-        input = last_tmp_class_vect,
-        output = classification_vect_tmp2,
-        type = "area",
-        method = "douglas",
-        threshold = generalize_thres,
+        input=last_tmp_class_vect,
+        output=classification_vect_tmp2,
+        type="area",
+        method="douglas",
+        threshold=generalize_thres,
     )
 
     # second run with slightly larger threshold
     grass.run_command(
         "v.generalize",
-        input = classification_vect_tmp2,
-        output = classification_vect,
-        type = "area",
-        method = "douglas",
-        threshold = generalize_thres * 1.5,
+        input=classification_vect_tmp2,
+        output=classification_vect,
+        type="area",
+        method="douglas",
+        threshold=generalize_thres * 1.5,
     )
 
 
