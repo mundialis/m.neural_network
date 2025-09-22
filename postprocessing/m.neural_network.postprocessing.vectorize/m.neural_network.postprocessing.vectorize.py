@@ -118,11 +118,11 @@ def main():
     rm_rasters.append(classification_rast_clean)
     grass.run_command(
         "r.reclass.area",
-        input = classification_rast,
-        output = classification_rast_clean,
-        mode = "lesser",
-        method = "rmarea",
-        value = rmarea_thres,
+        input=classification_rast,
+        output=classification_rast_clean,
+        mode="lesser",
+        method="rmarea",
+        value=rmarea_thres,
     )
 
     # Vectorize data
