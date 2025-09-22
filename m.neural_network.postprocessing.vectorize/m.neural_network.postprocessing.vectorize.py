@@ -64,7 +64,6 @@
 
 # import needed libraries
 import atexit
-import os
 
 import grass.script as grass
 
@@ -178,7 +177,8 @@ def main():
 
         grass.run_command(
             "db.execute",
-            sql=f"update {classification_vect_tmp_s2} set a_class_number = null where b_class_number is null",
+            sql=f"update {classification_vect_tmp_s2} set a_class_number = "
+            "null where b_class_number is null",
         )
 
         grass.run_command(
