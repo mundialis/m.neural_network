@@ -61,14 +61,8 @@
 
 import grass.script as grass
 
-# import module library
-grass.utils.set_path(
-    modulename="m.neural_network",
-    dirname="smp_lib",
-    path="..",
-)
 # pylint: disable=C0413
-from smp_lib.smp_test import smp_test
+from geo_neural_network.smp_lib.smp_test import smp_test
 
 
 def main():

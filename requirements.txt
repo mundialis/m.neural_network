@@ -1,6 +1,5 @@
-albumentations
+geo_neural_network
+grass_gis_helpers
 matplotlib
-segmentation_models.pytorch
-torch
-pytorch-lightning
-# Note: torch/pytorch-lightning might require numpy==1.26.4
+osgeo
+pandas
