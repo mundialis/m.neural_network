@@ -106,7 +106,7 @@ rm_vectors = []
 
 # cleanup function
 def cleanup():
-    """Cleanup fuction"""
+    """Cleanup fuction."""
     general_cleanup(
         rm_vectors = rm_vectors,
     )
