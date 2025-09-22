@@ -71,7 +71,7 @@ from grass_gis_helpers.cleanup import general_cleanup
 
 # initialize global variables
 ID = grass.tempname(12)
-orig_region = None
+orig_region = None # pylint: disable=invalid-name
 rm_rasters = []
 rm_vectors = []
 
@@ -88,7 +88,7 @@ def cleanup():
 
 def main():
     """Main function of m.neural_network.postprocessing.vectorize."""
-    global ID, orig_region, rm_rasters, rm_vectors
+    global orig_region
 
     classification_rast = options["input"]
     classification_vect = options["output"]

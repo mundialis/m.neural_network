@@ -93,7 +93,6 @@
 
 # import needed libraries
 import atexit
-import os
 
 import grass.script as grass
 
@@ -113,6 +112,7 @@ def cleanup():
 
 
 def get_attributes(vecmap):
+    """Get Attributes."""
     class_col_list = list(
         list(grass.parse_command("v.db.select", map=vecmap, separator=","))[
             0
@@ -123,7 +123,6 @@ def get_attributes(vecmap):
 
 def main():
     """Main function of m.neural_network.postprocessing.snapref"""
-    global ID, rm_vectors
 
     # check if v.rmarea installed
     if not grass.find_program("v.rmarea", "--help"):
