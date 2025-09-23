@@ -1,0 +1,27 @@
+<h2>DESCRIPTION</h2>
+
+<em>m.neural_network.postprocessing.snapref </em> merges classification vector with reference data.
+
+
+<h2>EXAMPLE</h2>
+
+<h3>Cleanup with ALKIS Gebäude</h3>
+<div class="code"><pre>
+m.neural_network.postprocessing.snapref \
+    a_input_classification=classification_vect b_input_reference=AX_Gebaeude \
+    output=classification_vect_clean_v01 \
+    merge_col=gebaeudefunktion \
+    rmarea_thres_inside=50 rmarea_where_inside="a_class_number <> 1 and b_gebaeudefunktion <> -1" \
+    rmarea_thres_outside=150 rmarea_where_outside="a_class_number = 1 and b_gebaeudefunktion = -1 and compact > 3.8"
+
+
+</pre></div>
+
+<h2>SEE ALSO</h2>
+<em>
+<a href="v.overlay.html">v.overlay</a>,
+</em>
+
+<h2>AUTHORS</h2>
+
+Lina Krisztian, <a href="https://www.mundialis.de/">mundialis</a>

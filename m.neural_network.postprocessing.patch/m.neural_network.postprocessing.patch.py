@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:      m.neural_network.postprocessing_patch
+# MODULE:      m.neural_network.postprocessing.patch
 # AUTHOR(S):   Lina Krisztian.
 
 # PURPOSE:     Patches tiles resulting from neural network inference.

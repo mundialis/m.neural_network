@@ -1,11 +1,12 @@
 
 [lint]
-ignore = [ 
+ignore = [
     "A001", # shadowing variables
     "ANN001", # missing type annotation
     "ANN201", # Missing return type annotation for public function
     "ANN204", # Missing return type annotation for special method `__getitem__`
     "BLE001", # catch blind exception
+    "COM812", # Trailing comma missing
     "D205",
     "E402", # import after file join
     "E501", # allow > 79 characters
@@ -30,7 +31,8 @@ ignore = [
     "PTH208",
     "S101", # Use of `assert` detected
     "S605", # using shell
+    "S608", # Possible SQL injection vector through string-based query construction
     "TRY003", # Avoid specifying long messages outside the exception class
-    "F821", 
-    "D203", 
+    "F821",
+    "D203",
     "D213",]
