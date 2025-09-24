@@ -36,7 +36,7 @@ v.import input=${PATH_TO_TESTDATA}/input/ref_data_trees.gpkg output=ref_data_tre
 
 m.neural_network.preparedata_part1 image_bands=dop.1,dop.2,dop.3,dop.4 ndsm=ndsm output_dir=${PATH_TO_TESTDATA}/output/preparedata_part1 || errormsg "ERROR: m.neural_network.preparedata_part1 failed"
 
-m.neural_network.preparedata_part2 input_traindir=${PATH_TO_TESTDATA}/input/preparedata_part2_labeled_train_data input_applydir=${PATH_TO_TESTDATA}//output/preparedata_part1/apply test_percentage=10 output=${PATH_TO_TESTDATA}/output/preparedata_part2 || errormsg "ERROR: m.neural_network.preparedata_part2 failed"
+m.neural_network.preparedata_part2 input_traindir=${PATH_TO_TESTDATA}/input/preparedata_part1/train input_applydir=${PATH_TO_TESTDATA}/output/preparedata_part1/apply test_percentage=10 output=${PATH_TO_TESTDATA}/output/preparedata_part2 || errormsg "ERROR: m.neural_network.preparedata_part2 failed"
 
 # Model Training and evaluation
 
@@ -44,7 +44,7 @@ m.neural_network.train data_dir=${PATH_TO_TESTDATA}/output/preparedata_part2/tra
 
 m.neural_network.test data_dir=${PATH_TO_TESTDATA}/output/preparedata_part2/train input_model_path=${PATH_TO_TESTDATA}/input/example_model output_path=${PATH_TO_TESTDATA}/output/model_testdata_evaluation || errormsg "ERROR: m.neural_network.test failed"
 
-m.neural_network.apply data_dir=${PATH_TO_TESTDATA}/input/preparedata_part2_apply_data input_model_path=${PATH_TO_TESTDATA}/input/example_model/ output_path=${PATH_TO_TESTDATA}/output/applied_model || errormsg "ERROR: m.neural_network.apply failed"
+m.neural_network.apply data_dir=${PATH_TO_TESTDATA}/input/preparedata_part2/apply input_model_path=${PATH_TO_TESTDATA}/input/example_model/ output_path=${PATH_TO_TESTDATA}/output/applied_model || errormsg "ERROR: m.neural_network.apply failed"
 
 # # Postprocessing
 
