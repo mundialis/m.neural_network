@@ -1,9 +1,13 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Small example script, for testing the m.neural_network Addons
 
-# TODO: adjust path (see also README.md)
+# For testdata see also README.md within this folder
+
+# TODO: adjust path
 PATH_TO_TESTDATA=/path/to/testdata/
+
+# ---- Don't change anything below
 
 # -- Setup
 
@@ -29,7 +33,6 @@ r.import input=${PATH_TO_TESTDATA}/input/ndsm.tif output=ndsm
 g.region raster=dop.1 -p
 v.import input=${PATH_TO_TESTDATA}/input/ref_data_trees.gpkg output=ref_data_trees
 
-
 # -- Test Addons
 
 # Data preparation
@@ -46,7 +49,7 @@ m.neural_network.test data_dir=${PATH_TO_TESTDATA}/output/preparedata_part2/trai
 
 m.neural_network.apply data_dir=${PATH_TO_TESTDATA}/input/preparedata_part2/apply input_model_path=${PATH_TO_TESTDATA}/input/example_model/ output_path=${PATH_TO_TESTDATA}/output/applied_model || errormsg "ERROR: m.neural_network.apply failed"
 
-# # Postprocessing
+# Postprocessing
 
 m.neural_network.postprocessing.patch tiles_path=${PATH_TO_TESTDATA}/output/applied_model output=applied_model_raster  || errormsg "ERROR: m.neural_network.postprocessing.patch failed"
 
