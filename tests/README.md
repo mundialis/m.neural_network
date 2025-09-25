@@ -1,6 +1,6 @@
 # Small example script for m.neural_network
 
-- Required test data available here: https://apps.mundialis.de/testdata/testdata_for_small_example_script.zip
+- Required test data available here: [https://apps.mundialis.de/testdata/testdata_for_small_example_script.zip](https://apps.mundialis.de/testdata/testdata_for_small_example_script.zip)
   - Note: will be downloaded automatically within [small_example_script.sh](./small_example_script.sh)
 - Within [small_example_script.sh](./small_example_script.sh) a small setup is given for testing the addons of m.neural_network
   - For running the script, first adjust the output path (for the testdata) within the script
