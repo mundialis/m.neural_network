@@ -19,7 +19,7 @@ if test "$GISBASE" = ""; then
     exit 1
 fi
 
-# Change to EPSG:25832 project, if not already given
+# Check for correct projection
 if [[ $(g.proj -p) != *"EPSG:25832"* ]]; then
     echo "You must be in a location with EPSG:25832 to run this program".
     exit 1
