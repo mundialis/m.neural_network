@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Small example script, for testing the m.neural_network Addons
 
