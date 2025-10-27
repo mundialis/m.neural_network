@@ -67,6 +67,13 @@
 # % guisection: Parameters
 # %end
 
+# %option G_OPT_F_INPUT
+# % key: reclassify_rules
+# % required: no
+# % multiple: no
+# % label: If desired, file with rules for reclassification of input class values
+# %end
+
 # %option G_OPT_F_OUTPUT
 # % required: yes
 # % multiple: no
@@ -119,6 +126,7 @@ def main():
     NEW_MAPSET = options["new_mapset"]
     class_values = options["class_values"].split(",")
     no_class_value = options["no_class_value"]
+    reclassify_rules = options["reclassify_rules"]
     class_col = options["class_column"]
     output = options["output"]
 
@@ -199,14 +207,22 @@ def main():
             attribute_column=class_col,
             quiet=True,
         )
-        # all items of class 2 are mapped to now empty class 0 to ensure binary classification
-        labelrast_bin = f"{labelrast_tmp}_bin"
-        exp = f"{labelrast_bin}=if({labelrast_tmp} == {class_values[0]}, 0, {labelrast_tmp})"
-        grass.run_command("r.mapcalc", expression=exp, quiet=True)
-        # if there is any nodata left in the label, this will be assigned
-        # to the no-class class
-        exp = f"{labelrast}=if(isnull({labelrast_bin}),{no_class_value},{labelrast_bin})"
-        grass.run_command("r.mapcalc", expression=exp, quiet=True)
+        if not reclassify_rules:
+            # all items of class 2 are mapped to now empty class 0 to ensure binary classification
+            labelrast_bin = f"{labelrast_tmp}_bin"
+            exp = f"{labelrast_bin}=if({labelrast_tmp} == {class_values[0]}, 0, {labelrast_tmp})"
+            grass.run_command("r.mapcalc", expression=exp, quiet=True)
+            # if there is any nodata left in the label, this will be assigned
+            # to the no-class class
+            exp = f"{labelrast}=if(isnull({labelrast_bin}),{no_class_value},{labelrast_bin})"
+            grass.run_command("r.mapcalc", expression=exp, quiet=True)
+        else:
+            grass.run_command(
+                "r.reclass",
+                input=labelrast_tmp,
+                output=labelrast,
+                rules=reclassify_rules,
+            )
 
     grass.run_command(
         "r.out.gdal",

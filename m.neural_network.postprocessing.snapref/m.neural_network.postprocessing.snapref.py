@@ -114,7 +114,7 @@ def get_attributes(vecmap):
     return list(
         next(
             iter(
-                grass.parse_command("v.db.select", map=vecmap, separator=",")
+                grass.parse_command("v.db.select", map=vecmap, separator=","),
             ),
         ).split(","),
     )

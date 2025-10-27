@@ -40,6 +40,13 @@
 # % guisection: Input
 # %end
 
+# %option G_OPT_M_DIR
+# % key: input_traindir_datawise
+# % label: Name of the input training data directory containing subfolders of dop, ndom and label of all tiles (with same row and column index)
+# % required: no
+# % guisection: Input
+# %end
+
 # %option
 # % key: val_percentage
 # % type: integer
@@ -89,6 +96,13 @@
 # % guisection: Parameters
 # %end
 
+# %option G_OPT_F_INPUT
+# % key: reclassify_rules
+# % required: no
+# % multiple: no
+# % label: If desired, file with rules for reclassification of input class values
+# %end
+
 # %option
 # % key: output
 # % type: string
@@ -98,16 +112,25 @@
 # % guisection: Output
 # %end
 
-# %option G_OPT_M_NPROCS
+# %option
+# % key: nprocs
+# % type: integer
+# % required: no
+# % multiple: no
+# % label: Number of parallel processes
+# % description: Number of cores for multiprocessing, -2 is the number of available cores - 1
+# % answer: -2
 # %end
 
 # %rules
-# % required: input_traindir, input_applydir
+# % required: input_traindir, input_applydir, input_traindir_datawise
+# % exclusive: input_traindir, input_traindir_datawise
 # %end
 
 import atexit
 import os
 import random
+import re
 from multiprocessing import Pool
 
 import grass.script as grass
@@ -130,6 +153,55 @@ rm_dirs = []
 def cleanup():
     """Pass args to the general cleanup from grass-gis-helpers."""
     general_cleanup(orig_region=ORIG_REGION, rm_dirs=rm_dirs)
+
+
+def get_tile_infos_datawise(in_dir, ttype="training"):
+    """Read data-wise directory and saves metadata in a list of dicts."""
+    all_tiles = []
+    for dop_tile in os.listdir(os.path.join(in_dir, "dop")):
+        tile = re.search(r"r\d+c\d+", dop_tile).group(0)
+
+        tiledict = {}
+        tiledict["id"] = tile
+        tiledict["type"] = ttype
+        tiledict["dop_tif"] = os.path.join(in_dir, "dop", dop_tile)
+
+        with os.scandir(os.path.join(in_dir, "ndom_scaled")) as entries:
+            matching_ndom = [
+                entry.name
+                for entry in entries
+                if f"_{tile}." in entry.name and entry.is_file()
+            ]
+        if matching_ndom:
+            tiledict["ndom_tif"] = os.path.join(
+                in_dir, "ndom_scaled", matching_ndom[0],
+            )
+        else:
+            grass.fatal(
+                _(f"Scaled nDOM for tile {tile} expected but no found."),
+            )
+
+        if ttype == "training":
+            with os.scandir(os.path.join(in_dir, "label")) as entries:
+                matching_label = [
+                    entry.name
+                    for entry in entries
+                    if f"_{tile}." in entry.name
+                    and entry.is_file()
+                    and entry.name.endswith(".gpkg")
+                ]
+            if matching_label:
+                tiledict["label_gpkg"] = os.path.join(
+                    in_dir,
+                    "label",
+                    matching_label[0],
+                )
+            else:
+                grass.fatal(_(f"Label for tile {tile} expected but no found."))
+
+        all_tiles.append(tiledict)
+
+    return all_tiles
 
 
 def get_tile_infos(in_dir, ttype):
@@ -214,12 +286,14 @@ def main():
 
     train_dir_in = options["input_traindir"]
     apply_dir_in = options["input_applydir"]
+    train_dir_in_datawise = options["input_traindir_datawise"]
     val_percentage = int(options["val_percentage"])
     test_percentage = int(options["test_percentage"])
     nprocs = set_nprocs(int(options["nprocs"]))
     class_col = options["class_column"]
     class_values = options["class_values"].split(",")
     no_class_value = options["no_class_value"]
+    reclassify_rules = options["reclassify_rules"]
     output = options["output"]
 
     # get location infos
@@ -232,6 +306,28 @@ def main():
     ORIG_REGION = f"orig_region_{ID}"
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
+    if train_dir_in_datawise:
+        if not os.path.isdir(os.path.join(train_dir_in_datawise, "dop")):
+            grass.fatal(
+                _(
+                    f"Directory {train_dir_in_datawise} is missing <dop> directory.",
+                ),
+            )
+        if not os.path.isdir(
+            os.path.join(train_dir_in_datawise, "ndom_scaled"),
+        ):
+            grass.fatal(
+                _(
+                    f"Directory {train_dir_in_datawise} is missing <ndom_scaled> directory.",
+                ),
+            )
+        if not os.path.isdir(os.path.join(train_dir_in_datawise, "label")):
+            grass.fatal(
+                _(
+                    f"Directory {train_dir_in_datawise} is missing <label> directory.",
+                ),
+            )
+
     try:
         os.makedirs(output, exist_ok=False)
     except FileExistsError:
@@ -239,7 +335,7 @@ def main():
 
     rm_dirs.append(output)
     # create folders if they dont exist
-    if train_dir_in:
+    if train_dir_in or train_dir_in_datawise:
         train_dir_out = os.path.join(output, "train")
         train_train_img_dir = os.path.join(train_dir_out, "train_images")
         train_train_masks_dir = os.path.join(train_dir_out, "train_masks")
@@ -286,8 +382,11 @@ def main():
         all_apply_tiles = get_tile_infos(apply_dir_in, ttype="apply")
         tile_dict_all += all_apply_tiles
 
-    if train_dir_in:
-        all_train_tiles = get_tile_infos(train_dir_in, ttype="training")
+    if train_dir_in or train_dir_in_datawise:
+        if train_dir_in:
+            all_train_tiles = get_tile_infos(train_dir_in, ttype="training")
+        if train_dir_in_datawise:
+            all_train_tiles = get_tile_infos_datawise(train_dir_in_datawise)
 
         # check the train tiles for wrong values in the label file
         train_gpkgs = [tile["label_gpkg"] for tile in all_train_tiles]
@@ -376,7 +475,7 @@ def main():
         pool.starmap(build_vrts, arglist)
 
     # loop over tiles
-    if train_dir_in:
+    if train_dir_in or train_dir_in_datawise:
         grass.message(_("Checking and rasterizing labels..."))
         queue = ParallelModuleQueue(nprocs=nprocs)
         try:
@@ -398,6 +497,7 @@ def main():
                     class_values=class_values,
                     no_class_value=no_class_value,
                     class_column=class_col,
+                    reclassify_rules=reclassify_rules,
                     output=outfile,
                     new_mapset=new_mapset,
                     run_=False,
