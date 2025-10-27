@@ -174,7 +174,9 @@ def get_tile_infos_datawise(in_dir, ttype="training"):
             ]
         if matching_ndom:
             tiledict["ndom_tif"] = os.path.join(
-                in_dir, "ndom_scaled", matching_ndom[0],
+                in_dir,
+                "ndom_scaled",
+                matching_ndom[0],
             )
         else:
             grass.fatal(
