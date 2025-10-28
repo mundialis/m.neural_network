@@ -42,7 +42,7 @@
 
 # %option G_OPT_M_DIR
 # % key: input_traindir_datawise
-# % label: Name of the input training data directory containing subfolders of dop, ndom and label of all tiles (with same row and column index)
+# % label: Name of the input training data directory containing subfolders of dop, scaled ndom and label of all tiles (with same row and column index)
 # % required: no
 # % guisection: Input
 # %end
