@@ -47,6 +47,14 @@
 # %end
 
 # %option
+# % key: dest_res
+# % type: double
+# % required: no
+# % label: destination resolution
+# % description: default is the resolution of the input tiles
+# %end
+
+# %option
 # % key: area_threshold
 # % type: double
 # % required: no
@@ -96,6 +104,9 @@ def main():
     tiles_path = options["tiles_path"]
     edge_cut = int(options["edge_cut"])
     area_threshold = float(options["area_threshold"])
+    dest_res = None
+    if options["dest_res"]:
+        dest_res = float(options["dest_res"])
     output = options["output"]
     keep_border_tile_edges = flags["b"]
 
@@ -130,6 +141,11 @@ def main():
             output=tiles_rast,
             quiet=True,
         )
+        # set current region to tile
+        if dest_res:
+            grass.run_command("g.region", raster=tiles_rast, res=dest_res)
+        else:
+            grass.run_command("g.region", raster=tiles_rast)
         # remove small areas before (!) cutting off edges
         tiles_rast_rmarea = tiles_rast
         if area_threshold > 0:
@@ -144,11 +160,6 @@ def main():
                 value=area_threshold,
             )
         # Cut edges
-        grass.run_command(
-            "g.region",
-            raster=tiles_rast,
-            # todo: set dest_res if given
-        )
         grass.run_command(
             "g.region",
             n=f"n-{edge_cut_meter}",
