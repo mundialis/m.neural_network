@@ -50,7 +50,8 @@
 # % key: dest_res
 # % type: double
 # % required: no
-# % description: destination resolution
+# % label: destination resolution
+# % description: default is the resolution of the input tiles
 # %end
 
 # %option
