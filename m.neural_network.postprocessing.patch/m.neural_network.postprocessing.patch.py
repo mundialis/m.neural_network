@@ -142,16 +142,9 @@ def main():
         )
         # set current region to tile
         if dest_res:
-            grass.run_command(
-                "g.region",
-                raster=tiles_rast,
-                res=dest_res
-            )
+            grass.run_command("g.region", raster=tiles_rast, res=dest_res)
         else:
-            grass.run_command(
-                "g.region",
-                raster=tiles_rast,
-            )
+            grass.run_command("g.region", raster=tiles_rast)
         # remove small areas before (!) cutting off edges
         tiles_rast_rmarea = tiles_rast
         if area_threshold > 0:
