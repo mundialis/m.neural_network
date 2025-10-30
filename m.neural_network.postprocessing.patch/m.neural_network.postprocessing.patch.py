@@ -46,6 +46,14 @@
 # % answer: 64
 # %end
 
+# %option
+# % key: area_threshold
+# % type: double
+# % required: no
+# % description: remove small areas before patching
+# % answer: 0.0005
+# %end
+
 # %option G_OPT_R_OUTPUT
 # % key: output
 # % required: yes
@@ -87,6 +95,7 @@ def main():
     tiles_filelist = options["tiles_filelist"]
     tiles_path = options["tiles_path"]
     edge_cut = int(options["edge_cut"])
+    area_threshold = float(options["area_threshold"])
     output = options["output"]
     keep_border_tile_edges = flags["b"]
 
@@ -121,6 +130,19 @@ def main():
             output=tiles_rast,
             quiet=True,
         )
+        # remove small areas before (!) cutting off edges
+        tiles_rast_rmarea = tiles_rast
+        if area_threshold > 0:
+            tiles_rast_rmarea = f"{tiles.split('.')[0]}_tmp_rmarea"
+            rm_rasters.append(tiles_rast_rmarea)
+            grass.run_command(
+                "r.reclass.area",
+                input=tiles_rast,
+                output=tiles_rast_rmarea,
+                mode="lesser",
+                method="rmarea",
+                value=area_threshold,
+            )
         # Cut edges
         grass.run_command(
             "g.region",
@@ -138,7 +160,7 @@ def main():
         rm_rasters.append(tiles_rast_cut)
         grass.run_command(
             "r.mapcalc",
-            expression=f"{tiles_rast_cut} = {tiles_rast}",
+            expression=f"{tiles_rast_cut} = {tiles_rast_rmarea}",
             quiet=True,
         )
         rast_list.append(tiles_rast_cut)
