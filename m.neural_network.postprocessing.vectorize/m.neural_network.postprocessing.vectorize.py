@@ -128,6 +128,7 @@ def main():
     )
 
     # remove small areas with v.clean
+    grass.message(_("Removing small areas ..."))
     classification_vect_rmarea = f"{classification_vect}_rmarea"
     rm_vectors.append(classification_vect_rmarea)
     grass.run_command(
