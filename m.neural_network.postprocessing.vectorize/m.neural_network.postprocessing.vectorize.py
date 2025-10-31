@@ -42,8 +42,8 @@
 # % type: double
 # % required: no
 # % type: double
-# % description: Threshold for cleaning up small areas
-# % answer: 0.0005
+# % description: Threshold for cleaning up small areas in square meters
+# % answer: 5
 # %end
 
 # %option
@@ -109,17 +109,9 @@ def main():
         generalize_thres = float(options["generalize_thres"])
 
     # Removing small areas
-    grass.message(_("Removing small areas ..."))
-    classification_rast_clean = f"{classification_rast}_clean"
-    rm_rasters.append(classification_rast_clean)
-    grass.run_command(
-        "r.reclass.area",
-        input=classification_rast,
-        output=classification_rast_clean,
-        mode="lesser",
-        method="rmarea",
-        value=rmarea_thres,
-    )
+    # do not use r.reclass.area method=rmarea because this module calls
+    # r.to.vect + v.clean + v.to.rast
+    # use v.clean directly below, this avoids r.to.vect + v.to.rast
 
     # Vectorize data
     grass.message(_("Vectorizing classification ..."))
@@ -128,16 +120,28 @@ def main():
     # no "s" flag because this creates artifacts at the corners of the raster
     grass.run_command(
         "r.to.vect",
-        input=classification_rast_clean,
+        input=classification_rast,
         output=classification_vect_tmp1,
         type="area",
         column="class_number",
         flags="c",
     )
 
+    # remove small areas with v.clean
+    grass.message(_("Removing small areas ..."))
+    classification_vect_rmarea = f"{classification_vect}_rmarea"
+    rm_vectors.append(classification_vect_rmarea)
+    grass.run_command(
+        "v.clean",
+        input=classification_vect_tmp1,
+        output=classification_vect_rmarea,
+        tool="rmarea",
+        threshold=rmarea_thres,
+    )
+
     # Generalize:
-    # due to rasterization not straight lines
-    last_tmp_class_vect = classification_vect_tmp1
+    # due to rasterization no straight lines
+    last_tmp_class_vect = classification_vect_rmarea
 
     if smoothing:
         classification_vect_tmp_s1 = f"{classification_vect}_tmp_s1"
