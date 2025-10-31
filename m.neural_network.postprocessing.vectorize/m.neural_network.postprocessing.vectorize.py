@@ -136,7 +136,7 @@ def main():
         input=classification_vect_tmp1,
         output=classification_vect_rmarea,
         tool="rmarea",
-        threshold=rmarea_thres
+        threshold=rmarea_thres,
     )
 
     # Generalize:
