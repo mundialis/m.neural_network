@@ -254,7 +254,7 @@ def main():
 
     rm_dirs.append(output)
     # create folders if they dont exist
-    if train_dir_in or train_dir_in_datawise:
+    if train_dir_in:
         train_dir_out = os.path.join(output, "train")
         train_train_img_dir = os.path.join(train_dir_out, "train_images")
         train_train_masks_dir = os.path.join(train_dir_out, "train_masks")
