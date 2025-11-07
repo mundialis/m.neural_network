@@ -89,6 +89,13 @@
 # % guisection: Parameters
 # %end
 
+# %option G_OPT_F_INPUT
+# % key: reclassify_rules
+# % required: no
+# % multiple: no
+# % label: If desired, file with rules for reclassification of input class values
+# %end
+
 # %option
 # % key: output
 # % type: string
@@ -98,7 +105,14 @@
 # % guisection: Output
 # %end
 
-# %option G_OPT_M_NPROCS
+# %option
+# % key: nprocs
+# % type: integer
+# % required: no
+# % multiple: no
+# % label: Number of parallel processes
+# % description: Number of cores for multiprocessing, -2 is the number of available cores - 1
+# % answer: -2
 # %end
 
 # %rules
@@ -220,6 +234,7 @@ def main():
     class_col = options["class_column"]
     class_values = options["class_values"].split(",")
     no_class_value = options["no_class_value"]
+    reclassify_rules = options["reclassify_rules"]
     output = options["output"]
 
     # get location infos
@@ -398,6 +413,7 @@ def main():
                     class_values=class_values,
                     no_class_value=no_class_value,
                     class_column=class_col,
+                    reclassify_rules=reclassify_rules,
                     output=outfile,
                     new_mapset=new_mapset,
                     run_=False,
