@@ -33,9 +33,34 @@
 
 # %option G_OPT_R_INPUT
 # % key: ndsm
+# % required: no
 # % label: Name of the nDSM raster
 # % answer: ndsm
 # % guisection: Input
+# %end
+
+# %option G_OPT_R_INPUT
+# % key: dsm
+# % required: no
+# % label: Name of the DSM raster
+# % answer: dsm
+# % guisection: Input
+# %end
+
+# %option G_OPT_R_INPUT
+# % key: dtm
+# % required: no
+# % label: Name of the DTM raster
+# % answer: dtm
+# % guisection: Input
+# %end
+
+# %option G_OPT_R_OUTPUT
+# % key: ndsm_out
+# % required: no
+# % label: Name for the computed nDSM raster
+# % answer: ndsm
+# % guisection: Output
 # %end
 
 # %option G_OPT_V_INPUT
@@ -128,6 +153,8 @@
 # % exclusive: -t,-a
 # % excludes: -t, train_percentage
 # % excludes: -a, train_percentage
+# % exclusive: ndsm, dsm
+# % requires_all: dsm, dtm
 # %end
 
 
@@ -206,6 +233,9 @@ def main() -> None:
 
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
+    dsm = options["dsm"]
+    dtm = options["dtm"]
+    ndsm_out = options["ndsm_out"]
     reference = options["reference"]
     tile_size = int(options["tile_size"])
     tile_overlap = int(options["tile_overlap"])
@@ -240,6 +270,11 @@ def main() -> None:
     # set region
     grass.run_command("g.region", raster=image_bands[0], quiet=True)
     reg = grass.region()
+
+    # compute nDSM if not directly given
+    if dsm and dtm:
+        ndsm = ndsm_out
+        grass.run_command("r.mapcalc", expression=f"{ndsm} = float({dsm} - {dtm})")
 
     # parameter for tiles
     res = reg["nsres"]
