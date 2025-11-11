@@ -274,7 +274,10 @@ def main() -> None:
     # compute nDSM if not directly given
     if dsm and dtm:
         ndsm = ndsm_out
-        grass.run_command("r.mapcalc", expression=f"{ndsm} = float({dsm} - {dtm})")
+        grass.run_command(
+            "r.mapcalc",
+            expression=f"{ndsm} = float({dsm} - {dtm})",
+        )
 
     # parameter for tiles
     res = reg["nsres"]
