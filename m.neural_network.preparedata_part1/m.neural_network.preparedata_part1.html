@@ -14,7 +14,7 @@ a tile index containing information about the labeled status is created.
 m.neural_network.preparedata_part1 image_bands=top_red_02,top_green_02,top_blue_02,top_nir_02 ndsm=ndsm tile_size=512 output_dir=/mnt/data/ nprocs=7
 </pre></div>
 
-<h3>Prepare training data and computing ndom on the fly (Note: will be kept within mapset, where Addon is executed)</h3>
+<h3>Prepare training data and computing ndsm on the fly (Note: will be kept within mapset, where Addon is executed)</h3>
 
 <div class="code"><pre>
 m.neural_network.preparedata_part1 image_bands=top_red_02,top_green_02,top_blue_02,top_nir_02 dsm=dsm dtm=dtm ndsm_out=ndsm tile_size=512 output_dir=/mnt/data/ nprocs=7
