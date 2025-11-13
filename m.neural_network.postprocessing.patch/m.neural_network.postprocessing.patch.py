@@ -190,11 +190,6 @@ def main():
     with open(tmpfile, "w", encoding="utf-8") as f:
         f.writelines(f"{rast}\n" for rast in rast_list)
 
-    grass.run_command(
-        "r.buildvrt",
-        input=rast_list,
-        output=patch_out,
-    )
     grass.message(_("Creating VRT with cutted edges ..."))
     grass.run_command(
         "r.buildvrt",
