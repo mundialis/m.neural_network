@@ -43,7 +43,6 @@
 # % key: dsm
 # % required: no
 # % label: Name of the DSM raster
-# % answer: dsm
 # % guisection: Input
 # %end
 
@@ -51,7 +50,6 @@
 # % key: dtm
 # % required: no
 # % label: Name of the DTM raster
-# % answer: dtm
 # % guisection: Input
 # %end
 
@@ -59,7 +57,6 @@
 # % key: ndsm_out
 # % required: no
 # % label: Name for the computed nDSM raster
-# % answer: ndsm
 # % guisection: Output
 # %end
 
@@ -153,8 +150,8 @@
 # % exclusive: -t,-a
 # % excludes: -t, train_percentage
 # % excludes: -a, train_percentage
-# % exclusive: ndsm, dsm
-# % requires_all: dsm, dtm
+# % exclusive: ndsm, ndsm_out
+# % requires_all: dsm, dtm, ndsm_out
 # %end
 
 
@@ -263,6 +260,33 @@ def main() -> None:
     gisdbase = gisenv["GISDBASE"]
     location = gisenv["LOCATION_NAME"]
 
+    # check if input data exists
+    for img_band in image_bands:
+        if not grass.find_file(name=img_band, element="raster")["file"]:
+            grass.fatal(_(f"Raster map <{img_band}> not found"))
+    if dsm and not grass.find_file(name=dsm, element="raster")["file"]:
+        grass.fatal(_(f"Raster map <{dsm}> not found"))
+    if dtm and not grass.find_file(name=dtm, element="raster")["file"]:
+        grass.fatal(_(f"Raster map <{dtm}> not found"))
+    if ndsm and not grass.find_file(name=ndsm, element="raster")["file"]:
+        if not (dsm and dtm):
+            grass.fatal(
+                _(f"Raster map <{ndsm}>, <{dtm}> and <{dsm}> not set!")
+            )
+        ndsm = None
+    if ndsm == ndsm_out:
+        grass.fatal(
+            _(
+                f"Parameter <ndsm_out> is set to <{ndsm}>, but the raster "
+                "map already exists!"
+            )
+        )
+    if (
+        reference
+        and not grass.find_file(name=reference, element="vector")["file"]
+    ):
+        grass.fatal(_(f"Vector map <{reference}> not found"))
+
     # save original region
     ORIG_REGION = f"orig_region_{ID}"
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
@@ -272,7 +296,7 @@ def main() -> None:
     reg = grass.region()
 
     # compute nDSM if not directly given
-    if dsm and dtm:
+    if dsm and dtm and ndsm_out:
         ndsm = ndsm_out
         grass.run_command(
             "r.mapcalc",
