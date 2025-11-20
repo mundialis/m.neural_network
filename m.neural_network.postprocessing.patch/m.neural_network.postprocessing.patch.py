@@ -89,7 +89,7 @@ rm_rasters = []
 
 # cleanup function
 def cleanup():
-    """Cleanup fuction."""
+    """Cleanup function."""
     general_cleanup(
         orig_region=ORIG_REGION,
         rm_rasters=rm_rasters,
@@ -203,7 +203,7 @@ def main():
 
     # If edges of border tiles should be kept
     if keep_border_tile_edges:
-        # add width of cutted tile edges to region
+        # add width of cut tile edges to region
         grass.run_command(
             "g.region",
             n=f"n+{edge_cut_meter}",
@@ -217,7 +217,7 @@ def main():
             f.writelines(f"{rast}_tmp\n" for rast in rast_list)
         buildvrt_out = f"vrt_all_no_edges_cut_{ID}"
         rm_rasters.append(buildvrt_out)
-        grass.message(_("Creating VRT without cutted edges ..."))
+        grass.message(_("Creating VRT without cut edges ..."))
         grass.run_command(
             "r.buildvrt",
             file=tmpfile,
