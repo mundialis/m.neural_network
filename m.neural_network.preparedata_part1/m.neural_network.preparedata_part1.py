@@ -163,12 +163,12 @@
 
 
 import atexit
-import geopandas as gpd
 import json
 import os
 import random
 import shutil
 
+import geopandas as gpd
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
@@ -282,7 +282,10 @@ def main() -> None:
     if ndsm and not grass.find_file(name=ndsm, element="raster")["file"]:
         if not (dsm and dtm):
             grass.fatal(
-                _(f"Raster map <{ndsm}>, <{dtm}> and <{dsm}> not set or found!")
+                _(
+                    f"Raster map <{ndsm}>, <{dtm}> and <{dsm}> not set or "
+                    "found!"
+                )
             )
         ndsm = None
     if ndsm == ndsm_out:
@@ -309,7 +312,9 @@ def main() -> None:
     if aoi:
         aoi_buf = f"aoi_buf_{ID}"
         # rm_vectors.append(aoi_buf)
-        grass.run_command("v.buffer", input=aoi, output=aoi_buf, distance=res*tile_overlap)
+        grass.run_command(
+            "v.buffer", input=aoi, output=aoi_buf, distance=res * tile_overlap
+        )
         grass.run_command("g.region", vector=aoi_buf, quiet=True)
         grass.run_command("g.region", align=image_bands[0], quiet=True)
         grass.run_command("g.region", res=res, quiet=True, flags="a")
@@ -366,7 +371,8 @@ def main() -> None:
                     ],
                 },
             }
-        ] * num_tiles_total,
+        ]
+        * num_tiles_total,
     }
     # loop over tiles
     # queue = ParallelModuleQueue(nprocs=nprocs)
@@ -375,7 +381,10 @@ def main() -> None:
         west = reg["w"]
         for col in range(num_tiles_col):
             grass.message(
-                _(f"Creating polygon for: row {row} - col {col} (total {num_tiles_row} x {num_tiles_col})"),
+                _(
+                    f"Creating polygon for: row {row} - col {col} (total "
+                    f"{num_tiles_row} x {num_tiles_col})"
+                ),
             )
             row_str = str(row).zfill(num_zeros)
             col_str = str(col).zfill(num_zeros)
@@ -420,16 +429,22 @@ def main() -> None:
     # check which polygons intersects with aoi otherwise take all grid tiles
     if aoi:
         grid_gdf = gpd.GeoDataFrame.from_features(geojson_dict["features"])
-        aoi_dict = json.loads(grass.read_command("v.out.geojson", input=aoi_buf, output="-", epsg=epsg_code))
+        aoi_dict = json.loads(
+            grass.read_command(
+                "v.out.geojson", input=aoi_buf, output="-", epsg=epsg_code
+            )
+        )
         aoi_gdf = gpd.GeoDataFrame.from_features(aoi_dict["features"])
-        aoi_gdf.drop(aoi_gdf.columns.difference(["geometry"]), axis=1, inplace=True)
+        aoi_gdf.drop(
+            aoi_gdf.columns.difference(["geometry"]), axis=1, inplace=True
+        )
         # intersection of aoi_buf and grid (https://geopandas.org/en/stable/
         # docs/user_guide/mergingdata.html#binary-predicate-joins)
         grid_aoi_gdf = gpd.sjoin(
-            left_df = grid_gdf,
-            right_df = aoi_gdf,
-            how = "inner",
-            predicate = "intersects",
+            left_df=grid_gdf,
+            right_df=aoi_gdf,
+            how="inner",
+            predicate="intersects",
         )
         # cleanup columns
         for col in grid_aoi_gdf.columns:
@@ -509,7 +524,6 @@ def main() -> None:
         tiles_with_data = list(range(len(geojson_dict["features"])))
         tiles_wo_data = []
         tr_tiles = []
-
 
     if train_percentage == 100:
         ap_tiles = []
