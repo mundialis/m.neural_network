@@ -181,6 +181,11 @@ def main() -> None:
 
     NEW_MAPSET = options["new_mapset"]
     tile_name = options["tile_name"]
+    north = options["n"]
+    south = options["s"]
+    west = options["w"]
+    east = options["e"]
+    res = options["res"]
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
     reference = options["reference"]
@@ -200,6 +205,18 @@ def main() -> None:
 
     # switch to the new mapset
     GISRC, NEWGISRC, old_mapset = switch_to_new_mapset(NEW_MAPSET, new=False)
+
+    # set region
+    grass.message(_(f"Set region for tile {tile_name} ..."))
+    grass.run_command(
+        "g.region",
+        n=north,
+        s=south,
+        e=east,
+        w=west,
+        res=res,
+        quiet=True,
+    )
 
     if ndsm and "@" not in ndsm:
         ndsm += f"@{old_mapset}"
