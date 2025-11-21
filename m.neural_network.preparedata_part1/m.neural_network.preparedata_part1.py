@@ -311,7 +311,7 @@ def main() -> None:
     res = reg["nsres"]
     if aoi:
         aoi_buf = f"aoi_buf_{ID}"
-        # rm_vectors.append(aoi_buf)
+        rm_vectors.append(aoi_buf)
         grass.run_command(
             "v.buffer", input=aoi, output=aoi_buf, distance=res * tile_overlap
         )
@@ -375,7 +375,6 @@ def main() -> None:
         * num_tiles_total,
     }
     # loop over tiles
-    # queue = ParallelModuleQueue(nprocs=nprocs)
     idx = 0
     for row in range(num_tiles_row):
         west = reg["w"]
@@ -529,6 +528,7 @@ def main() -> None:
         ap_tiles = []
     else:
         ap_tiles = [x for x in tiles_with_data if x not in tr_tiles]
+
     # loop over training data
     queue_export_tr = ParallelModuleQueue(nprocs=nprocs)
     try:
