@@ -537,9 +537,14 @@ def main() -> None:
     queue_export_tr = ParallelModuleQueue(nprocs=nprocs)
     try:
         for i, tr_tile in enumerate(tr_tiles):
-            tile_name = geojson_dict["features"][tr_tile]["properties"]["name"]
+            tile = geojson_dict["features"][tr_tile]
+            tile_name = tile["properties"]["name"]
             tile_path = os.path.join(output_dir, "train", tile_name)
-            tile_id = geojson_dict["features"][tr_tile]["properties"]["fid"]
+            tile_id = tile["properties"]["fid"]
+            north = tile["geometry"]["coordinates"][0][0][1]
+            south = tile["geometry"]["coordinates"][0][2][1]
+            west = tile["geometry"]["coordinates"][0][0][0]
+            east = tile["geometry"]["coordinates"][0][1][0]
             grass.message(
                 _(
                     f"Segmenting and/or Exporting: "
@@ -555,6 +560,11 @@ def main() -> None:
             # worker for export
             worker_export_tr = Module(
                 "m.neural_network.preparedata_part1.worker_export",
+                n=north,
+                s=south,
+                e=east,
+                w=west,
+                res=res,
                 image_bands=image_bands,
                 ndsm=ndsm,
                 tile_name=tile_name,
@@ -578,9 +588,14 @@ def main() -> None:
     queue_export_ap = ParallelModuleQueue(nprocs=nprocs)
     try:
         for i, ap_tile in enumerate(ap_tiles):
-            tile_name = geojson_dict["features"][ap_tile]["properties"]["name"]
+            tile = geojson_dict["features"][ap_tiles]
+            tile_name = tile["properties"]["name"]
             tile_path = os.path.join(output_dir, "apply", tile_name)
-            tile_id = geojson_dict["features"][ap_tile]["properties"]["fid"]
+            tile_id = tile["properties"]["fid"]
+            north = tile["geometry"]["coordinates"][0][0][1]
+            south = tile["geometry"]["coordinates"][0][2][1]
+            west = tile["geometry"]["coordinates"][0][0][0]
+            east = tile["geometry"]["coordinates"][0][1][0]
             grass.message(
                 _(f"Exporting: apply tile {i + 1} of {len(ap_tiles)}"),
             )
@@ -591,6 +606,11 @@ def main() -> None:
             # worker for export
             worker_export_ap = Module(
                 "m.neural_network.preparedata_part1.worker_export",
+                n=north,
+                s=south,
+                e=east,
+                w=west,
+                res=res,
                 image_bands=image_bands,
                 tile_name=tile_name,
                 ndsm=ndsm,

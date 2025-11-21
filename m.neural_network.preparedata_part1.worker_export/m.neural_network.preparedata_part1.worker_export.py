@@ -21,6 +21,56 @@
 # % keyword: segmentation
 # %end
 
+# %option
+# % key: n
+# % type: string
+# % required: no
+# % multiple: no
+# % key_desc: value
+# % description: Value for the northern edge
+# % guisection: Bounds
+# %end
+
+# %option
+# % key: s
+# % type: string
+# % required: no
+# % multiple: no
+# % key_desc: value
+# % description: Value for the southern edge
+# % guisection: Bounds
+# %end
+
+# %option
+# % key: e
+# % type: string
+# % required: no
+# % multiple: no
+# % key_desc: value
+# % description: Value for the eastern edge
+# % guisection: Bounds
+# %end
+
+# %option
+# % key: w
+# % type: string
+# % required: no
+# % multiple: no
+# % key_desc: value
+# % description: Value for the western edge
+# % guisection: Bounds
+# %end
+
+# %option
+# % key: res
+# % type: string
+# % required: no
+# % multiple: no
+# % key_desc: value
+# % description: 2D grid resolution (north-south and east-west)
+# % guisection: Resolution
+# %end
+
 # %option G_OPT_R_INPUTS
 # % key: image_bands
 # % label: The names of imagery raster bands, e.g. for DOPs RGBI raster bands
@@ -131,6 +181,11 @@ def main() -> None:
 
     NEW_MAPSET = options["new_mapset"]
     tile_name = options["tile_name"]
+    north = options["n"]
+    south = options["s"]
+    west = options["w"]
+    east = options["e"]
+    res = options["res"]
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
     reference = options["reference"]
@@ -150,6 +205,18 @@ def main() -> None:
 
     # switch to the new mapset
     GISRC, NEWGISRC, old_mapset = switch_to_new_mapset(NEW_MAPSET, new=False)
+
+    # set region
+    grass.message(_(f"Set region for tile {tile_name} ..."))
+    grass.run_command(
+        "g.region",
+        n=north,
+        s=south,
+        e=east,
+        w=west,
+        res=res,
+        quiet=True,
+    )
 
     if ndsm and "@" not in ndsm:
         ndsm += f"@{old_mapset}"
