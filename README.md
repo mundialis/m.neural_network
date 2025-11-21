@@ -12,3 +12,7 @@ The `m.neural_network` toolset consists of following modules:
 * `m.neural_network.postprocessing.patch`: patches the tiles (GeoTIFFs) which results from neural network inference
 * `m.neural_network.postprocessing.vectorize`: vectorizes the classification raster output and clean results (remove small areas, if set straighten lines)
 * `m.neural_network.postprocessing.snapref`: snaps classification vector with reference data.
+
+## Additional required GRASS GIS addons
+
+* `v.out.geojson` from [mundialis](https://github.com/mundialis/v.out.geojson)

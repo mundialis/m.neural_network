@@ -173,7 +173,7 @@ import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
-from grass_gis_helpers.general import set_nprocs
+from grass_gis_helpers.general import check_installed_addon, set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
 from grass_gis_helpers.parallel import check_parallel_errors
 
@@ -259,6 +259,10 @@ def main() -> None:
     nprocs = set_nprocs(int(options["nprocs"]))
     if options["suffix"]:
         suffix = options["suffix"]
+
+    check_installed_addon(
+        "v.out.geojson", url="https://github.com/mundialis/v.out.geojson"
+    )
 
     # get addon etc path
     etc_path = get_lib_path(modname="m.neural_network.preparedata_part1")
