@@ -24,6 +24,13 @@
 # % keyword: preparation
 # %end
 
+# %option G_OPT_V_INPUT
+# % key: aoi
+# % required: no
+# % label: Name of the area of interest vector map
+# % guisection: Optional input
+# %end
+
 # %option G_OPT_R_INPUTS
 # % key: image_bands
 # % label: The names of imagery raster bands, e.g. for DOPs RGBI raster bands
@@ -161,6 +168,7 @@ import os
 import random
 import shutil
 
+import geopandas as gpd
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
@@ -174,6 +182,7 @@ ID = grass.tempname(8)
 rm_files = list()
 ORIG_REGION = None
 rm_dirs = []
+rm_vectors = []
 
 
 def cleanup() -> None:
@@ -182,6 +191,7 @@ def cleanup() -> None:
         orig_region=ORIG_REGION,
         rm_dirs=rm_dirs,
         rm_files=rm_files,
+        rm_vectors=rm_vectors,
     )
 
 
@@ -228,6 +238,7 @@ def main() -> None:
     """
     global ORIG_REGION
 
+    aoi = options["aoi"]
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
     dsm = options["dsm"]
@@ -271,7 +282,10 @@ def main() -> None:
     if ndsm and not grass.find_file(name=ndsm, element="raster")["file"]:
         if not (dsm and dtm):
             grass.fatal(
-                _(f"Raster map <{ndsm}>, <{dtm}> and <{dsm}> not set!")
+                _(
+                    f"Raster map <{ndsm}>, <{dtm}> and <{dsm}> not set or "
+                    "found!"
+                )
             )
         ndsm = None
     if ndsm == ndsm_out:
@@ -291,9 +305,20 @@ def main() -> None:
     ORIG_REGION = f"orig_region_{ID}"
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
-    # set region
+    # set region to raster or aoi
     grass.run_command("g.region", raster=image_bands[0], quiet=True)
     reg = grass.region()
+    res = reg["nsres"]
+    if aoi:
+        aoi_buf = f"aoi_buf_{ID}"
+        rm_vectors.append(aoi_buf)
+        grass.run_command(
+            "v.buffer", input=aoi, output=aoi_buf, distance=res * tile_overlap
+        )
+        grass.run_command("g.region", vector=aoi_buf, quiet=True)
+        grass.run_command("g.region", align=image_bands[0], quiet=True)
+        grass.run_command("g.region", res=res, quiet=True, flags="a")
+        reg = grass.region()
 
     # compute nDSM if not directly given
     if dsm and dtm and ndsm_out:
@@ -304,22 +329,8 @@ def main() -> None:
         )
 
     # parameter for tiles
-    res = reg["nsres"]
     tile_size_map_units = tile_size * res
     tile_overlap_map_units = tile_overlap * res
-
-    # create GeoJson for tindex
-    epsg_code = grass.parse_command("g.proj", flags="g")["srid"].split(":")[-1]
-
-    geojson_dict = {
-        "type": "FeatureCollection",
-        "name": "tindex",
-        "crs": {
-            "type": "name",
-            "properties": {"name": f"urn:ogc:def:crs:EPSG::{epsg_code}"},
-        },
-        "features": [],
-    }
 
     # start values
     north = reg["n"]
@@ -328,29 +339,135 @@ def main() -> None:
     num_zeros = max([len(str(num_tiles_row)), len(str(num_tiles_col))])
     num_tiles_total = num_tiles_col * num_tiles_row
 
+    # create GeoJson for tindex
+    epsg_code = grass.parse_command("g.proj", flags="g")["srid"].split(":")[-1]
+    geojson_dict = {
+        "type": "FeatureCollection",
+        "name": "tindex",
+        "crs": {
+            "type": "name",
+            "properties": {"name": f"urn:ogc:def:crs:EPSG::{epsg_code}"},
+        },
+        "features": [
+            # Polygon initalized with default values to allocate memory
+            {
+                "type": "Feature",
+                "properties": {
+                    "fid": "fid_TODO",
+                    "name": "tile_name_TODO",
+                    "path": "",
+                    "training": "false",
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [99999.9, 99999.9],
+                            [99999.9, 99999.9],
+                            [99999.9, 99999.9],
+                            [99999.9, 99999.9],
+                            [99999.9, 99999.9],
+                        ],
+                    ],
+                },
+            }
+        ]
+        * num_tiles_total,
+    }
     # loop over tiles
-    queue = ParallelModuleQueue(nprocs=nprocs)
-    num = 0
-    try:
-        for row in range(num_tiles_row):
-            west = reg["w"]
-            for col in range(num_tiles_col):
+    idx = 0
+    for row in range(num_tiles_row):
+        west = reg["w"]
+        for col in range(num_tiles_col):
+            grass.message(
+                _(
+                    f"Creating polygon for: row {row} - col {col} (total "
+                    f"{num_tiles_row} x {num_tiles_col})"
+                ),
+            )
+            row_str = str(row).zfill(num_zeros)
+            col_str = str(col).zfill(num_zeros)
+            tile_id = f"{row_str}{col_str}"
+            tile_name = f"tile_{row_str}_{col_str}"
+            if options["suffix"]:
+                tile_name += f"_{suffix}"
+
+            # set tile region
+            south = north - tile_size_map_units
+            east = west + tile_size_map_units
+
+            # create tile for tindex
+            feat = {
+                "type": "Feature",
+                "properties": {
+                    "fid": tile_id,
+                    "name": tile_name,
+                    "path": "",
+                    "training": "false",
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [west, north],
+                            [east, north],
+                            [east, south],
+                            [west, south],
+                            [west, north],
+                        ],
+                    ],
+                },
+            }
+            geojson_dict["features"][idx] = feat
+
+            # set region west for next tile
+            west += tile_size_map_units - tile_overlap_map_units
+            idx += 1
+        north -= tile_size_map_units - tile_overlap_map_units
+
+    # check which polygons intersects with aoi otherwise take all grid tiles
+    if aoi:
+        grid_gdf = gpd.GeoDataFrame.from_features(geojson_dict["features"])
+        aoi_dict = json.loads(
+            grass.read_command(
+                "v.out.geojson", input=aoi_buf, output="-", epsg=epsg_code
+            )
+        )
+        aoi_gdf = gpd.GeoDataFrame.from_features(aoi_dict["features"])
+        aoi_gdf.drop(
+            aoi_gdf.columns.difference(["geometry"]), axis=1, inplace=True
+        )
+        # intersection of aoi_buf and grid (https://geopandas.org/en/stable/
+        # docs/user_guide/mergingdata.html#binary-predicate-joins)
+        grid_aoi_gdf = gpd.sjoin(
+            left_df=grid_gdf,
+            right_df=aoi_gdf,
+            how="inner",
+            predicate="intersects",
+        )
+        # cleanup columns
+        for col in grid_aoi_gdf.columns:
+            print(col)
+            if col not in {"geometry", "fid", "name", "path", "training"}:
+                grid_aoi_gdf.drop(col, axis=1, inplace=True)
+        geojson_dict["features"] = grid_aoi_gdf.to_geo_dict()["features"]
+
+    # Check if tile has no null cells inside and can be used for training
+    if not flags["a"]:
+        queue_nullcheck = ParallelModuleQueue(nprocs=nprocs)
+        num = 0
+        try:
+            for tile in geojson_dict["features"]:
+                tile_id = tile["properties"]["fid"]
                 grass.message(
-                    _(f"Checking for null cells: row {row} - col {col}"),
+                    _(f"Checking null cells for tile: {tile_id}"),
                 )
-                row_str = str(row).zfill(num_zeros)
-                col_str = str(col).zfill(num_zeros)
-                tile_id = f"{row_str}{col_str}"
-                tile_name = f"tile_{row_str}_{col_str}"
-                if options["suffix"]:
-                    tile_name += f"_{suffix}"
+                north = tile["geometry"]["coordinates"][0][0][1]
+                south = tile["geometry"]["coordinates"][0][2][1]
+                west = tile["geometry"]["coordinates"][0][0][0]
+                east = tile["geometry"]["coordinates"][0][1][0]
                 new_mapset = f"tmp_mapset_{ID}_{tile_id}"
                 rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
-
-                # set tile region
-                south = north - tile_size_map_units
-                east = west + tile_size_map_units
-
                 # worker to request the null cells to get the info if the tile
                 # can be a training data tile
                 worker_nullcells = Module(
@@ -367,75 +484,51 @@ def main() -> None:
                 )
                 worker_nullcells.stdout_ = grass.PIPE
                 worker_nullcells.stderr_ = grass.PIPE
-                queue.put(worker_nullcells)
-
-                # create tile for tindex
-                feat = {
-                    "type": "Feature",
-                    "properties": {
-                        "fid": tile_id,
-                        "name": tile_name,
-                        "path": "",
-                        "training": "false",
-                    },
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [
-                            [
-                                [west, north],
-                                [east, north],
-                                [east, south],
-                                [west, south],
-                                [west, north],
-                            ],
-                        ],
-                    },
-                }
-                geojson_dict["features"].append(feat)
-
-                # set region west for next tile
-                west += tile_size_map_units - tile_overlap_map_units
+                queue_nullcheck.put(worker_nullcells)
                 num += 1
-            north -= tile_size_map_units - tile_overlap_map_units
-        queue.wait()
-    except Exception:
-        check_parallel_errors(queue)
+            queue_nullcheck.wait()
+        except Exception:
+            check_parallel_errors(queue_nullcheck)
+        verify_mapsets(cur_mapset)
 
-    verify_mapsets(cur_mapset)
+        possible_tr_data = []
+        tiles_with_data = []
+        tiles_wo_data = []
+        for proc in queue_nullcheck.get_finished_modules():
+            stdout_strs = proc.outputs["stdout"].value.strip().split(":")
+            null_cells = int(stdout_strs[1].strip())
+            num = int(stdout_strs[0].split(" ")[2])
+            if null_cells == 0:
+                possible_tr_data.append(num)
+            if null_cells != tile_size * tile_size:
+                tiles_with_data.append(num)
+            else:
+                tiles_wo_data.append(num)
 
-    possible_tr_data = []
-    tiles_with_data = []
-    tiles_wo_data = []
-    for proc in queue.get_finished_modules():
-        stdout_strs = proc.outputs["stdout"].value.strip().split(":")
-        null_cells = int(stdout_strs[1].strip())
-        num = int(stdout_strs[0].split(" ")[2])
-        if null_cells == 0:
-            possible_tr_data.append(num)
-        if null_cells != tile_size * tile_size:
-            tiles_with_data.append(num)
-        else:
-            tiles_wo_data.append(num)
+        # random split into train and apply data tiles
+        num_tr_tiles = round(train_percentage / 100.0 * num_tiles_total)
+        if len(possible_tr_data) < num_tr_tiles:
+            num_tr_tiles = len(possible_tr_data)
+            true_train_percentage = round(num_tr_tiles / num_tiles_total * 100)
+            grass.warning(
+                _(
+                    "Too many border tiles including null values. To "
+                    "ensure valid train tiles, the train percentage is "
+                    f"reduced to {true_train_percentage}.",
+                ),
+            )
+        random.shuffle(possible_tr_data)
+        tr_tiles = possible_tr_data[:num_tr_tiles]
+    else:
+        tiles_with_data = list(range(len(geojson_dict["features"])))
+        tiles_wo_data = []
+        tr_tiles = []
 
-    # random split into train and apply data tiles
-    num_tr_tiles = round(train_percentage / 100.0 * num_tiles_total)
-    if len(possible_tr_data) < num_tr_tiles:
-        num_tr_tiles = len(possible_tr_data)
-        true_train_percentage = round(num_tr_tiles / num_tiles_total * 100)
-        grass.warning(
-            _(
-                "Too many border tiles including null values. To "
-                "ensure valid train tiles, the train percentage is "
-                f"reduced to {true_train_percentage}.",
-            ),
-        )
-
-    random.shuffle(possible_tr_data)
-    tr_tiles = possible_tr_data[:num_tr_tiles]
     if train_percentage == 100:
         ap_tiles = []
     else:
         ap_tiles = [x for x in tiles_with_data if x not in tr_tiles]
+
     # loop over training data
     queue_export_tr = ParallelModuleQueue(nprocs=nprocs)
     try:

@@ -1,4 +1,5 @@
 gdal
+geopandas
 grass_gis_helpers
 matplotlib
 ogr
