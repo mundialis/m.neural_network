@@ -21,6 +21,56 @@
 # % keyword: segmentation
 # %end
 
+# %option
+# % key: n
+# % type: string
+# % required: no
+# % multiple: no
+# % key_desc: value
+# % description: Value for the northern edge
+# % guisection: Bounds
+# %end
+
+# %option
+# % key: s
+# % type: string
+# % required: no
+# % multiple: no
+# % key_desc: value
+# % description: Value for the southern edge
+# % guisection: Bounds
+# %end
+
+# %option
+# % key: e
+# % type: string
+# % required: no
+# % multiple: no
+# % key_desc: value
+# % description: Value for the eastern edge
+# % guisection: Bounds
+# %end
+
+# %option
+# % key: w
+# % type: string
+# % required: no
+# % multiple: no
+# % key_desc: value
+# % description: Value for the western edge
+# % guisection: Bounds
+# %end
+
+# %option
+# % key: res
+# % type: string
+# % required: no
+# % multiple: no
+# % key_desc: value
+# % description: 2D grid resolution (north-south and east-west)
+# % guisection: Resolution
+# %end
+
 # %option G_OPT_R_INPUTS
 # % key: image_bands
 # % label: The names of imagery raster bands, e.g. for DOPs RGBI raster bands
