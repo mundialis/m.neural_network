@@ -449,7 +449,7 @@ def main() -> None:
         # cleanup columns
         for col in grid_aoi_gdf.columns:
             print(col)
-            if col not in ["geometry", "fid", "name", "path", "training"]:
+            if col not in {"geometry", "fid", "name", "path", "training"}:
                 grid_aoi_gdf.drop(col, axis=1, inplace=True)
         geojson_dict["features"] = grid_aoi_gdf.to_geo_dict()["features"]
 
