@@ -588,7 +588,7 @@ def main() -> None:
     queue_export_ap = ParallelModuleQueue(nprocs=nprocs)
     try:
         for i, ap_tile in enumerate(ap_tiles):
-            tile = geojson_dict["features"][ap_tiles]
+            tile = geojson_dict["features"][ap_tile]
             tile_name = tile["properties"]["name"]
             tile_path = os.path.join(output_dir, "apply", tile_name)
             tile_id = tile["properties"]["fid"]
