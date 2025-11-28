@@ -78,7 +78,7 @@
 # % key: tile_size
 # % type: integer
 # % required: yes
-# % label: Size of the created tiles in cells
+# % label: Size of the created tiles in cells. Must be divisible by 16
 # % description: Creates tiles of size <tile_size>,<tile_size>
 # % answer: 512
 # % guisection: Optional input
@@ -249,6 +249,9 @@ def main() -> None:
     tile_overlap = int(options["tile_overlap"])
     segmentation_minsize = int(options["segmentation_minsize"])
     segmentation_threshold = float(options["segmentation_threshold"])
+    # check tile_size devisible by 16
+    if tile_size % 16 != 0:
+        grass.fatal(_("<tile_size> is not devisible by 16!"))
     if flags["a"]:
         train_percentage = 0  # no training, only application preparation
     elif flags["t"]:
@@ -568,6 +571,7 @@ def main() -> None:
                 image_bands=image_bands,
                 ndsm=ndsm,
                 tile_name=tile_name,
+                tile_size=tile_size,
                 reference=reference,
                 segmentation_minsize=segmentation_minsize,
                 segmentation_threshold=segmentation_threshold,
