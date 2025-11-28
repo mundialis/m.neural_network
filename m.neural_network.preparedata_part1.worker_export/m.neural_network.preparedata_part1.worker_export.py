@@ -245,7 +245,7 @@ def main() -> None:
         grass.run_command(
             "r.mapcalc",
             expression=f"{image_new} = int(if({image} < 1, 1, if({image} > "
-            f"255, 255, {image})))"
+            f"255, 255, {image})))",
         )
     grass.run_command(
         "i.group",
@@ -258,7 +258,7 @@ def main() -> None:
         input="image_bands",
         output=image_file,
         type="Byte",
-        createopt=f"COMPRESS=LZW,TILED=YES​,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
+        createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
         **EXPORT_PARAM,
     )
 
