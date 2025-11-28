@@ -129,6 +129,16 @@
 # %end
 
 # %option
+# % key: tile_size
+# % type: integer
+# % required: yes
+# % label: Size of the created tiles in cells. Must be divisible by 16
+# % description: Creates tiles of size <tile_size>,<tile_size>
+# % answer: 512
+# % guisection: Optional input
+# %end
+
+# %option
 # % key: new_mapset
 # % type: string
 # % required: yes
@@ -153,7 +163,6 @@ from grass_gis_helpers.mapset import switch_to_new_mapset
 EXPORT_PARAM = {
     "format": "GTiff",
     "flags": "mc",
-    "createopt": "COMPRESS=LZW",
     "quiet": True,
 }
 NEWGISRC = None
@@ -186,6 +195,7 @@ def main() -> None:
     west = options["w"]
     east = options["e"]
     res = options["res"]
+    tile_size = int(options["tile_size"])
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
     reference = options["reference"]
@@ -248,6 +258,7 @@ def main() -> None:
         input="image_bands",
         output=image_file,
         type="Byte",
+        createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
         **EXPORT_PARAM,
     )
 
@@ -256,6 +267,7 @@ def main() -> None:
         "r.out.gdal",
         input=ndsm,
         output=os.path.join(output_dir, f"ndsm_{tile_name}.tif"),
+        createopt=f"COMPRESS=LZW",
         **EXPORT_PARAM,
     )
 
@@ -270,6 +282,7 @@ def main() -> None:
         input="ndsm_scaled",
         output=ndsm_sc_file,
         type="Byte",
+        createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
         **EXPORT_PARAM,
     )
 
