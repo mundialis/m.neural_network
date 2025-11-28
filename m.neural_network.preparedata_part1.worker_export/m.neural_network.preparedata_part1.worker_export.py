@@ -228,10 +228,19 @@ def main() -> None:
 
     # image band export
     image_file = os.path.join(output_dir, f"image_{tile_name}.tif")
+    image_bands_new = []
+    for image in image_bands:
+        image_new = f"{image.split('@')[0]}_new"
+        image_bands_new.append(image_new)
+        grass.run_command(
+            "r.mapcalc",
+            expression=f"{image_new} = int(if({image} < 1, 1, if({image} > "
+            f"255, 255, {image})))"
+        )
     grass.run_command(
         "i.group",
         group="image_bands",
-        input=image_bands,
+        input=image_bands_new,
         quiet=True,
     )
     grass.run_command(
