@@ -258,7 +258,7 @@ def main() -> None:
         input="image_bands",
         output=image_file,
         type="Byte",
-        createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
+        createopt=f"COMPRESS=LZW,TILED=YES​,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
         **EXPORT_PARAM,
     )
 
@@ -267,7 +267,7 @@ def main() -> None:
         "r.out.gdal",
         input=ndsm,
         output=os.path.join(output_dir, f"ndsm_{tile_name}.tif"),
-        createopt=f"COMPRESS=LZW",
+        createopt="COMPRESS=LZW",
         **EXPORT_PARAM,
     )
 
