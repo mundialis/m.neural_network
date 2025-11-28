@@ -238,6 +238,7 @@ def main() -> None:
         "r.out.gdal",
         input="image_bands",
         output=image_file,
+        type="Byte",
         **EXPORT_PARAM,
     )
 
