@@ -251,7 +251,7 @@ def main() -> None:
     segmentation_threshold = float(options["segmentation_threshold"])
     # check tile_size devisible by 16
     if tile_size % 16 != 0:
-        grass.fatal(_(f"<tile_size> is not devisible by 16!"))
+        grass.fatal(_("<tile_size> is not devisible by 16!"))
     if flags["a"]:
         train_percentage = 0  # no training, only application preparation
     elif flags["t"]:
