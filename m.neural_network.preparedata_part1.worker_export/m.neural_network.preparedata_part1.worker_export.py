@@ -149,11 +149,11 @@ from grass.pygrass.utils import get_lib_path
 from grass.script.vector import vector_info_topo
 from grass_gis_helpers.mapset import switch_to_new_mapset
 
+# overviews,TILED=YES,BIGTIFF=YES are not needed scince only tiles are exported
 EXPORT_PARAM = {
     "format": "GTiff",
     "flags": "mc",
-    "createopt": "COMPRESS=LZW,TILED=YES,BIGTIFF=YES",
-    "overviews": 5,
+    "createopt": "COMPRESS=LZW",
     "quiet": True,
 }
 NEWGISRC = None
