@@ -339,7 +339,9 @@ def main() -> None:
 
     # nDSM scaled + export (cut to [0 30] and rescale to [1 255]))
     ndsm_cut = "ndsm_cut"
-    ex_cut = f"{ndsm_cut} = if( {ndsm} >= 30, 30, if( {ndsm} < 0, 0, {ndsm} ) )"
+    ex_cut = (
+        f"{ndsm_cut} = if( {ndsm} >= 30, 30, if( {ndsm} < 0, 0, {ndsm} ) )"
+    )
     grass.run_command("r.mapcalc", expression=ex_cut)
     rm_rasters.append(ndsm_cut)
     ndsm_scaled = "ndsm_scaled"
@@ -347,15 +349,23 @@ def main() -> None:
     grass.run_command("r.mapcalc", expression=ex_scale)
 
     # Image Bands: convert to byte, if not integer or larger values than 255
+    image_bands_new = []
     for image in image_bands:
-        if grass.raster_info(image)["datatype"] != "CELL" or grass.raster_info(image)["max"] > 255:
+        if (
+            grass.raster_info(image)["datatype"] != "CELL"
+            or grass.raster_info(image)["max"] > 255
+        ):
             image_new = f"{image.split('@')[0]}_new"
-            image_bands[image_bands.index(image)] = image_new
+            # image_bands[image_bands.index(image)] = image_new
             grass.run_command(
                 "r.mapcalc",
                 expression=f"{image_new} = int(if({image} < 1, 1, if({image} > "
                 f"255, 255, {image})))",
             )
+            image_bands_new.append(image_new)
+        else:
+            image_bands_new.append(image)
+    image_bands = image_bands_new
 
     # parameter for tiles
     tile_size_map_units = tile_size * res

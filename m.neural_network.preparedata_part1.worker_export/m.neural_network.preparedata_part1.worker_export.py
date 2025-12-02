@@ -193,7 +193,6 @@ def cleanup() -> None:
 
 def main() -> None:
     """Export tiles and training data suggestion."""
-
     # NOTE: avoid using r.mapcalc and similar within this exporter
     # -> only region setting and export (to reduce long runtimes for large AOIs)
 
