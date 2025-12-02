@@ -356,7 +356,6 @@ def main() -> None:
             or grass.raster_info(image)["max"] > 255
         ):
             image_new = f"{image.split('@')[0]}_new"
-            # image_bands[image_bands.index(image)] = image_new
             grass.run_command(
                 "r.mapcalc",
                 expression=f"{image_new} = int(if({image} < 1, 1, if({image} > "
@@ -366,6 +365,14 @@ def main() -> None:
         else:
             image_bands_new.append(image)
     image_bands = image_bands_new
+
+    image_bands_group = "image_bands"
+    grass.run_command(
+        "i.group",
+        group=image_bands_group,
+        input=image_bands,
+        quiet=True,
+    )
 
     # parameter for tiles
     tile_size_map_units = tile_size * res
@@ -600,7 +607,7 @@ def main() -> None:
                 e=east,
                 w=west,
                 res=res,
-                image_bands=image_bands,
+                image_bands_group=image_bands_group,
                 ndsm=ndsm,
                 ndsm_scaled=ndsm_scaled,
                 tile_name=tile_name,
@@ -650,7 +657,7 @@ def main() -> None:
                 e=east,
                 w=west,
                 res=res,
-                image_bands=image_bands,
+                image_bands_group=image_bands_group,
                 tile_name=tile_name,
                 ndsm=ndsm,
                 ndsm_scaled=ndsm_scaled,

@@ -71,10 +71,9 @@
 # % guisection: Resolution
 # %end
 
-# %option G_OPT_R_INPUTS
-# % key: image_bands
-# % label: The names of imagery raster bands, e.g. for DOPs RGBI raster bands
-# % description: The first raster defines the output resolution
+# %option G_OPT_I_GROUP
+# % key: image_bands_group
+# % label: The imagery group with all imagery raster bands, e.g. for DOPs RGBI raster bands
 # % guisection: Input
 # %end
 
@@ -206,7 +205,7 @@ def main() -> None:
     east = options["e"]
     res = options["res"]
     tile_size = int(options["tile_size"])
-    image_bands = options["image_bands"].split(",")
+    image_bands_group = options["image_bands_group"]
     ndsm = options["ndsm"]
     ndsm_scaled = options["ndsm_scaled"]
     reference = options["reference"]
@@ -242,36 +241,19 @@ def main() -> None:
         ndsm += f"@{old_mapset}"
     if reference and "@" not in reference:
         reference += f"@{old_mapset}"
-    for num in range(len(image_bands)):
-        if "@" not in image_bands[num]:
-            image_bands[num] += f"@{old_mapset}"
 
     # image band export
     image_file = os.path.join(output_dir, f"image_{tile_name}.tif")
     grass.run_command(
-        "i.group",
-        group="image_bands",
-        input=image_bands,
-        quiet=True,
-    )
-    grass.run_command(
         "r.out.gdal",
-        input="image_bands",
+        input=image_bands_group,
         output=image_file,
         type="Byte",
         createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
         **EXPORT_PARAM,
     )
 
-    # ndom export
-    grass.run_command(
-        "r.out.gdal",
-        input=ndsm,
-        output=os.path.join(output_dir, f"ndsm_{tile_name}.tif"),
-        createopt="COMPRESS=LZW",
-        **EXPORT_PARAM,
-    )
-
+    # scaled ndom export
     ndsm_sc_file = os.path.join(output_dir, f"ndsm_1_255_{tile_name}.tif")
     grass.run_command(
         "r.out.gdal",
@@ -284,6 +266,14 @@ def main() -> None:
 
     # segmentation or clip reference data
     if tr_flag:
+        # unscaled ndom export (as helper map for labeling)
+        grass.run_command(
+            "r.out.gdal",
+            input=ndsm,
+            output=os.path.join(output_dir, f"ndsm_{tile_name}.tif"),
+            createopt="COMPRESS=LZW",
+            **EXPORT_PARAM,
+        )
         label_file = os.path.join(output_dir, f"label_{tile_name}.gpkg")
         create_seg = False
         if reference:
@@ -328,13 +318,13 @@ def main() -> None:
             if ndsm_range["min"] != ndsm_range["max"]:
                 grass.run_command(
                     "i.group",
-                    group="image_bands",
+                    group=image_bands_group,
                     input="ndsm_scaled",
                     quiet=True,
                 )
             grass.run_command(
                 "i.segment",
-                group="image_bands",
+                group=image_bands_group,
                 output="segments",
                 threshold=segmentation_threshold,
                 minsize=segmentation_minsize,
