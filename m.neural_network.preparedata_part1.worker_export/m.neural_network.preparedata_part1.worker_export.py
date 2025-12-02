@@ -85,6 +85,13 @@
 # % guisection: Input
 # %end
 
+# %option G_OPT_R_INPUT
+# % key: ndsm_scaled
+# % label: Name of the scaled nDSM raster
+# % answer: ndsm_scaled
+# % guisection: Input
+# %end
+
 # %option G_OPT_V_INPUT
 # % key: reference
 # % required: no
@@ -186,6 +193,10 @@ def cleanup() -> None:
 
 def main() -> None:
     """Export tiles and training data suggestion."""
+
+    # NOTE: avoid using r.mapcalc and similar within this exporter
+    # -> only region setting and export (to reduce long runtimes for large AOIs)
+
     global NEW_MAPSET, NEWGISRC, GISRC
 
     NEW_MAPSET = options["new_mapset"]
@@ -198,6 +209,7 @@ def main() -> None:
     tile_size = int(options["tile_size"])
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
+    ndsm_scaled = options["ndsm_scaled"]
     reference = options["reference"]
     segmentation_minsize = int(options["segmentation_minsize"])
     segmentation_threshold = float(options["segmentation_threshold"])
@@ -217,7 +229,6 @@ def main() -> None:
     GISRC, NEWGISRC, old_mapset = switch_to_new_mapset(NEW_MAPSET, new=False)
 
     # set region
-    grass.message(_(f"Set region for tile {tile_name} ..."))
     grass.run_command(
         "g.region",
         n=north,
@@ -238,19 +249,10 @@ def main() -> None:
 
     # image band export
     image_file = os.path.join(output_dir, f"image_{tile_name}.tif")
-    image_bands_new = []
-    for image in image_bands:
-        image_new = f"{image.split('@')[0]}_new"
-        image_bands_new.append(image_new)
-        grass.run_command(
-            "r.mapcalc",
-            expression=f"{image_new} = int(if({image} < 1, 1, if({image} > "
-            f"255, 255, {image})))",
-        )
     grass.run_command(
         "i.group",
         group="image_bands",
-        input=image_bands_new,
+        input=image_bands,
         quiet=True,
     )
     grass.run_command(
@@ -271,15 +273,10 @@ def main() -> None:
         **EXPORT_PARAM,
     )
 
-    # nDSM scaled + export (cut to [0 30] and rescale to [1 255]))
     ndsm_sc_file = os.path.join(output_dir, f"ndsm_1_255_{tile_name}.tif")
-    ex_cut = f"ndsm_cut = if( {ndsm} >= 30, 30, if( {ndsm} < 0, 0, {ndsm} ) )"
-    grass.run_command("r.mapcalc", expression=ex_cut)
-    ex_scale = "ndsm_scaled = int((ndsm_cut / 30. * 254.) + 1)"
-    grass.run_command("r.mapcalc", expression=ex_scale)
     grass.run_command(
         "r.out.gdal",
-        input="ndsm_scaled",
+        input=ndsm_scaled,
         output=ndsm_sc_file,
         type="Byte",
         createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",

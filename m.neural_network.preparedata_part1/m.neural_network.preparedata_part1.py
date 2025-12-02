@@ -183,6 +183,7 @@ rm_files = list()
 ORIG_REGION = None
 rm_dirs = []
 rm_vectors = []
+rm_rasters = []
 
 
 def cleanup() -> None:
@@ -192,6 +193,7 @@ def cleanup() -> None:
         rm_dirs=rm_dirs,
         rm_files=rm_files,
         rm_vectors=rm_vectors,
+        rm_rasters=rm_rasters,
     )
 
 
@@ -334,6 +336,26 @@ def main() -> None:
             "r.mapcalc",
             expression=f"{ndsm} = float({dsm} - {dtm})",
         )
+
+    # nDSM scaled + export (cut to [0 30] and rescale to [1 255]))
+    ndsm_cut = "ndsm_cut"
+    ex_cut = f"{ndsm_cut} = if( {ndsm} >= 30, 30, if( {ndsm} < 0, 0, {ndsm} ) )"
+    grass.run_command("r.mapcalc", expression=ex_cut)
+    rm_rasters.append(ndsm_cut)
+    ndsm_scaled = "ndsm_scaled"
+    ex_scale = f"{ndsm_scaled} = int(({ndsm_cut} / 30. * 254.) + 1)"
+    grass.run_command("r.mapcalc", expression=ex_scale)
+
+    # Image Bands: convert to byte, if not integer or larger values than 255
+    for image in image_bands:
+        if grass.raster_info(image)["datatype"] != "CELL" or grass.raster_info(image)["max"] > 255:
+            image_new = f"{image.split('@')[0]}_new"
+            image_bands[image_bands.index(image)] = image_new
+            grass.run_command(
+                "r.mapcalc",
+                expression=f"{image_new} = int(if({image} < 1, 1, if({image} > "
+                f"255, 255, {image})))",
+            )
 
     # parameter for tiles
     tile_size_map_units = tile_size * res
@@ -570,6 +592,7 @@ def main() -> None:
                 res=res,
                 image_bands=image_bands,
                 ndsm=ndsm,
+                ndsm_scaled=ndsm_scaled,
                 tile_name=tile_name,
                 tile_size=tile_size,
                 reference=reference,
@@ -600,9 +623,11 @@ def main() -> None:
             south = tile["geometry"]["coordinates"][0][2][1]
             west = tile["geometry"]["coordinates"][0][0][0]
             east = tile["geometry"]["coordinates"][0][1][0]
-            grass.message(
-                _(f"Exporting: apply tile {i + 1} of {len(ap_tiles)}"),
-            )
+            if i == 0 or i % 100 == 0:
+                # print only every 100-th entry
+                grass.message(
+                    _(f"Exporting: apply tile {i + 1} of {len(ap_tiles)}"),
+                )
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
             # update jeojson values
             geojson_dict["features"][ap_tile]["properties"]["training"] = "no"
@@ -618,6 +643,7 @@ def main() -> None:
                 image_bands=image_bands,
                 tile_name=tile_name,
                 ndsm=ndsm,
+                ndsm_scaled=ndsm_scaled,
                 output_dir=tile_path,
                 new_mapset=new_mapset,
                 run_=False,
