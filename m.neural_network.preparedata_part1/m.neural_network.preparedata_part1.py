@@ -184,6 +184,7 @@ ORIG_REGION = None
 rm_dirs = []
 rm_vectors = []
 rm_rasters = []
+rm_groups = []
 
 
 def cleanup() -> None:
@@ -342,10 +343,12 @@ def main() -> None:
     ex_cut = (
         f"{ndsm_cut} = if( {ndsm} >= 30, 30, if( {ndsm} < 0, 0, {ndsm} ) )"
     )
-    grass.run_command("r.mapcalc", expression=ex_cut)
     rm_rasters.append(ndsm_cut)
+    grass.run_command("r.mapcalc", expression=ex_cut)
+
     ndsm_scaled = "ndsm_scaled"
     ex_scale = f"{ndsm_scaled} = int(({ndsm_cut} / 30. * 254.) + 1)"
+    rm_rasters.append(ndsm_scaled)
     grass.run_command("r.mapcalc", expression=ex_scale)
 
     # Image Bands: convert to byte, if not integer or larger values than 255
@@ -356,6 +359,7 @@ def main() -> None:
             or grass.raster_info(image)["max"] > 255
         ):
             image_new = f"{image.split('@')[0]}_new"
+            rm_rasters.append(image_new)
             grass.run_command(
                 "r.mapcalc",
                 expression=f"{image_new} = int(if({image} < 1, 1, if({image} > "
@@ -367,6 +371,7 @@ def main() -> None:
     image_bands = image_bands_new
 
     image_bands_group = "image_bands"
+    rm_groups.append(image_bands_group)
     grass.run_command(
         "i.group",
         group=image_bands_group,
