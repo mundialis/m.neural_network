@@ -195,6 +195,7 @@ def cleanup() -> None:
         rm_files=rm_files,
         rm_vectors=rm_vectors,
         rm_rasters=rm_rasters,
+        rm_groups=rm_groups,
     )
 
 
