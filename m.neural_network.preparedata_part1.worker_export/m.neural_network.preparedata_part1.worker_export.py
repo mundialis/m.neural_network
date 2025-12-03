@@ -239,6 +239,8 @@ def main() -> None:
 
     if ndsm and "@" not in ndsm:
         ndsm += f"@{old_mapset}"
+    if ndsm_scaled and "@" not in ndsm_scaled:
+        ndsm_scaled += f"@{old_mapset}"
     if reference and "@" not in reference:
         reference += f"@{old_mapset}"
     if image_bands_group and "@" not in image_bands_group:
