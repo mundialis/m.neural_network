@@ -645,7 +645,7 @@ def main() -> None:
             south = tile["geometry"]["coordinates"][0][2][1]
             west = tile["geometry"]["coordinates"][0][0][0]
             east = tile["geometry"]["coordinates"][0][1][0]
-            if i == 0 or i % 100 == 0:
+            if i % 100 == 0:
                 # print only every 100-th entry
                 grass.message(
                     _(f"Exporting: apply tile {i + 1} of {len(ap_tiles)}"),
