@@ -241,6 +241,8 @@ def main() -> None:
         ndsm += f"@{old_mapset}"
     if reference and "@" not in reference:
         reference += f"@{old_mapset}"
+    if image_bands_group and "@" not in image_bands_group:
+        image_bands_group += f"@{old_mapset}"
 
     # image band export
     image_file = os.path.join(output_dir, f"image_{tile_name}.tif")
