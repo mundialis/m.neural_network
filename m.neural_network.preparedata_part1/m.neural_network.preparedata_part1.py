@@ -638,8 +638,12 @@ def main() -> None:
     if flags["a"]:
         ap_tiles_skip_existing = []
         n = 0
-        for i, ap_tile in reversed(list(enumerate(ap_tiles))):
-            tile_path = os.path.join(output_dir, "apply", geojson_dict["features"][ap_tile]["properties"]["name"])
+        for ap_tile in reversed(ap_tiles):
+            tile_path = os.path.join(
+                output_dir,
+                "apply",
+                geojson_dict["features"][ap_tile]["properties"]["name"],
+            )
             if not os.path.isdir(tile_path):
                 ap_tiles_skip_existing.append(ap_tile)
             elif n < nprocs:
