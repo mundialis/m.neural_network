@@ -634,6 +634,20 @@ def main() -> None:
         check_parallel_errors(queue_export_tr)
     verify_mapsets(cur_mapset)
 
+    # If only apply data -> skip existing tiles
+    if flags["a"]:
+        ap_tiles_skip_existing = []
+        n = 0
+        for i, ap_tile in reversed(list(enumerate(ap_tiles))):
+            tile_path = os.path.join(output_dir, "apply", geojson_dict["features"][ap_tile]["properties"]["name"])
+            if not os.path.isdir(tile_path):
+                ap_tiles_skip_existing.append(ap_tile)
+            elif n < nprocs:
+                # add also last processed dirs, which prob. not completely exported
+                n += 1
+                ap_tiles_skip_existing.append(ap_tile)
+        ap_tiles = ap_tiles_skip_existing
+
     # loop over apply data
     queue_export_ap = ParallelModuleQueue(nprocs=nprocs)
     try:
