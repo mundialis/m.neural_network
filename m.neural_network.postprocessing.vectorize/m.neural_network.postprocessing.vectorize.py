@@ -118,13 +118,19 @@ def main():
     classification_vect_tmp1 = f"{classification_vect}_tmp1"
     rm_vectors.append(classification_vect_tmp1)
     # no "s" flag because this creates artifacts at the corners of the raster
+    r_to_vect_flags = ""
+    if tuple(int(x) for x in grass.version()["version"].split(".")[:2]) >= (
+        8,
+        5,
+    ):
+        r_to_vect_flags = "c"
     grass.run_command(
         "r.to.vect",
         input=classification_rast,
         output=classification_vect_tmp1,
         type="area",
         column="class_number",
-        flags="c",
+        flags=r_to_vect_flags,
     )
 
     # remove small areas with v.clean
