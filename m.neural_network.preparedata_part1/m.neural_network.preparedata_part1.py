@@ -544,6 +544,7 @@ def main() -> None:
         verify_mapsets(cur_mapset)
 
         possible_tr_data = []
+        no_possible_tr_data = []
         tiles_with_data = []
         tiles_wo_data = []
         for proc in queue_nullcheck.get_finished_modules():
@@ -552,6 +553,8 @@ def main() -> None:
             num = int(stdout_strs[0].split(" ")[2])
             if null_cells == 0:
                 possible_tr_data.append(num)
+            else:
+                no_possible_tr_data.append(num)
             if null_cells != tile_size * tile_size:
                 tiles_with_data.append(num)
             else:
@@ -700,6 +703,12 @@ def main() -> None:
     tiles_wo_data.reverse()
     for num in tiles_wo_data:
         del geojson_dict["features"][num]
+    # remove null-cell-tiles when t-flag (all tiles for training)
+    # null-cell-tiles are then not exported at all (not even as apply tile)
+    if flags["t"]:
+        no_possible_tr_data.reverse()
+        for num in no_possible_tr_data:
+            del geojson_dict["features"][num]
 
     # export tindex
     export_tindex(output_dir, geojson_dict, etc_path)
