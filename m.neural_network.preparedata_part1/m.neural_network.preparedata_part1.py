@@ -398,7 +398,7 @@ def main() -> None:
             "properties": {"name": f"urn:ogc:def:crs:EPSG::{epsg_code}"},
         },
         "features": [
-            # Polygon initalized with default values to allocate memory
+            # Polygon initialized with default values to allocate memory
             {
                 "type": "Feature",
                 "properties": {
