@@ -6,7 +6,7 @@
 # PURPOSE:      Applies a neural network for semantic segmentation on a
 #               untrained data set based on a smp framework and scripts.
 # SPDX-FileCopyrightText: (c) 2025 by mundialis GmbH & Co. KG and the
-#              GRASS Development Team
+#               GRASS Development Team
 # SPDX-License-Identifier: GPL-3.0-or-later.
 #
 #############################################################################

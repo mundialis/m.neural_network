@@ -3,11 +3,9 @@
 #
 # MODULE:      m.neural_network.postprocessing.snapref
 # AUTHOR(S):   Lina Krisztian.
-#
 # PURPOSE:     Merges classification vector with reference data.
 # SPDX-FileCopyrightText: (c) 2025 by mundialis GmbH & Co. KG and the
 #                             GRASS Development Team
-#
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 #############################################################################

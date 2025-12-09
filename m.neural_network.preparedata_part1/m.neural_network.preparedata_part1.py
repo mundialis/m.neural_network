@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:       m.neural_network.preparedata_part1
-# AUTHOR(S):    Anika Weinmann, Guido Riembauer and Victoria-Leandra Brunn
-# PURPOSE:      Prepare training data as first step for the process of
-#               creating a neural network.
+# MODULE:      m.neural_network.preparedata_part1
+# AUTHOR(S):   Anika Weinmann, Guido Riembauer and Victoria-Leandra Brunn
+# PURPOSE:     Prepare training data as first step for the process of
+#              creating a neural network.
 # SPDX-FileCopyrightText: (c) 2024-2025 by mundialis GmbH & Co. KG and the
 #              GRASS Development Team
 # SPDX-License-Identifier: GPL-3.0-or-later.

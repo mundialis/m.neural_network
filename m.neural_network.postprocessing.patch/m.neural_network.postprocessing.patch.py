@@ -3,11 +3,9 @@
 #
 # MODULE:      m.neural_network.postprocessing.patch
 # AUTHOR(S):   Lina Krisztian.
-#
 # PURPOSE:     Patches tiles resulting from neural network inference.
 # SPDX-FileCopyrightText: (c) 2025 by mundialis GmbH & Co. KG and the
 #                             GRASS Development Team
-#
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 #############################################################################
