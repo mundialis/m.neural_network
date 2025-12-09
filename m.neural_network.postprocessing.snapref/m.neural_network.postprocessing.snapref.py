@@ -46,14 +46,14 @@
 # %option G_OPT_DB_COLUMN
 # % key: class_col
 # % required: yes
-# % description: Attribute column containig attribute of class number
+# % description: Attribute column containing attribute of class number
 # % answer: class_number
 # %end
 
 # %option G_OPT_DB_COLUMN
 # % key: merge_col
 # % required: yes
-# % description: Attribute column containig attribute of reference data, along wich should be merged
+# % description: Attribute column containing attribute of reference data, along which should be merged
 # %end
 
 # %option
@@ -103,7 +103,7 @@ rm_vectors = []
 
 # cleanup function
 def cleanup():
-    """Cleanup fuction."""
+    """Cleanup function."""
     general_cleanup(
         rm_vectors=rm_vectors,
     )
