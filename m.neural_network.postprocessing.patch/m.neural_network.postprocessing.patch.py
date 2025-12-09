@@ -87,7 +87,7 @@ def cleanup():
 
 
 def main():
-    """main function for patching."""
+    """Main function for patching."""
     global ORIG_REGION
 
     tiles_filelist = options["tiles_filelist"]
