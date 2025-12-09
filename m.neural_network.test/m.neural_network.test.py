@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:       m.neural_network.test
-# AUTHOR(S):    Victoria-Leandra Brunn
-# PURPOSE:      Tests a neural network for semantic segmentation based
-#               on a smp framework and scripts.
-#
-# COPYRIGHT:	(C) 2025 by mundialis
-#
-# 		This program is free software under the GNU General Public
-# 		License (v3). Read the file COPYING that comes with GRASS
-# 		for details.
+# MODULE:      m.neural_network.test
+# AUTHOR(S):   Victoria-Leandra Brunn
+# PURPOSE:     Tests a neural network for semantic segmentation based
+#              on a smp framework and scripts.
+# SPDX-FileCopyrightText: (c) 2025 by mundialis GmbH & Co. KG and the
+#              GRASS Development Team
+# SPDX-License-Identifier: GPL-3.0-or-later.
 #
 #############################################################################
 """

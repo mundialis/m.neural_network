@@ -1,6 +1,20 @@
 #!/bin/bash
 #
-# Small example script, for testing the m.neural_network Addons
+########################################################################
+#
+# MODULE:       small_example_script.sh
+#
+# AUTHOR(S):    Lina Krisztian
+#               mundialis GmbH & Co. KG, Bonn
+#               https://www.mundialis.de
+#
+# PURPOSE:      Small example script, for testing the m.neural_network Addons
+#
+# SPDX-FileCopyrightText: (c) 2025 by mundialis GmbH & Co. KG
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+########################################################################
 
 # TODO: adjust output path
 PATH_TO_TESTDATA=/path/for/downloaded/testdata/

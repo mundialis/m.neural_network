@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:       m.neural_network.train
-# AUTHOR(S):    Victoria-Leandra Brunn
-# PURPOSE:      Trains a neural network for semantic segmentation based
-#               on a smp framework and scripts including the steps initial
-#               training and finetuning.
-#
-# COPYRIGHT:	(C) 2025 by mundialis
-#
-# 		This program is free software under the GNU General Public
-# 		License (v3). Read the file COPYING that comes with GRASS
-# 		for details.
+# MODULE:      m.neural_network.train
+# AUTHOR(S):   Victoria-Leandra Brunn
+# PURPOSE:     Trains a neural network for semantic segmentation based
+#              on a smp framework and scripts including the steps initial
+#              training and finetuning.
+# SPDX-FileCopyrightText: (c) 2025 by mundialis GmbH & Co. KG and the
+#              GRASS Development Team
+# SPDX-License-Identifier: GPL-3.0-or-later.
 #
 #############################################################################
 """
