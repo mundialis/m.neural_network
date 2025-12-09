@@ -87,7 +87,7 @@ def cleanup():
 
 
 def main():
-    """r.postprocessing.patch main function."""
+    """Main function for patching."""
     global ORIG_REGION
 
     tiles_filelist = options["tiles_filelist"]
@@ -115,13 +115,11 @@ def main():
     else:
         tiles_list = [f for f in os.listdir(tiles_path) if f.endswith(".tif")]
 
-    grass.message(_("Importing tiles and cutting of edges ..."))
+    grass.message(_("Importing tiles and cutting off edges ..."))
     rast_list = []
     tot_num_tiles = len(tiles_list)
     for num_tiles_ind, tiles in enumerate(tiles_list):
-        if num_tiles_ind % 50 == 0 or num_tiles_ind == (tot_num_tiles - 1):
-            percent = int(100 * num_tiles_ind / tot_num_tiles)
-            grass.message(f"{percent}%")
+        grass.percent(num_tiles_ind, tot_num_tiles, 5)
         tiles_rast = f"{tiles.split('.')[0]}_tmp"
         rm_rasters.append(tiles_rast)
         # Import data
@@ -148,6 +146,7 @@ def main():
                 mode="lesser",
                 method="rmarea",
                 value=area_threshold,
+                quiet=True,
             )
         # Cut edges
         grass.run_command(
@@ -222,10 +221,10 @@ def main():
         )
     else:
         # final output: convert vrt to one raster
+        grass.message(_(f"Creating final output '{output}' ..."))
         grass.run_command(
             "r.mapcalc",
             expression=f"{output} = {patch_out}",
-            quiet=True,
         )
 
 
