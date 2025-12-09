@@ -4,12 +4,9 @@
 # MODULE:      m.neural_network.preparedata_part1.worker_export
 # AUTHOR(S):   Guido Riembauer, Anika Weinmann
 # PURPOSE:     Worker module for m.neural_network.preparedata_part1 to export data
-# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
-#              Team.
-#
-# 		This program is free software under the GNU General Public
-# 		License (v3). Read the file COPYING that comes with GRASS
-# 		for details.
+# SPDX-FileCopyrightText: (c) 2025 by mundialis GmbH & Co. KG and the
+#              GRASS Development Team
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 #############################################################################
 """

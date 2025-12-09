@@ -5,12 +5,9 @@
 # AUTHOR(S):   Guido Riembauer, Victoria-Leandra Brunn
 # PURPOSE:     Worker module for m.neural_network.preparedata_part2 to check
 #              and rasterize label data
-# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
-#              Team.
-#
-# 		This program is free software under the GNU General Public
-# 		License (v3). Read the file COPYING that comes with GRASS
-# 		for details.
+# SPDX-FileCopyrightText: (c) 2024-2025 by mundialis GmbH & Co. KG and the
+#              GRASS Development Team
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 ##############################################################################
 """
