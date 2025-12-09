@@ -165,8 +165,6 @@ def main():
         )
         rast_list.append(tiles_rast_cut)
 
-    grass.percent(tot_num_tiles, tot_num_tiles, 5);
-
     # Patch raster
     if not keep_border_tile_edges:
         patch_out = f"{output}_vrt"
