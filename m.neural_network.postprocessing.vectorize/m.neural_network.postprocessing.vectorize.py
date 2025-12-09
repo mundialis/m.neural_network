@@ -2,7 +2,7 @@
 """############################################################################
 #
 # MODULE:      m.neural_network.postprocessing.vectorize
-# AUTHOR(S):   Lina Krisztian
+# AUTHOR(S):   Lina Krisztian.
 #
 # PURPOSE:     Vectorizes classification raster output and clean up results
 # SPDX-FileCopyrightText: (c) 2025 by mundialis GmbH & Co. KG and the
