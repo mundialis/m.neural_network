@@ -119,7 +119,7 @@ def main():
     rast_list = []
     tot_num_tiles = len(tiles_list)
     for num_tiles_ind, tiles in enumerate(tiles_list):
-        grass.percent(num_tiles_ind, tot_num_tiles, 5);
+        grass.percent(num_tiles_ind, tot_num_tiles, 5)
         tiles_rast = f"{tiles.split('.')[0]}_tmp"
         rm_rasters.append(tiles_rast)
         # Import data
