@@ -87,7 +87,7 @@ def cleanup():
 
 
 def main():
-    """Main function for patching."""
+    """Import, clean, clip and patch tiles."""
     global ORIG_REGION
 
     tiles_filelist = options["tiles_filelist"]
