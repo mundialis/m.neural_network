@@ -87,7 +87,7 @@ def cleanup():
 
 
 def main():
-    """Main function for patching."""
+    """Import, clean, clip and patch tiles."""
     global ORIG_REGION
 
     tiles_filelist = options["tiles_filelist"]
@@ -118,8 +118,13 @@ def main():
     grass.message(_("Importing tiles and cutting off edges ..."))
     rast_list = []
     tot_num_tiles = len(tiles_list)
+    perc_step = 2
+    last_perc = -perc_step
     for num_tiles_ind, tiles in enumerate(tiles_list):
-        grass.percent(num_tiles_ind, tot_num_tiles, 5)
+        perc = int(100 * num_tiles_ind / tot_num_tiles)
+        if perc >= last_perc + perc_step:
+            grass.percent(num_tiles_ind, tot_num_tiles, perc_step)
+            last_perc = perc
         tiles_rast = f"{tiles.split('.')[0]}_tmp"
         rm_rasters.append(tiles_rast)
         # Import data
