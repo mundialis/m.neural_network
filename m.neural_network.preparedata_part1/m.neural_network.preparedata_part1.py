@@ -650,6 +650,8 @@ def main() -> None:
                 # add also last processed dirs, which prob. not completely exported
                 n += 1
                 ap_tiles_skip_existing.append(ap_tile)
+                # remove these dirs before exporting newly
+                shutil.rmtree(tile_path)
         ap_tiles = ap_tiles_skip_existing
 
     # loop over apply data
