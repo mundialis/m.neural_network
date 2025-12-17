@@ -250,7 +250,7 @@ def main() -> None:
         input=image_bands_group,
         output=image_file,
         type="Byte",
-        createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
+        createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size},PHOTOMETRIC=RGB,ALPHA=UNSPECIFIED",
         **EXPORT_PARAM,
     )
 
