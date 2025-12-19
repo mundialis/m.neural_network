@@ -313,14 +313,14 @@ def main() -> None:
         if create_seg:
             ndsm_range = grass.parse_command(
                 "r.info",
-                map="ndsm_scaled",
+                map=ndsm_scaled,
                 flags="r",
             )
             if ndsm_range["min"] != ndsm_range["max"]:
                 grass.run_command(
                     "i.group",
                     group=image_bands_group,
-                    input="ndsm_scaled",
+                    input=ndsm_scaled,
                     quiet=True,
                 )
             grass.run_command(
