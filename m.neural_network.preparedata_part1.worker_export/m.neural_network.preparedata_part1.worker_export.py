@@ -316,16 +316,25 @@ def main() -> None:
                 map=ndsm_scaled,
                 flags="r",
             )
+            # create copy of imagery group in current mapset
+            image_bands_group_name = image_bands_group.split("@")[0]
+            image_bands_group_tmp = f"{image_bands_group_name}_tmp"
+            grass.run_command(
+                "g.copy",
+                group=f"{image_bands_group},{image_bands_group_tmp}",
+                quiet=True,
+            )
+            # add ndsm_scaled to imagery group
             if ndsm_range["min"] != ndsm_range["max"]:
                 grass.run_command(
                     "i.group",
-                    group=image_bands_group,
+                    group=image_bands_group_tmp,
                     input=ndsm_scaled,
                     quiet=True,
                 )
             grass.run_command(
                 "i.segment",
-                group=image_bands_group,
+                group=image_bands_group_tmp,
                 output="segments",
                 threshold=segmentation_threshold,
                 minsize=segmentation_minsize,
