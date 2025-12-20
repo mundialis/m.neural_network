@@ -74,6 +74,14 @@
 # % description: Threshold for removing small areas, outside reference area
 # %end
 
+# %option
+# % key: snap
+# % type: double
+# % required: no
+# % answer: 0.0001
+# % description: Snapping threshold in map units
+# %end
+
 # %option G_OPT_DB_WHERE
 # % key: rmarea_where_outside
 # % required: yes
@@ -133,6 +141,7 @@ def main():
     rmarea_where_inside = options["rmarea_where_inside"]
     rmarea_thres_outside = options["rmarea_thres_outside"]
     rmarea_where_outside = options["rmarea_where_outside"]
+    snap_thresh = float(options["snap"])
 
     # Get reference data only for classification
     ref_select_of_class = f"ref_select_of_class_{ID}"
@@ -179,7 +188,7 @@ def main():
         binput=ref_select_of_class_diss,
         output=classification_with_ref,
         operator="or",
-        snap=0.000001,
+        snap=snap_thresh,
     )
 
     # set dummy value for null-value of merge_col of reference data (no reference data)
