@@ -204,8 +204,8 @@ def main():
             attribute_column=class_col,
             quiet=True,
         )
-        # check for null cells
-        # e.g. if output of part1 was modified before parsing to part2, e.g. for label adjustment
+        # check for null cells within rasterized label
+        # could occur e.g. during label adjustment
         stats = grass.parse_command(
             "r.univar",
             map=labelrast_tmp,
