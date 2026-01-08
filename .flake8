@@ -19,5 +19,5 @@ per-file-ignores =
     ./m.neural_network.preparedata_part2.worker_label/m.neural_network.preparedata_part2.worker_label.py: E501,F821
     ./m.neural_network.postprocessing.patch/m.neural_network.postprocessing.patch.py: E501,F821
     ./m.neural_network.postprocessing.snapref/m.neural_network.postprocessing.snapref.py: E501,F821
-    ./m.neural_network.postprocessing.vectorize/m.neural_network.postprocessing.vectorize.py: F821
+    ./m.neural_network.postprocessing.vectorize/m.neural_network.postprocessing.vectorize.py: E501,F821
     ./smp_lib/smp_train.py: E501

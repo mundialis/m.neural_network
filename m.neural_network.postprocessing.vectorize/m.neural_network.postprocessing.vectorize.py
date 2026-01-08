@@ -53,6 +53,12 @@
 # % description: This smoothes corners which is sometimes not desired
 # %end
 
+# %flag
+# % key: c
+# % label: Keep corners after generalization (only meaningful for single small tiles)
+# % description: Keep corners after the generalization this is only meaningful for single tiles as the training tiles
+# %end
+
 # import needed libraries
 import atexit
 
@@ -73,6 +79,66 @@ def cleanup():
         orig_region=orig_region,
         rm_rasters=rm_rasters,
         rm_vectors=rm_vectors,
+    )
+
+
+def restore_corners(input_generalized, input_corners, output):
+    """Restore corners. This is important after v.generalize, because
+    sometimes the corners are generalized away.
+
+    Args:
+        input_generalized (str): The name of the input vector map with missing
+                                    corners
+        input_corners (str): The name of the input vector map before the
+                                generalization
+        output (str): The name of the output vector map including the corners
+
+    """
+    output_tmp = f"{output}_tmp"
+    rm_vectors.append(output_tmp)
+    grass.run_command(
+        "v.overlay",
+        ainput=input_generalized,
+        atype="area",
+        binput=input_corners,
+        btype="area",
+        operator="or",
+        output=output_tmp,
+        olayer="1,0,0",
+    )
+
+    for col in ["class_number", "label"]:
+        grass.run_command(
+            "v.db.update",
+            map=output_tmp,
+            column=f"a_{col}",
+            query_column=f"b_{col}",
+            where=f"a_{col} is null",
+        )
+
+        grass.run_command(
+            "db.execute",
+            sql=f"update {output_tmp} set a_{col} = "
+            f"null where b_{col} is null",
+        )
+        grass.run_command(
+            "v.db.renamecolumn",
+            map=output_tmp,
+            column=f"a_{col},{col}",
+        )
+    grass.run_command(
+        "v.db.dropcolumn",
+        map=output_tmp,
+        columns="a_cat,b_cat,b_label,b_class_number",
+    )
+    grass.run_command(
+        "v.extract",
+        input=output_tmp,
+        output=output,
+        type="area",
+        dissolve_column="class_number",
+        where="class_number is not null",
+        flags="d",
     )
 
 
@@ -154,58 +220,13 @@ def main():
         )
 
         # restore corners
-        classification_vect_tmp_s2 = f"{classification_vect}_tmp_s2"
-        rm_vectors.append(classification_vect_tmp_s2)
-        grass.run_command(
-            "v.overlay",
-            ainput=classification_vect_tmp_s1,
-            atype="area",
-            binput=classification_vect_tmp1,
-            btype="area",
-            operator="or",
-            output=classification_vect_tmp_s2,
-            olayer="1,0,0",
+        last_tmp_class_vect = f"{classification_vect}_tmp_s2"
+        rm_vectors.append(last_tmp_class_vect)
+        restore_corners(
+            classification_vect_tmp_s1,
+            classification_vect_tmp1,
+            last_tmp_class_vect,
         )
-
-        grass.run_command(
-            "v.db.update",
-            map=classification_vect_tmp_s2,
-            column="a_class_number",
-            query_column="b_class_number",
-            where="a_class_number is null",
-        )
-
-        grass.run_command(
-            "db.execute",
-            sql=f"update {classification_vect_tmp_s2} set a_class_number = "
-            "null where b_class_number is null",
-        )
-
-        grass.run_command(
-            "v.db.dropcolumn",
-            map=classification_vect_tmp_s2,
-            columns="a_cat,b_cat,a_label,b_label,b_class_number",
-        )
-
-        grass.run_command(
-            "v.db.renamecolumn",
-            map=classification_vect_tmp_s2,
-            column="a_class_number,class_number",
-        )
-
-        classification_vect_tmp_s3 = f"{classification_vect}_tmp_s3"
-        rm_vectors.append(classification_vect_tmp_s3)
-        grass.run_command(
-            "v.extract",
-            input=classification_vect_tmp_s2,
-            output=classification_vect_tmp_s3,
-            type="area",
-            dissolve_column="class_number",
-            where="class_number is not null",
-            flags="d",
-        )
-
-        last_tmp_class_vect = classification_vect_tmp_s3
 
     classification_vect_tmp2 = f"{classification_vect}_tmp2"
     rm_vectors.append(classification_vect_tmp2)
@@ -219,14 +240,29 @@ def main():
     )
 
     # second run with slightly larger threshold
+    classification_vect_tmp3 = f"{classification_vect}_tmp3"
+    rm_vectors.append(classification_vect_tmp3)
     grass.run_command(
         "v.generalize",
         input=classification_vect_tmp2,
-        output=classification_vect,
+        output=classification_vect_tmp3,
         type="area",
         method="douglas",
         threshold=generalize_thres * 1.5,
     )
+
+    # restore corners
+    if flags["c"]:
+        restore_corners(
+            classification_vect_tmp3,
+            last_tmp_class_vect,
+            classification_vect,
+        )
+    else:
+        grass.run_command(
+            "g.rename",
+            vector=f"{classification_vect_tmp3},{classification_vect}",
+        )
 
 
 if __name__ == "__main__":
