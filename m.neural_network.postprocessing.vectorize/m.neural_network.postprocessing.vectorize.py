@@ -83,7 +83,7 @@ def cleanup():
 
 
 def restore_corners(input_generalized, input_corners, output):
-    """Restore corners. This is important after v.generalize, because there
+    """Restore corners. This is important after v.generalize, because
     sometimes the corners are generalized away.
 
     Args:
