@@ -204,6 +204,19 @@ def main():
             attribute_column=class_col,
             quiet=True,
         )
+        # check for null cells within rasterized label
+        # could occur e.g. during label adjustment
+        stats = grass.parse_command(
+            "r.univar",
+            map=labelrast_tmp,
+            flags="g",
+        )
+        if int(stats["null_cells"]) > 0:
+            grass.fatal(
+                _(
+                    f"Rasterized label contains {stats['null_cells']} null cells"
+                )
+            )
         if not reclassify_rules:
             # all items of class 2 are mapped to now empty class 0 to ensure binary classification
             labelrast_bin = f"{labelrast_tmp}_bin"
