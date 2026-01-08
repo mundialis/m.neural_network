@@ -53,6 +53,12 @@
 # % description: This smoothes corners which is sometimes not desired
 # %end
 
+# %flag
+# % key: c
+# % label: Keep corners after generalization (only meaningful for single small tiles)
+# % description: Keep corners after the generalization this is only meaningful for single tiles as the training tiles
+# %end
+
 # import needed libraries
 import atexit
 
@@ -246,11 +252,17 @@ def main():
     )
 
     # restore corners
-    restore_corners(
-        classification_vect_tmp3,
-        last_tmp_class_vect,
-        classification_vect,
-    )
+    if flags["c"]:
+        restore_corners(
+            classification_vect_tmp3,
+            last_tmp_class_vect,
+            classification_vect,
+        )
+    else:
+        grass.run_command(
+            "g.rename",
+            vector=f"{classification_vect_tmp3},{classification_vect}",
+        )
 
 
 if __name__ == "__main__":
