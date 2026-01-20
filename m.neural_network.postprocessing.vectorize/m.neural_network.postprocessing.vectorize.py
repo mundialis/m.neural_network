@@ -203,9 +203,24 @@ def main():
         threshold=rmarea_thres,
     )
 
+    # Dissolve areas with same class_number
+    # (which can occur after v.clean)
+    grass.message(_("Dissolving areas of same class_number ..."))
+    classification_vect_dissolve = f"{classification_vect}_dissolve"
+    rm_vectors.append(classification_vect_dissolve)
+    # use v.extract with -d flag, instead of v.dissolve (faster)
+    grass.run_command(
+        "v.extract",
+        input=classification_vect_rmarea,
+        output=classification_vect_dissolve,
+        type="area",
+        dissolve_column="class_number",
+        flags="d",
+    )
+
     # Generalize:
     # due to rasterization no straight lines
-    last_tmp_class_vect = classification_vect_rmarea
+    last_tmp_class_vect = classification_vect_dissolve
 
     if smoothing:
         classification_vect_tmp_s1 = f"{classification_vect}_tmp_s1"
