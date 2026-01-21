@@ -187,7 +187,7 @@ def main():
         input=classification_rast,
         output=classification_vect_tmp1,
         type="area",
-        column="class_number",
+        column="class_number_float",
         flags=r_to_vect_flags,
     )
 
@@ -201,6 +201,25 @@ def main():
         output=classification_vect_rmarea,
         tool="rmarea",
         threshold=rmarea_thres,
+    )
+
+    # Change column type to INT for dissolving
+    grass.message(_("Updating column type ..."))
+    grass.run_command(
+        "v.db.addcolumn",
+        map=classification_vect_rmarea,
+        column="class_number INTEGER",
+    )
+    grass.run_command(
+        "v.db.update",
+        map=classification_vect_rmarea,
+        column="class_number",
+        query_column="class_number_float",
+    )
+    grass.run_command(
+        "v.db.dropcolumn",
+        map=classification_vect_rmarea,
+        column="class_number_float",
     )
 
     # Dissolve areas with same class_number
