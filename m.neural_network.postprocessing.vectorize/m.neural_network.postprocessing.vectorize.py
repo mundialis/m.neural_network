@@ -156,7 +156,7 @@ def main():
     if rasterinfo["datatype"] != "CELL":
         grass.fatal(
             _(
-                f"Raster map {classification_rast} is not of type 'CELL'."
+                f"Raster map {classification_rast} is not of type 'CELL'. "
                 "Please convert to integer values.",
             ),
         )
