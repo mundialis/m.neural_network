@@ -10,6 +10,7 @@
 #
 #############################################################################
 """
+
 # %Module
 # % description: Patches tiles resulting from neural network inference.
 # % keyword: raster
@@ -104,7 +105,6 @@ def main():
     ORIG_REGION = f"original_region_{ID}"
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
-    reg = grass.region()
     edge_cut_meter = 0
 
     # Read all files into a list

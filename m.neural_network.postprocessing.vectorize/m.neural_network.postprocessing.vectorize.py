@@ -12,6 +12,7 @@
 #
 #############################################################################
 """
+
 # %Module
 # % description: Vectorizes classification raster output and clean up results.
 # % keyword: vector
