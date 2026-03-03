@@ -105,8 +105,7 @@ def main():
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
     reg = grass.region()
-    res = reg["nsres"]
-    edge_cut_meter = edge_cut * res
+    edge_cut_meter = 0
 
     # Read all files into a list
     if tiles_filelist:
@@ -134,11 +133,11 @@ def main():
             output=tiles_rast,
             quiet=True,
         )
+        if edge_cut_meter == 0 and edge_cut > 0:
+            res = grass.raster_info(tiles_rast)["ns_res"]
+            edge_cut_meter = edge_cut * res
         # set current region to tile
-        if dest_res:
-            grass.run_command("g.region", raster=tiles_rast, res=dest_res)
-        else:
-            grass.run_command("g.region", raster=tiles_rast)
+        grass.run_command("g.region", raster=tiles_rast)
         # remove small areas before (!) cutting off edges
         tiles_rast_rmarea = tiles_rast
         if area_threshold > 0:
@@ -194,6 +193,10 @@ def main():
 
     # region to all tiles
     grass.run_command("g.region", raster=patch_out)
+    # set destination resolution only now to avoid artifacts when
+    # cutting off edges from tiles
+    if dest_res:
+        grass.run_command("g.region", res=dest_res, flags="a")
 
     # If edges of border tiles should be kept
     if keep_border_tile_edges:
