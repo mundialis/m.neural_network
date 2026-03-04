@@ -134,7 +134,7 @@ def main():
             quiet=True,
         )
         if edge_cut_meter == 0 and edge_cut > 0:
-            res = grass.raster_info(tiles_rast)["ns_res"]
+            res = grass.raster_info(tiles_rast)["nsres"]
             edge_cut_meter = edge_cut * res
         # set current region to tile
         grass.run_command("g.region", raster=tiles_rast)
