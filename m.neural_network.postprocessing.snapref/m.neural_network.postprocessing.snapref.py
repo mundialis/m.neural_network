@@ -10,6 +10,7 @@
 #
 #############################################################################
 """
+
 # %Module
 # % description: Merges classification vector with reference data.
 # % keyword: vector
