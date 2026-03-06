@@ -416,9 +416,8 @@ def remove_tiles_with_null_cells(
         if null_cells != tile_size * tile_size:
             # tile with data, can be used for application
             continue
-        else:
-            # tile without data, only null cells, remove from tile index
-            tiles_wo_data.append(num)
+        # tile without data, only null cells, remove from tile index
+        tiles_wo_data.append(num)
     # remove tiles without data
     tiles_wo_data.reverse()
     for num in tiles_wo_data:
@@ -494,7 +493,7 @@ def add_tile_to_tindex(
 
 def init_tindex(num_tiles_total, epsg_code):
     """Initialize tile index as GeoJson dictionary."""
-    geojson_dict = {
+    return {
         "type": "FeatureCollection",
         "name": "tindex",
         "crs": {
@@ -527,7 +526,6 @@ def init_tindex(num_tiles_total, epsg_code):
         ]
         * num_tiles_total,
     }
-    return geojson_dict
 
 
 if __name__ == "__main__":
