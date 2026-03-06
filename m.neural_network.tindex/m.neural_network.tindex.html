@@ -1,0 +1,27 @@
+<h2>DESCRIPTION</h2>
+
+<em>m.neural_network.tindex</em> creates a tile index of the possible tiles for
+the data preparation. It will be used with <em>m.neural_network.preparedata_part1</em>.
+
+<p>The <em>suffix</em> option may be used to add a suffix to each output tile/file in order to create unique tile IDs that can later be combined with results from other runs.</p>
+
+<h2>EXAMPLES</h2>
+
+<h3>Create tile index</h3>
+
+<div class="code"><pre>
+m.neural_network.preparedata_part1 image_bands=top_red_02,top_green_02,top_blue_02,top_nir_02 ndsm=ndsm tile_size=512 output_dir=/mnt/data/ nprocs=7
+</pre></div>
+
+<h2>SEE ALSO</h2>
+
+<em>
+<a href="g.region.html">g.region</a>,
+<a href="r.univar.html">r.univar</a>,
+</em>
+
+<h2>AUTHORS</h2>
+
+Anika Weinmann, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Guido Riembauer, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Victoria-Leandra Brunn, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>
