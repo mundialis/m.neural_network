@@ -3,8 +3,8 @@
 #
 # MODULE:      m.neural_network.index
 # AUTHOR(S):   Anika Weinmann, Guido Riembauer and Victoria-Leandra Brunn
-# PURPOSE:     Prepare training data as first step for the process of
-#              creating a neural network.
+# PURPOSE:     Create tile index for data preparation as first step
+#               for the process of creating a neural network.
 # SPDX-FileCopyrightText: (c) 2024-2026 by mundialis GmbH & Co. KG and the
 #              GRASS Development Team
 # SPDX-License-Identifier: GPL-3.0-or-later.
@@ -256,7 +256,10 @@ def main() -> None:
             aoi_buf = f"aoi_buf_{ID}"
             rm_vectors.append(aoi_buf)
             grass.run_command(
-                "v.buffer", input=aoi, output=aoi_buf, distance=res * tile_overlap
+                "v.buffer",
+                input=aoi,
+                output=aoi_buf,
+                distance=res * tile_overlap,
             )
             grass.run_command("g.region", vector=aoi_buf, quiet=True)
         else:
@@ -315,9 +318,13 @@ def main() -> None:
     # check which polygons intersects with aoi otherwise take all grid tiles
     if aoi:
         if flags["b"]:
-            check_tile_intersection_with_aoi(aoi_buf, "intersects", epsg_code, geojson_dict)
+            check_tile_intersection_with_aoi(
+                aoi_buf, "intersects", epsg_code, geojson_dict
+            )
         if flags["w"]:
-            check_tile_intersection_with_aoi(aoi, "within", epsg_code, geojson_dict)
+            check_tile_intersection_with_aoi(
+                aoi, "within", epsg_code, geojson_dict
+            )
 
     # only for training data
     if not flags["a"]:
@@ -446,7 +453,9 @@ def remove_tiles_with_null_cells(
     return possible_tr_data, no_possible_tr_data
 
 
-def check_tile_intersection_with_aoi(aoi_buf, aoi_intersection, epsg_code, geojson_dict):
+def check_tile_intersection_with_aoi(
+    aoi_buf, aoi_intersection, epsg_code, geojson_dict
+):
     """Check which tiles of the grid intersect with the area of interest (AOI)
     and keep only those in the tile index.
     """
