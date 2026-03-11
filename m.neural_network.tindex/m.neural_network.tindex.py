@@ -119,6 +119,8 @@
 # % excludes: -t, train_percentage
 # % excludes: -a, train_percentage
 # % requires: aoi,-b,-w
+# % requires: -w,aoi
+# % requires: -b,aoi
 # % exclusive: -b,-w
 # %end
 
