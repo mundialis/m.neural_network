@@ -28,10 +28,10 @@
 # % guisection: Optional input
 # %end
 
-# %option G_OPT_R_INPUTS
-# % key: image_bands
-# % label: The names of imagery raster bands, e.g. for DOPs RGBI raster bands
-# % description: The first raster defines the output resolution
+# %option G_OPT_R_INPUT
+# % key: image_band
+# % label: Name of an imagery raster band, e.g. first band
+# % description: The raster defines the output resolution and will be used for checking null-cells
 # % guisection: Input
 # %end
 
@@ -101,11 +101,25 @@
 # % description: Option for skipping the check for null cells in the tiles. This can be used if the user is sure that there are no null cells in the input data and wants to save time by skipping this step. If this flag is set, all tiles will be exported as training and application data according to the given percentage, even if they contain null cells. This speeds up processing.
 # %end
 
+# %flag
+# % key: b
+# % label: (buffered) AOI intersects with tiles
+# % description: Recommended, when tindex is used for final application of model. I.e. when complete AOI should be classified, and even a little more tiles are classifed, to ensure gap free classification at the borders of AOI.
+# %end
+
+# %flag
+# % key: w
+# % label: AOI completely within tiles
+# % description: Recommended, e.g. for training tiles. I.e. when tiles should be completely within AOI (for which input data are prepared).
+# %end
+
 # %rules
 # % excludes: -s,-a
 # % exclusive: -t,-a
 # % excludes: -t, train_percentage
 # % excludes: -a, train_percentage
+# % requires: aoi,-b,-w
+# % exclusive: -b,-w
 # %end
 
 
@@ -193,7 +207,7 @@ def main() -> None:
     tile_overlap = int(options["tile_overlap"])
     output_dir = options["output_dir"]
     nprocs = set_nprocs(int(options["nprocs"]))
-    image_bands = options["image_bands"].split(",")
+    image_band = options["image_band"]
     suffix = options["suffix"]
 
     # check tile_size devisible by 16
@@ -224,26 +238,28 @@ def main() -> None:
     location = gisenv["LOCATION_NAME"]
 
     # check if input data exists
-    for img_band in image_bands:
-        if not grass.find_file(name=img_band, element="raster")["file"]:
-            grass.fatal(_(f"Raster map <{img_band}> not found"))
+    if not grass.find_file(name=image_band, element="raster")["file"]:
+        grass.fatal(_(f"Raster map <{image_band}> not found"))
 
     # save original region
     ORIG_REGION = f"orig_region_{ID}"
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
     # set region to raster or aoi
-    grass.run_command("g.region", raster=image_bands[0], quiet=True)
+    grass.run_command("g.region", raster=image_band, quiet=True)
     reg = grass.region()
     res = reg["nsres"]
     if aoi:
-        aoi_buf = f"aoi_buf_{ID}"
-        rm_vectors.append(aoi_buf)
-        grass.run_command(
-            "v.buffer", input=aoi, output=aoi_buf, distance=res * tile_overlap
-        )
-        grass.run_command("g.region", vector=aoi_buf, quiet=True)
-        grass.run_command("g.region", align=image_bands[0], quiet=True)
+        if flags["b"]:
+            aoi_buf = f"aoi_buf_{ID}"
+            rm_vectors.append(aoi_buf)
+            grass.run_command(
+                "v.buffer", input=aoi, output=aoi_buf, distance=res * tile_overlap
+            )
+            grass.run_command("g.region", vector=aoi_buf, quiet=True)
+        else:
+            grass.run_command("g.region", vector=aoi, quiet=True)
+        grass.run_command("g.region", align=image_band, quiet=True)
         grass.run_command("g.region", res=res, quiet=True, flags="a")
         reg = grass.region()
 
@@ -296,7 +312,10 @@ def main() -> None:
 
     # check which polygons intersects with aoi otherwise take all grid tiles
     if aoi:
-        check_tile_intersection_with_aoi(aoi_buf, epsg_code, geojson_dict)
+        if flags["b"]:
+            check_tile_intersection_with_aoi(aoi_buf, "intersects", epsg_code, geojson_dict)
+        if flags["w"]:
+            check_tile_intersection_with_aoi(aoi, "within", epsg_code, geojson_dict)
 
     # only for training data
     if not flags["a"]:
@@ -306,7 +325,7 @@ def main() -> None:
                 remove_tiles_with_null_cells(
                     tile_size,
                     nprocs,
-                    image_bands,
+                    image_band,
                     cur_mapset,
                     gisdbase,
                     location,
@@ -352,7 +371,7 @@ def main() -> None:
 def remove_tiles_with_null_cells(
     tile_size,
     nprocs,
-    image_bands,
+    image_band,
     cur_mapset,
     gisdbase,
     location,
@@ -383,7 +402,7 @@ def remove_tiles_with_null_cells(
                 e=east,
                 w=west,
                 res=res,
-                map=image_bands[0],
+                map=image_band,
                 tile_name=num,
                 new_mapset=new_mapset,
                 run_=False,
@@ -425,7 +444,7 @@ def remove_tiles_with_null_cells(
     return possible_tr_data, no_possible_tr_data
 
 
-def check_tile_intersection_with_aoi(aoi_buf, epsg_code, geojson_dict):
+def check_tile_intersection_with_aoi(aoi_buf, aoi_intersection, epsg_code, geojson_dict):
     """Check which tiles of the grid intersect with the area of interest (AOI)
     and keep only those in the tile index.
     """
@@ -445,7 +464,7 @@ def check_tile_intersection_with_aoi(aoi_buf, epsg_code, geojson_dict):
         left_df=grid_gdf,
         right_df=aoi_gdf,
         how="inner",
-        predicate="intersects",
+        predicate=aoi_intersection,
     )
     # cleanup columns
     for col in grid_aoi_gdf.columns:
