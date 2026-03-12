@@ -27,13 +27,6 @@
 # % label: tindex file for tiling.
 # %end
 
-# %option G_OPT_V_INPUT
-# % key: aoi
-# % required: no
-# % label: Name of the area of interest vector map
-# % guisection: Optional input
-# %end
-
 # %option G_OPT_R_INPUTS
 # % key: image_bands
 # % label: The names of imagery raster bands, e.g. for DOPs RGBI raster bands
@@ -78,24 +71,6 @@
 # %end
 
 # %option
-# % key: tile_size
-# % type: integer
-# % required: yes
-# % label: Size of the created tiles in cells. Should be same as for imported tileindex
-# % answer: 512
-# % guisection: Optional input
-# %end
-
-# %option
-# % key: tile_overlap
-# % type: integer
-# % required: yes
-# % label: Overlap of the created tiles in cells
-# % answer: 128
-# % guisection: Optional input
-# %end
-
-# %option
 # % key: segmentation_minsize
 # % type: integer
 # % required: no
@@ -114,15 +89,6 @@
 # % guisection: Optional input
 # %end
 
-# %option
-# % key: suffix
-# % type: string
-# % required: no
-# % label: Suffix to be added to each output file
-# % description: Use the suffix to provide a unique ID for e.g. a specific flight campaign year
-# % guisection: Optional input
-# %end
-
 # %option G_OPT_M_DIR
 # % key: output_dir
 # % multiple: no
@@ -136,29 +102,24 @@
 
 # %flag
 # % key: t
-# % label: Only training
-# % description: Option for all input data should be used as training data for the neural network
+# % label: Only training and testing tiles
+# % description: Option for only exporting training and testing tiles
 # %end
 
 # %flag
-# % key: a
-# % label: Only application
-# % description: Option for only neural network application and no data are prepared for training
+# % key: l
+# % label: Prepare labels for training and testing data
+# % description: Option for preparing labels for training and testing data. If not set, only the tiles for the image bands and nDSM are exported, but no segmentation and labeling is performed.
 # %end
 
 # %rules
-# % exclusive: -t,-a
-# % excludes: -t, train_percentage
-# % excludes: -a, train_percentage
 # % exclusive: ndsm, ndsm_out
 # % requires_all: dsm, dtm, ndsm_out
 # %end
 
 
 import atexit
-import json
 import os
-import random
 import shutil
 
 import geopandas as gpd
@@ -169,7 +130,7 @@ import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
-from grass_gis_helpers.general import check_installed_addon, set_nprocs
+from grass_gis_helpers.general import set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
 from grass_gis_helpers.parallel import check_parallel_errors
 
@@ -177,7 +138,6 @@ from grass_gis_helpers.parallel import check_parallel_errors
 ID = grass.tempname(8)
 rm_files = list()
 ORIG_REGION = None
-rm_dirs = []
 rm_vectors = []
 rm_rasters = []
 rm_groups = []
@@ -187,7 +147,6 @@ def cleanup() -> None:
     """Clean up function calling general clean up from grass_gis_helpers."""
     general_cleanup(
         orig_region=ORIG_REGION,
-        rm_dirs=rm_dirs,
         rm_files=rm_files,
         rm_vectors=rm_vectors,
         rm_rasters=rm_rasters,
@@ -205,20 +164,16 @@ def main() -> None:
     global ORIG_REGION
 
     tindex = options["tindex"]
-    aoi = options["aoi"]
     image_bands = options["image_bands"].split(",")
     ndsm = options["ndsm"]
     dsm = options["dsm"]
     dtm = options["dtm"]
     ndsm_out = options["ndsm_out"]
     reference = options["reference"]
-    tile_size = int(options["tile_size"])
-    tile_overlap = int(options["tile_overlap"])
     segmentation_minsize = int(options["segmentation_minsize"])
     segmentation_threshold = float(options["segmentation_threshold"])
     output_dir = options["output_dir"]
     nprocs = set_nprocs(int(options["nprocs"]))
-    suffix = options["suffix"]
 
     # get addon etc path
     etc_path = get_lib_path(modname="m.neural_network.preparedata_part1")
@@ -263,21 +218,13 @@ def main() -> None:
     ORIG_REGION = f"orig_region_{ID}"
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
-    # set region to raster or aoi
-    grass.run_command("g.region", raster=image_bands[0], quiet=True)
+    # set region to raster and tindex to compute data only for tindex area
+    grass.run_command("v.external", input=tindex, output="tindex", quiet=True)
+    rm_vectors.append("tindex")
+    grass.run_command("g.region", vector="tindex", quiet=True)
+    grass.run_command("g.region", align=image_bands[0], quiet=True)
     reg = grass.region()
     res = reg["nsres"]
-    # # TODO: needed? -> aoi oder aoi_buf
-    # # if aoi:
-    # #     aoi_buf = f"aoi_buf_{ID}"
-    # #     rm_vectors.append(aoi_buf)
-    # #     grass.run_command(
-    # #         "v.buffer", input=aoi, output=aoi_buf, distance=res * tile_overlap
-    # #     )
-    # #     grass.run_command("g.region", vector=aoi, quiet=True)
-    # #     grass.run_command("g.region", align=image_bands[0], quiet=True)
-    # #     grass.run_command("g.region", res=res, quiet=True, flags="a")
-    # #     reg = grass.region()
 
     # compute nDSM if not directly given
     if dsm and dtm and ndsm_out:
@@ -332,8 +279,11 @@ def main() -> None:
     tindex_gdf = gpd.read_file(tindex)
 
     tindex_gdf_tr_tiles = tindex_gdf[(tindex_gdf["training"] == "TODO") | (tindex_gdf["training"] == "yes")].copy()
-    tindex_gdf_ap_tiles = tindex_gdf[tindex_gdf["training"] == "no"].copy()
-
+    tindex_gdf_te_tiles = tindex_gdf[(tindex_gdf["testing"] == "TODO") | (tindex_gdf["testing"] == "yes")].copy()
+    if flags["t"]:
+        tindex_gdf_ap_tiles = gpd.GeoDataFrame()
+    else:
+        tindex_gdf_ap_tiles = tindex_gdf[(tindex_gdf["training"] == "no") & (tindex_gdf["testing"] == "no")].copy()
     # get number of digits of resolution for correct rounding of coordinates
     round_decimals = len(str(res).split('.')[1])
 
@@ -341,58 +291,54 @@ def main() -> None:
     queue_export_tr = ParallelModuleQueue(nprocs=nprocs)
     try:
         for i, tr_tile in enumerate(tindex_gdf_tr_tiles.itertuples(), start=1):
-            tile_name = tr_tile.name
-            tile_path = os.path.join(output_dir, "train", tile_name)
-            # TODO: difference fid, id und Index/i
-            # tile_id = tile["properties"]["fid"]
-            tile_id = tr_tile.id
-            tile_bounds = np.round(tr_tile.geometry.bounds, round_decimals)
-            north = tile_bounds[3]
-            south = tile_bounds[1]
-            west = tile_bounds[0]
-            east = tile_bounds[2]
-            grass.message(
-                _(
-                    f"Segmenting and/or Exporting: "
-                    f"training tile {i} of {len(tindex_gdf_tr_tiles)}",
-                ),
+            worker_export_tr = export_training_test_tile(
+                ndsm,
+                reference,
+                segmentation_minsize,
+                segmentation_threshold,
+                output_dir,
+                res,
+                ndsm_scaled,
+                image_bands_group,
+                tindex_gdf_tr_tiles,
+                round_decimals,
+                i,
+                tr_tile,
             )
-            new_mapset = f"tmp_mapset_{ID}_{tile_id}"
-            # update gdf values
-            tindex_gdf_tr_tiles.at[tr_tile.Index, "path"] = tile_path
-
-            # worker for export
-            worker_export_tr = Module(
-                "m.neural_network.preparedata_part1.worker_export",
-                n=north,
-                s=south,
-                e=east,
-                w=west,
-                res=res,
-                image_bands_group=image_bands_group,
-                ndsm=ndsm,
-                ndsm_scaled=ndsm_scaled,
-                tile_name=tile_name,
-                tile_size=tile_size,
-                reference=reference,
-                segmentation_minsize=segmentation_minsize,
-                segmentation_threshold=segmentation_threshold,
-                output_dir=tile_path,
-                new_mapset=new_mapset,
-                flags="t",
-                run_=False,
-            )
-            worker_export_tr.stdout_ = grass.PIPE
-            worker_export_tr.stderr_ = grass.PIPE
             queue_export_tr.put(worker_export_tr)
         queue_export_tr.wait()
     except Exception:
         check_parallel_errors(queue_export_tr)
     verify_mapsets(cur_mapset)
 
+    # loop over testing data
+    queue_export_te = ParallelModuleQueue(nprocs=nprocs)
+    try:
+        for i, te_tile in enumerate(tindex_gdf_te_tiles.itertuples(), start=1):
+            worker_export_te = export_training_test_tile(
+                ndsm,
+                reference,
+                segmentation_minsize,
+                segmentation_threshold,
+                output_dir,
+                res,
+                ndsm_scaled,
+                image_bands_group,
+                tindex_gdf_te_tiles,
+                round_decimals,
+                i,
+                te_tile,
+                type="test",
+            )
+            queue_export_te.put(worker_export_te)
+        queue_export_te.wait()
+    except Exception:
+        check_parallel_errors(queue_export_te)
+    verify_mapsets(cur_mapset)
+
     # If only apply data -> skip existing tiles
     # TODO: if two times interrupted/restarted -> missing files in the middle
-    if flags["a"]:
+    if tindex_gdf.shape[0] == tindex_gdf_ap_tiles.shape[0]:
         tindex_gdf_ap_tiles_skip_existing = tindex_gdf_ap_tiles.copy()
         n = 0
         for ap_tile in tindex_gdf_ap_tiles[::-1].itertuples():
@@ -415,41 +361,7 @@ def main() -> None:
     queue_export_ap = ParallelModuleQueue(nprocs=nprocs)
     try:
         for i, ap_tile in enumerate(tindex_gdf_ap_tiles.itertuples(), start=1):
-            tile_name = tr_tile.name
-            tile_path = os.path.join(output_dir, "apply", tile_name)
-            # TODO: difference fid, id und Index/i
-            # tile_id = tile["properties"]["fid"]
-            tile_id = tr_tile.id
-            tile_bounds = np.round(tr_tile.geometry.bounds, round_decimals)
-            north = tile_bounds[3]
-            south = tile_bounds[1]
-            west = tile_bounds[0]
-            east = tile_bounds[2]
-            if i % 100 == 0:
-                # print only every 100-th entry
-                grass.message(
-                    _(f"Exporting: apply tile {i} of {len(tindex_gdf_ap_tiles)}"),
-                )
-            new_mapset = f"tmp_mapset_{ID}_{tile_id}"
-            # update jeojson values
-            tindex_gdf_ap_tiles.at[ap_tile.Index, "path"] = tile_path
-            # worker for export
-            worker_export_ap = Module(
-                "m.neural_network.preparedata_part1.worker_export",
-                n=north,
-                s=south,
-                e=east,
-                w=west,
-                res=res,
-                image_bands_group=image_bands_group,
-                tile_name=tile_name,
-                ndsm=ndsm,
-                ndsm_scaled=ndsm_scaled,
-                output_dir=tile_path,
-                new_mapset=new_mapset,
-                run_=False,
-            )
-            worker_export_ap.stdout_ = grass.PIPE
+            worker_export_ap = export_apply_tile(ndsm, output_dir, res, ndsm_scaled, image_bands_group, tindex_gdf_ap_tiles, round_decimals, i, te_tile, ap_tile)
             queue_export_ap.put(worker_export_ap)
         queue_export_ap.wait()
     except Exception:
@@ -457,10 +369,106 @@ def main() -> None:
     verify_mapsets(cur_mapset)
 
     # Update tindex
-    tindex_gdf_updated = pd.concat([tindex_gdf_tr_tiles, tindex_gdf_ap_tiles], ignore_index=False)
+    tindex_gdf_updated = pd.concat([tindex_gdf_tr_tiles, tindex_gdf_te_tiles, tindex_gdf_ap_tiles], ignore_index=True)
     tindex_gdf_updated.to_file(tindex, driver='GPKG')
 
     grass.message(_("Prepare data done"))
+
+
+def export_apply_tile(ndsm, output_dir, res, ndsm_scaled, image_bands_group, tindex_gdf_ap_tiles, round_decimals, i, te_tile, ap_tile):
+    """Export apply tile."""
+    tile_name = te_tile.name
+    tile_path = os.path.join(output_dir, "apply", tile_name)
+    tile_bounds = np.round(te_tile.geometry.bounds, round_decimals)
+    north = str(tile_bounds[3])
+    south = str(tile_bounds[1])
+    west = str(tile_bounds[0])
+    east = str(tile_bounds[2])
+    if i % 100 == 0:
+        # print only every 100-th entry
+        grass.message(
+            _(f"Exporting: apply tile {i} of {len(tindex_gdf_ap_tiles)}"),
+        )
+    new_mapset = f"tmp_mapset_{ID}_{tile_name}"
+    # update jeojson values
+    tindex_gdf_ap_tiles.at[ap_tile.Index, "path"] = tile_path
+    # worker for export
+    worker_export_ap = Module(
+        "m.neural_network.preparedata_part1.worker_export",
+        n=north,
+        s=south,
+        e=east,
+        w=west,
+        res=res,
+        image_bands_group=image_bands_group,
+        tile_name=tile_name,
+        ndsm=ndsm,
+        ndsm_scaled=ndsm_scaled,
+        output_dir=tile_path,
+        new_mapset=new_mapset,
+        run_=False,
+    )
+    worker_export_ap.stdout_ = grass.PIPE
+    return worker_export_ap
+
+
+def export_training_test_tile(
+        ndsm,
+        reference,
+        segmentation_minsize,
+        segmentation_threshold,
+        output_dir,
+        res,
+        ndsm_scaled,
+        image_bands_group,
+        tindex_gdf_tiles,
+        round_decimals,
+        i,
+        tile,
+        type="train",
+    ):
+    """Export training/test tile."""
+    tile_name = tile.name
+    tile_path = os.path.join(output_dir, type, tile_name)
+    tile_bounds = np.round(tile.geometry.bounds, round_decimals)
+    north = str(tile_bounds[3])
+    south = str(tile_bounds[1])
+    west = str(tile_bounds[0])
+    east = str(tile_bounds[2])
+    grass.message(
+        _(
+            f"Segmenting and/or Exporting: "
+            f"{type}ing tile {i} of {len(tindex_gdf_tiles)}",
+        ),
+    )
+    new_mapset = f"tmp_mapset_{ID}_{tile_name}"
+    # update gdf values
+    tindex_gdf_tiles.at[tile.Index, "path"] = tile_path
+
+    # worker for export
+    worker_export_tr = Module(
+        "m.neural_network.preparedata_part1.worker_export",
+        n=north,
+        s=south,
+        e=east,
+        w=west,
+        res=res,
+        image_bands_group=image_bands_group,
+        ndsm=ndsm,
+        ndsm_scaled=ndsm_scaled,
+        tile_name=tile_name,
+        reference=reference,
+        segmentation_minsize=segmentation_minsize,
+        segmentation_threshold=segmentation_threshold,
+        output_dir=tile_path,
+        new_mapset=new_mapset,
+        flags="l" if flags["l"] else "",
+        run_=False,
+    )
+    worker_export_tr.stdout_ = grass.PIPE
+    worker_export_tr.stderr_ = grass.PIPE
+
+    return worker_export_tr
 
 
 if __name__ == "__main__":
