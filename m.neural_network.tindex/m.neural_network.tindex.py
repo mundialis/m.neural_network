@@ -2,9 +2,10 @@
 """############################################################################
 #
 # MODULE:      m.neural_network.index
-# AUTHOR(S):   Anika Weinmann, Guido Riembauer and Victoria-Leandra Brunn
+# AUTHOR(S):   Anika Weinmann, Lina Krisztian, Guido Riembauer and
+#              Victoria-Leandra Brunn
 # PURPOSE:     Create tile index for data preparation as first step
-#               for the process of creating a neural network.
+#              for the process of creating a neural network.
 # SPDX-FileCopyrightText: (c) 2024-2026 by mundialis GmbH & Co. KG and the
 #              GRASS Development Team
 # SPDX-License-Identifier: GPL-3.0-or-later.
@@ -13,7 +14,7 @@
 """
 
 # %Module
-# % description: Create tindex
+# % description: Create tile index for data preparation as first step for the process of creating a neural network
 # % keyword: raster
 # % keyword: vector
 # % keyword: export
