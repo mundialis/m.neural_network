@@ -123,10 +123,9 @@ import os
 import shutil
 
 import geopandas as gpd
+import grass.script as grass
 import numpy as np
 import pandas as pd
-
-import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
@@ -152,6 +151,7 @@ def cleanup() -> None:
         rm_rasters=rm_rasters,
         rm_groups=rm_groups,
     )
+
 
 def main() -> None:
     """Prepare training data.
@@ -278,14 +278,20 @@ def main() -> None:
     # import tindex
     tindex_gdf = gpd.read_file(tindex)
 
-    tindex_gdf_tr_tiles = tindex_gdf[(tindex_gdf["training"] == "TODO") | (tindex_gdf["training"] == "yes")].copy()
-    tindex_gdf_te_tiles = tindex_gdf[(tindex_gdf["testing"] == "TODO") | (tindex_gdf["testing"] == "yes")].copy()
+    tindex_gdf_tr_tiles = tindex_gdf[
+        (tindex_gdf["training"] == "TODO") | (tindex_gdf["training"] == "yes")
+    ].copy()
+    tindex_gdf_te_tiles = tindex_gdf[
+        (tindex_gdf["testing"] == "TODO") | (tindex_gdf["testing"] == "yes")
+    ].copy()
     if flags["t"]:
         tindex_gdf_ap_tiles = gpd.GeoDataFrame()
     else:
-        tindex_gdf_ap_tiles = tindex_gdf[(tindex_gdf["training"] == "no") & (tindex_gdf["testing"] == "no")].copy()
+        tindex_gdf_ap_tiles = tindex_gdf[
+            (tindex_gdf["training"] == "no") & (tindex_gdf["testing"] == "no")
+        ].copy()
     # get number of digits of resolution for correct rounding of coordinates
-    round_decimals = len(str(res).split('.')[1])
+    round_decimals = len(str(res).split(".")[1])
 
     # loop over training data
     queue_export_tr = ParallelModuleQueue(nprocs=nprocs)
@@ -328,7 +334,7 @@ def main() -> None:
                 round_decimals,
                 i,
                 te_tile,
-                type="test",
+                tr_te_type="test",
             )
             queue_export_te.put(worker_export_te)
         queue_export_te.wait()
@@ -342,11 +348,7 @@ def main() -> None:
         tindex_gdf_ap_tiles_skip_existing = tindex_gdf_ap_tiles.copy()
         n = 0
         for ap_tile in tindex_gdf_ap_tiles[::-1].itertuples():
-            tile_path = os.path.join(
-                output_dir,
-                "apply",
-                ap_tile.name
-            )
+            tile_path = os.path.join(output_dir, "apply", ap_tile.name)
             if os.path.isdir(tile_path):
                 # add also last processed dirs, which prob. not completely exported
                 if n < nprocs:
@@ -354,14 +356,30 @@ def main() -> None:
                     # remove these dirs before exporting newly
                     shutil.rmtree(tile_path)
                 else:
-                    tindex_gdf_ap_tiles_skip_existing = tindex_gdf_ap_tiles_skip_existing[tindex_gdf_ap_tiles_skip_existing["name"] != ap_tile.name]
+                    tindex_gdf_ap_tiles_skip_existing = (
+                        tindex_gdf_ap_tiles_skip_existing[
+                            tindex_gdf_ap_tiles_skip_existing["name"]
+                            != ap_tile.name
+                        ]
+                    )
         tindex_gdf_ap_tiles = tindex_gdf_ap_tiles_skip_existing
 
     # loop over apply data
     queue_export_ap = ParallelModuleQueue(nprocs=nprocs)
     try:
         for i, ap_tile in enumerate(tindex_gdf_ap_tiles.itertuples(), start=1):
-            worker_export_ap = export_apply_tile(ndsm, output_dir, res, ndsm_scaled, image_bands_group, tindex_gdf_ap_tiles, round_decimals, i, te_tile, ap_tile)
+            worker_export_ap = export_apply_tile(
+                ndsm,
+                output_dir,
+                res,
+                ndsm_scaled,
+                image_bands_group,
+                tindex_gdf_ap_tiles,
+                round_decimals,
+                i,
+                te_tile,
+                ap_tile,
+            )
             queue_export_ap.put(worker_export_ap)
         queue_export_ap.wait()
     except Exception:
@@ -369,13 +387,27 @@ def main() -> None:
     verify_mapsets(cur_mapset)
 
     # Update tindex
-    tindex_gdf_updated = pd.concat([tindex_gdf_tr_tiles, tindex_gdf_te_tiles, tindex_gdf_ap_tiles], ignore_index=True)
-    tindex_gdf_updated.to_file(tindex, driver='GPKG')
+    tindex_gdf_updated = pd.concat(
+        [tindex_gdf_tr_tiles, tindex_gdf_te_tiles, tindex_gdf_ap_tiles],
+        ignore_index=True,
+    )
+    tindex_gdf_updated.to_file(tindex, driver="GPKG")
 
     grass.message(_("Prepare data done"))
 
 
-def export_apply_tile(ndsm, output_dir, res, ndsm_scaled, image_bands_group, tindex_gdf_ap_tiles, round_decimals, i, te_tile, ap_tile):
+def export_apply_tile(
+    ndsm,
+    output_dir,
+    res,
+    ndsm_scaled,
+    image_bands_group,
+    tindex_gdf_ap_tiles,
+    round_decimals,
+    i,
+    te_tile,
+    ap_tile,
+):
     """Export apply tile."""
     tile_name = te_tile.name
     tile_path = os.path.join(output_dir, "apply", tile_name)
@@ -413,23 +445,23 @@ def export_apply_tile(ndsm, output_dir, res, ndsm_scaled, image_bands_group, tin
 
 
 def export_training_test_tile(
-        ndsm,
-        reference,
-        segmentation_minsize,
-        segmentation_threshold,
-        output_dir,
-        res,
-        ndsm_scaled,
-        image_bands_group,
-        tindex_gdf_tiles,
-        round_decimals,
-        i,
-        tile,
-        type="train",
-    ):
+    ndsm,
+    reference,
+    segmentation_minsize,
+    segmentation_threshold,
+    output_dir,
+    res,
+    ndsm_scaled,
+    image_bands_group,
+    tindex_gdf_tiles,
+    round_decimals,
+    i,
+    tile,
+    tr_te_type="train",
+):
     """Export training/test tile."""
     tile_name = tile.name
-    tile_path = os.path.join(output_dir, type, tile_name)
+    tile_path = os.path.join(output_dir, tr_te_type, tile_name)
     tile_bounds = np.round(tile.geometry.bounds, round_decimals)
     north = str(tile_bounds[3])
     south = str(tile_bounds[1])
@@ -438,7 +470,7 @@ def export_training_test_tile(
     grass.message(
         _(
             f"Segmenting and/or Exporting: "
-            f"{type}ing tile {i} of {len(tindex_gdf_tiles)}",
+            f"{tr_te_type}ing tile {i} of {len(tindex_gdf_tiles)}",
         ),
     )
     new_mapset = f"tmp_mapset_{ID}_{tile_name}"
