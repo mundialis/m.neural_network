@@ -124,7 +124,6 @@ import shutil
 
 import geopandas as gpd
 import grass.script as grass
-import grass.script as grass
 import numpy as np
 import pandas as pd
 from grass.pygrass.modules import Module, ParallelModuleQueue
@@ -152,7 +151,6 @@ def cleanup() -> None:
         rm_rasters=rm_rasters,
         rm_groups=rm_groups,
     )
-
 
 
 def main() -> None:
