@@ -76,7 +76,6 @@
 # % key: output_dir
 # % multiple: no
 # % label: Directory where the prepared data should be stored
-# % description: The directory will be split into train and apply
 # % guisection: Output
 # %end
 
@@ -204,6 +203,10 @@ def main() -> None:
     """
     global ORIG_REGION
 
+    # TODO:
+    # for train flag -> automatic test/train split
+    # a/t flag dann noch sinnvoll, oder logik ändern?
+
     aoi = options["aoi"]
     tile_size = int(options["tile_size"])
     tile_overlap = int(options["tile_overlap"])
@@ -227,7 +230,7 @@ def main() -> None:
     )
 
     # get addon etc path
-    etc_path = get_lib_path(modname="m.neural_network.preparedata_part1")
+    etc_path = get_lib_path(modname="m.neural_network.tindex")
     if etc_path is None:
         grass.fatal("Unable to find qml files!")
 
