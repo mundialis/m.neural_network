@@ -76,7 +76,7 @@
 # %option G_OPT_M_DIR
 # % key: output_dir
 # % multiple: no
-# % label: Directory where the prepared data should be stored
+# % label: Directory where the tile index should be stored
 # % guisection: Output
 # %end
 
