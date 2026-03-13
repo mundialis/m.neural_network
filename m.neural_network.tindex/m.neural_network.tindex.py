@@ -484,7 +484,7 @@ def check_tile_intersection_with_aoi(
     # cleanup columns
     for col in grid_aoi_gdf.columns:
         print(col)
-        if col not in {"geometry", "fid", "name", "path", "training"}:
+        if col not in {"geometry", "fid", "name", "path", "training", "testing"}:
             grid_aoi_gdf.drop(col, axis=1, inplace=True)
     geojson_dict["features"] = grid_aoi_gdf.to_geo_dict()["features"]
 
@@ -508,6 +508,7 @@ def add_tile_to_tindex(
             "name": tile_name,
             "path": "",
             "training": "no",
+            "testing": "no",
         },
         "geometry": {
             "type": "Polygon",
@@ -543,6 +544,7 @@ def init_tindex(num_tiles_total, epsg_code):
                     "name": "tile_name_TODO",
                     "path": "",
                     "training": "no",
+                    "testing": "no",
                 },
                 "geometry": {
                     "type": "Polygon",
