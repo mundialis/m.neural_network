@@ -377,7 +377,6 @@ def main() -> None:
                 tindex_gdf_ap_tiles,
                 round_decimals,
                 i,
-                te_tile,
                 ap_tile,
             )
             queue_export_ap.put(worker_export_ap)
@@ -391,6 +390,8 @@ def main() -> None:
         [tindex_gdf_tr_tiles, tindex_gdf_te_tiles, tindex_gdf_ap_tiles],
         ignore_index=True,
     )
+    if "fid" in tindex_gdf_updated.columns:
+        tindex_gdf_updated = tindex_gdf_updated.drop(columns=["fid"])          # if you don’t need it
     tindex_gdf_updated.to_file(tindex, driver="GPKG")
 
     grass.message(_("Prepare data done"))
@@ -405,13 +406,12 @@ def export_apply_tile(
     tindex_gdf_ap_tiles,
     round_decimals,
     i,
-    te_tile,
     ap_tile,
 ):
     """Export apply tile."""
-    tile_name = te_tile.name
+    tile_name = ap_tile.name
     tile_path = os.path.join(output_dir, "apply", tile_name)
-    tile_bounds = np.round(te_tile.geometry.bounds, round_decimals)
+    tile_bounds = np.round(ap_tile.geometry.bounds, round_decimals)
     north = str(tile_bounds[3])
     south = str(tile_bounds[1])
     west = str(tile_bounds[0])
