@@ -132,16 +132,6 @@
 # %end
 
 # %option
-# % key: tile_size
-# % type: integer
-# % required: yes
-# % label: Size of the created tiles in cells. Must be divisible by 16
-# % description: Creates tiles of size <tile_size>,<tile_size>
-# % answer: 512
-# % guisection: Optional input
-# %end
-
-# %option
 # % key: new_mapset
 # % type: string
 # % required: yes
@@ -150,8 +140,8 @@
 # %end
 
 # %flag
-# % key: t
-# % label: Export reference or segmentation data as training data suggestion
+# % key: l
+# % label: Export reference or segmentation data as training data suggestion (additionally the unscaled nDSM as helper map for labelling)
 # %end
 
 import os
@@ -201,7 +191,6 @@ def main() -> None:
     west = options["w"]
     east = options["e"]
     res = options["res"]
-    tile_size = int(options["tile_size"])
     image_bands_group = options["image_bands_group"]
     ndsm = options["ndsm"]
     ndsm_scaled = options["ndsm_scaled"]
@@ -209,7 +198,7 @@ def main() -> None:
     segmentation_minsize = int(options["segmentation_minsize"])
     segmentation_threshold = float(options["segmentation_threshold"])
     output_dir = options["output_dir"]
-    tr_flag = flags["t"]
+    l_flag = flags["l"]
 
     # get addon etc path
     etc_path = get_lib_path(modname="m.neural_network.preparedata_part1")
@@ -233,6 +222,7 @@ def main() -> None:
         res=res,
         quiet=True,
     )
+    tile_size = grass.region()["cols"]
 
     if ndsm and "@" not in ndsm:
         ndsm += f"@{old_mapset}"
@@ -266,7 +256,7 @@ def main() -> None:
     )
 
     # segmentation or clip reference data
-    if tr_flag:
+    if l_flag:
         # unscaled ndom export (as helper map for labeling)
         grass.run_command(
             "r.out.gdal",

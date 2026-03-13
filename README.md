@@ -1,6 +1,8 @@
 # `m.neural_network` - Toolset for creating training data and training a neural network
 
 The `m.neural_network` toolset consists of following modules:
+
+* `m.neural_network.tindex`: create tile index for data preparation as first step for the process of creating a neural network
 * `m.neural_network.preparedata_part1`: prepare training and/or apply data as first step for the process of creating a neural network.
   * `m.neural_network.preparedata_part1.worker_nullcells`: Worker module for `m.neural_network.preparedata_part1` to check null cells
   * `m.neural_network.preparedata_part1.worker_export`: Worker module for `m.neural_network.preparedata_part1` to export data
