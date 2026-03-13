@@ -58,7 +58,6 @@ v.import input=${PATH_TO_TESTDATA}/testdata/input/ref_data_trees.gpkg output=ref
 # -- Test Addons
 
 # Data preparation
-output_dir=${PATH_TO_TESTDATA}/testdata/output/preparedata_part1
 m.neural_network.tindex image_band=dop.1 output_dir=${PATH_TO_TESTDATA}/testdata/output/tindex nprocs=7
 m.neural_network.preparedata_part1 tindex=${PATH_TO_TESTDATA}/testdata/output/tindex/tindex.gpkg image_bands=dop.1,dop.2,dop.3,dop.4 ndsm=ndsm output_dir=${PATH_TO_TESTDATA}/testdata/output/preparedata_part1 || errormsg "m.neural_network.preparedata_part1 failed"
 m.neural_network.preparedata_part2 input_traindir=${PATH_TO_TESTDATA}/testdata/input/preparedata_part1/train input_applydir=${PATH_TO_TESTDATA}/testdata/output/preparedata_part1/apply test_percentage=10 output=${PATH_TO_TESTDATA}/testdata/output/preparedata_part2 || errormsg "m.neural_network.preparedata_part2 failed"
