@@ -205,8 +205,8 @@ def main() -> None:
     global ORIG_REGION
 
     # TODO:
-    # for train flag -> automatic test/train split
-    # a/t flag dann noch sinnvoll, oder logik ändern?
+    # automatic test/train split aus split_train_test_data.py übernehmen, dabei
+    # nochmal auf die flags sehen, ob diese alle Sinn machen
 
     aoi = options["aoi"]
     tile_size = int(options["tile_size"])
