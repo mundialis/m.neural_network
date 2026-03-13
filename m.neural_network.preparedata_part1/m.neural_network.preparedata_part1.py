@@ -25,6 +25,7 @@
 # % key: tindex
 # % required: yes
 # % label: tindex file for tiling.
+# % description: must be created with m.neural_network.tindex
 # %end
 
 # %option G_OPT_R_INPUTS

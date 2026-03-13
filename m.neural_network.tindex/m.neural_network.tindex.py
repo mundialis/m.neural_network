@@ -26,6 +26,7 @@
 # % key: aoi
 # % required: no
 # % label: Name of the area of interest vector map
+# % description: if not given, the current region is used
 # % guisection: Optional input
 # %end
 
@@ -269,7 +270,6 @@ def main() -> None:
         else:
             grass.run_command("g.region", vector=aoi, quiet=True)
         grass.run_command("g.region", align=image_band, quiet=True)
-        grass.run_command("g.region", res=res, quiet=True, flags="a")
         reg = grass.region()
 
     # parameter for tiles

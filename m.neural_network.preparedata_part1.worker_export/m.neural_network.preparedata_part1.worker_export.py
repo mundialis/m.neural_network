@@ -141,7 +141,7 @@
 
 # %flag
 # % key: l
-# % label: Export reference or segmentation data as training data suggestion (additinal the unscaled nDSM as helper map for labeling)
+# % label: Export reference or segmentation data as training data suggestion (additionally the unscaled nDSM as helper map for labelling)
 # %end
 
 import os
