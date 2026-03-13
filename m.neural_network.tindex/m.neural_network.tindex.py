@@ -484,7 +484,14 @@ def check_tile_intersection_with_aoi(
     # cleanup columns
     for col in grid_aoi_gdf.columns:
         print(col)
-        if col not in {"geometry", "fid", "name", "path", "training", "testing"}:
+        if col not in {
+            "geometry",
+            "fid",
+            "name",
+            "path",
+            "training",
+            "testing",
+        }:
             grid_aoi_gdf.drop(col, axis=1, inplace=True)
     geojson_dict["features"] = grid_aoi_gdf.to_geo_dict()["features"]
 

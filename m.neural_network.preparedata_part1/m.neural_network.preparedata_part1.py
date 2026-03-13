@@ -391,7 +391,7 @@ def main() -> None:
         ignore_index=True,
     )
     if "fid" in tindex_gdf_updated.columns:
-        tindex_gdf_updated = tindex_gdf_updated.drop(columns=["fid"])          # if you don’t need it
+        tindex_gdf_updated = tindex_gdf_updated.drop(columns=["fid"])
     tindex_gdf_updated.to_file(tindex, driver="GPKG")
 
     grass.message(_("Prepare data done"))
