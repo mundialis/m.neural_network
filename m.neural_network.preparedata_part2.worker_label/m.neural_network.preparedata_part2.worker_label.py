@@ -133,7 +133,7 @@ def main():
     no_class_value = options["no_class_value"]
     reclassify_rules = options["reclassify_rules"]
     class_col = options["class_column"]
-    num_null_cells_label = options["num_null_cells_label"]
+    num_null_cells_label = int(options["num_null_cells_label"])
     output = options["output"]
 
     # switch to the new mapset
