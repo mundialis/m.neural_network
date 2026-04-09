@@ -71,6 +71,14 @@
 # % label: If desired, file with rules for reclassification of input class values
 # %end
 
+# %option
+# % key: num_null_cells_label
+# % type: integer
+# % answer: 0
+# % label: Number of null cells in the rasterized label, which are accepted (will be filled with neighbouring classes).
+# % description: This can be used to account for small acceptable gaps in the vector data, which would lead to null cells in the rasterized label.
+# %end
+
 # %option G_OPT_F_OUTPUT
 # % required: yes
 # % multiple: no
@@ -125,6 +133,7 @@ def main():
     no_class_value = options["no_class_value"]
     reclassify_rules = options["reclassify_rules"]
     class_col = options["class_column"]
+    num_null_cells_label = options["num_null_cells_label"]
     output = options["output"]
 
     # switch to the new mapset
@@ -211,12 +220,38 @@ def main():
             map=labelrast_tmp,
             flags="g",
         )
-        if int(stats["null_cells"]) > 0:
+        if int(stats["null_cells"]) > num_null_cells_label:
             grass.fatal(
                 _(
                     f"Rasterized label contains {stats['null_cells']} null cells"
                 )
             )
+        elif int(stats["null_cells"]) != 0:
+            grass.warning(
+                _(
+                    f"Rasterized label contains {stats['null_cells']} null cells. "
+                    "These will be filled with the value of neighbouring classes."
+                )
+            )
+            grass.run_command(
+                "g.rename", raster=f"{labelrast_tmp},{labelrast_tmp}_2"
+            )
+            label_grow_values = f"{labelrast_tmp}_grow_values"
+            grass.run_command(
+                "r.grow.distance",
+                input=f"{labelrast_tmp}_2",
+                value=label_grow_values,
+            )
+            grass.run_command(
+                "r.patch",
+                input=f"{labelrast_tmp}_2,{label_grow_values}",
+                output=f"{labelrast_tmp}_3",
+            )
+            grass.run_command(
+                "r.mapcalc",
+                expression=f"{labelrast_tmp} = int({labelrast_tmp}_3)",
+            )
+
         if not reclassify_rules:
             # all items of class 2 are mapped to now empty class 0 to ensure binary classification
             labelrast_bin = f"{labelrast_tmp}_bin"
