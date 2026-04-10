@@ -94,6 +94,14 @@
 # %end
 
 # %option
+# % key: num_null_cells_label
+# % type: integer
+# % answer: 0
+# % label: Number of null cells in the rasterized label, which are accepted (will be filled with neighbouring classes).
+# % description: This can be used to account for small acceptable gaps in the vector data, which would lead to null cells in the rasterized label.
+# %end
+
+# %option
 # % key: output
 # % type: string
 # % required: yes
@@ -232,6 +240,7 @@ def main():
     class_values = options["class_values"].split(",")
     no_class_value = options["no_class_value"]
     reclassify_rules = options["reclassify_rules"]
+    num_null_cells_label = options["num_null_cells_label"]
     output = options["output"]
 
     # get location infos
@@ -411,6 +420,7 @@ def main():
                     no_class_value=no_class_value,
                     class_column=class_col,
                     reclassify_rules=reclassify_rules,
+                    num_null_cells_label=num_null_cells_label,
                     output=outfile,
                     new_mapset=new_mapset,
                     run_=False,
