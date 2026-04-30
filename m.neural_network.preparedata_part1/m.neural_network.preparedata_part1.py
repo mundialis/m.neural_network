@@ -248,12 +248,14 @@ def main() -> None:
     rm_rasters.append(ndsm_scaled)
     grass.run_command("r.mapcalc", expression=ex_scale)
 
-    # Image Bands: convert to byte, if not integer or larger values than 255
+    # Image Bands:
+    # convert to byte, if not integer or values out of range [1 255]
     image_bands_new = []
     for image in image_bands:
         if (
             grass.raster_info(image)["datatype"] != "CELL"
             or grass.raster_info(image)["max"] > 255
+            or grass.raster_info(image)["min"] < 1
         ):
             image_new = f"{image.split('@')[0]}_new"
             rm_rasters.append(image_new)

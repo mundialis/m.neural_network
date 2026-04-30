@@ -240,6 +240,7 @@ def main() -> None:
         input=image_bands_group,
         output=image_file,
         type="Byte",
+        nodata=0,
         createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size},PHOTOMETRIC=RGB,ALPHA=UNSPECIFIED",
         **EXPORT_PARAM,
     )
@@ -251,6 +252,7 @@ def main() -> None:
         input=ndsm_scaled,
         output=ndsm_sc_file,
         type="Byte",
+        nodata=0,
         createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
         **EXPORT_PARAM,
     )
