@@ -107,6 +107,8 @@ NEWGISRC = None
 GISRC = None
 ID = grass.tempname(8)
 NEW_MAPSET = None
+# pylint: disable=C0103
+original_nprocs = None
 
 
 def cleanup():
@@ -121,11 +123,16 @@ def cleanup():
     mapset_dir = os.path.join(gisdbase, location, NEW_MAPSET)
     if os.path.isdir(mapset_dir):
         shutil.rmtree(mapset_dir)
+    """Reset nprocs"""
+    if original_nprocs:
+        grass.run_command("g.gisenv", set=f"NPROCS={original_nprocs}")
+    else:
+        grass.run_command("g.gisenv", unset="NPROCS")
 
 
 def main():
     """Run label rasterization."""
-    global NEWGISRC, GISRC, NEW_MAPSET
+    global NEWGISRC, GISRC, NEW_MAPSET, original_nprocs
     input = options["input"]
     img_file = options["img_path"]
     NEW_MAPSET = options["new_mapset"]
@@ -135,6 +142,12 @@ def main():
     class_col = options["class_column"]
     num_null_cells_label = int(options["num_null_cells_label"])
     output = options["output"]
+
+    # set nprocs to 1, write original value in variable
+    gisenv = grass.parse_command("g.gisenv", get="")
+    if "NPROCS" in gisenv:
+        original_nprocs = gisenv["NPROCS"]
+    grass.run_command("g.gisenv", set="NPROCS=1")
 
     # switch to the new mapset
     GISRC, NEWGISRC, _old_mapset = switch_to_new_mapset(NEW_MAPSET)

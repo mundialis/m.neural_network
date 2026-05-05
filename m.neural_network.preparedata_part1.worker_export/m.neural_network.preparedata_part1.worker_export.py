@@ -162,6 +162,8 @@ NEWGISRC = None
 GISRC = None
 ID = grass.tempname(8)
 NEW_MAPSET = None
+# pylint: disable=C0103
+original_nprocs = None
 
 
 def cleanup() -> None:
@@ -175,6 +177,11 @@ def cleanup() -> None:
     mapset_dir = os.path.join(gisdbase, location, NEW_MAPSET)
     if os.path.isdir(mapset_dir):
         shutil.rmtree(mapset_dir)
+    """Reset nprocs"""
+    if original_nprocs:
+        grass.run_command("g.gisenv", set=f"NPROCS={original_nprocs}")
+    else:
+        grass.run_command("g.gisenv", unset="NPROCS")
 
 
 def main() -> None:
@@ -182,7 +189,7 @@ def main() -> None:
     # NOTE: avoid using r.mapcalc and similar within this exporter
     # -> only region setting and export (to reduce long runtimes for large AOIs)
 
-    global NEW_MAPSET, NEWGISRC, GISRC
+    global NEW_MAPSET, NEWGISRC, GISRC, original_nprocs
 
     NEW_MAPSET = options["new_mapset"]
     tile_name = options["tile_name"]
@@ -199,6 +206,12 @@ def main() -> None:
     segmentation_threshold = float(options["segmentation_threshold"])
     output_dir = options["output_dir"]
     l_flag = flags["l"]
+
+    # set nprocs to 1, write original value in variable
+    gisenv = grass.parse_command("g.gisenv", get="")
+    if "NPROCS" in gisenv:
+        original_nprocs = gisenv["NPROCS"]
+    grass.run_command("g.gisenv", set="NPROCS=1")
 
     # get addon etc path
     etc_path = get_lib_path(modname="m.neural_network.preparedata_part1")
