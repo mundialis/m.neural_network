@@ -132,7 +132,7 @@ from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.general import set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
-from grass_gis_helpers.parallel import check_parallel_errors
+from grass_gis_helpers.parallel import check_parallel_errors, create_grass_env
 
 # initialize global vars
 ID = grass.tempname(8)
@@ -141,10 +141,22 @@ ORIG_REGION = None
 rm_vectors = []
 rm_rasters = []
 rm_groups = []
+rm_mapsets = []
+rm_gisrcs = []
 
 
 def cleanup() -> None:
     """Clean up function calling general clean up from grass_gis_helpers."""
+    for gisrc in rm_gisrcs:
+        grass.utils.try_remove(gisrc)
+    # delete the new mapsets
+    for mapset in rm_mapsets:
+        gisenv = grass.gisenv()
+        gisdbase = gisenv["GISDBASE"]
+        location = gisenv["LOCATION_NAME"]
+        mapset_dir = os.path.join(gisdbase, location, mapset)
+        if os.path.isdir(mapset_dir):
+            shutil.rmtree(mapset_dir)
     general_cleanup(
         orig_region=ORIG_REGION,
         rm_files=rm_files,
@@ -427,6 +439,12 @@ def export_apply_tile(
     new_mapset = f"tmp_mapset_{ID}_{tile_name}"
     # update jeojson values
     tindex_gdf_ap_tiles.at[ap_tile.Index, "path"] = tile_path
+
+    rm_mapsets.append(new_mapset)
+    # Create new env with new GISRC, to avoid parallel access of same GISRC
+    orig_mapset, worker_env, worker_gisrc = create_grass_env(new_mapset)
+    rm_gisrcs.append(worker_gisrc)
+
     # worker for export
     worker_export_ap = Module(
         "m.neural_network.preparedata_part1.worker_export",
@@ -440,10 +458,12 @@ def export_apply_tile(
         ndsm=ndsm,
         ndsm_scaled=ndsm_scaled,
         output_dir=tile_path,
-        new_mapset=new_mapset,
+        orig_mapset=orig_mapset,
         run_=False,
+        env_=worker_env,
     )
     worker_export_ap.stdout_ = grass.PIPE
+    worker_export_ap.stderr_ = grass.PIPE
     return worker_export_ap
 
 
@@ -480,6 +500,11 @@ def export_training_test_tile(
     # update gdf values
     tindex_gdf_tiles.at[tile.Index, "path"] = tile_path
 
+    rm_mapsets.append(new_mapset)
+    # Create new env with new GISRC, to avoid parallel access of same GISRC
+    orig_mapset, worker_env, worker_gisrc = create_grass_env(new_mapset)
+    rm_gisrcs.append(worker_gisrc)
+
     # worker for export
     worker_export_tr = Module(
         "m.neural_network.preparedata_part1.worker_export",
@@ -496,9 +521,10 @@ def export_training_test_tile(
         segmentation_minsize=segmentation_minsize,
         segmentation_threshold=segmentation_threshold,
         output_dir=tile_path,
-        new_mapset=new_mapset,
+        orig_mapset=orig_mapset,
         flags="l" if flags["l"] else "",
         run_=False,
+        env_=worker_env,
     )
     worker_export_tr.stdout_ = grass.PIPE
     worker_export_tr.stderr_ = grass.PIPE
