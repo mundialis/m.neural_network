@@ -132,11 +132,11 @@
 # %end
 
 # %option
-# % key: new_mapset
+# % key: orig_mapset
 # % type: string
 # % required: yes
 # % multiple: no
-# % label: Name for new mapset
+# % label: Name for original mapset
 # %end
 
 # %flag
@@ -150,7 +150,6 @@ import shutil
 import grass.script as grass
 from grass.pygrass.utils import get_lib_path
 from grass.script.vector import vector_info_topo
-from grass_gis_helpers.mapset import switch_to_new_mapset
 
 # overviews,TILED=YES,BIGTIFF=YES are not needed since only tiles are exported
 EXPORT_PARAM = {
@@ -158,8 +157,6 @@ EXPORT_PARAM = {
     "flags": "mc",
     "quiet": True,
 }
-NEWGISRC = None
-GISRC = None
 ID = grass.tempname(8)
 NEW_MAPSET = None
 # pylint: disable=C0103
@@ -167,17 +164,10 @@ original_nprocs = None
 
 
 def cleanup() -> None:
-    """Clean up function switching mapsets and deleting the new one."""
-    grass.utils.try_remove(NEWGISRC)
-    os.environ["GISRC"] = GISRC
-    # delete the new mapset (doppelt haelt besser)
-    gisenv = grass.gisenv()
-    gisdbase = gisenv["GISDBASE"]
-    location = gisenv["LOCATION_NAME"]
-    mapset_dir = os.path.join(gisdbase, location, NEW_MAPSET)
-    if os.path.isdir(mapset_dir):
-        shutil.rmtree(mapset_dir)
-    """Reset nprocs"""
+    """Clean up function.
+
+    Reset nprocs
+    """
     if original_nprocs:
         grass.run_command("g.gisenv", set=f"NPROCS={original_nprocs}")
     else:
@@ -189,9 +179,9 @@ def main() -> None:
     # NOTE: avoid using r.mapcalc and similar within this exporter
     # -> only region setting and export (to reduce long runtimes for large AOIs)
 
-    global NEW_MAPSET, NEWGISRC, GISRC, original_nprocs
+    global original_nprocs
 
-    NEW_MAPSET = options["new_mapset"]
+    orig_mapset = options["orig_mapset"]
     tile_name = options["tile_name"]
     north = options["n"]
     south = options["s"]
@@ -208,9 +198,9 @@ def main() -> None:
     l_flag = flags["l"]
 
     # set nprocs to 1, write original value in variable
-    gisenv = grass.parse_command("g.gisenv", get="")
+    gisenv = grass.gisenv()
     if "NPROCS" in gisenv:
-        original_nprocs = gisenv["NPROCS"]
+        original_nprocs = int(gisenv["NPROCS"])
     grass.run_command("g.gisenv", set="NPROCS=1")
 
     # get addon etc path
@@ -221,9 +211,6 @@ def main() -> None:
     # make new output directory
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
-
-    # switch to the new mapset
-    GISRC, NEWGISRC, old_mapset = switch_to_new_mapset(NEW_MAPSET, new=False)
 
     # set region
     grass.run_command(
@@ -238,13 +225,13 @@ def main() -> None:
     tile_size = grass.region()["cols"]
 
     if ndsm and "@" not in ndsm:
-        ndsm += f"@{old_mapset}"
+        ndsm += f"@{orig_mapset}"
     if ndsm_scaled and "@" not in ndsm_scaled:
-        ndsm_scaled += f"@{old_mapset}"
+        ndsm_scaled += f"@{orig_mapset}"
     if reference and "@" not in reference:
-        reference += f"@{old_mapset}"
+        reference += f"@{orig_mapset}"
     if image_bands_group and "@" not in image_bands_group:
-        image_bands_group += f"@{old_mapset}"
+        image_bands_group += f"@{orig_mapset}"
 
     # image band export
     image_file = os.path.join(output_dir, f"image_{tile_name}.tif")
