@@ -161,12 +161,14 @@ def get_tile_infos(in_dir, ttype):
         if os.path.isdir(tiledir) and tile.startswith("tile_"):
             tiledict["id"] = tile
             tiledict["type"] = ttype
-            tiledict["dop_tif"] = os.path.join(tiledir, f"image_{tile}.tif")
+            tiledict["imagery_tif"] = os.path.join(
+                tiledir, f"image_{tile}.tif"
+            )
             tiledict["ndom_tif"] = os.path.join(
                 tiledir,
                 f"ndsm_1_255_{tile}.tif",
             )
-            checklist = [tiledict["dop_tif"], tiledict["ndom_tif"]]
+            checklist = [tiledict["imagery_tif"], tiledict["ndom_tif"]]
             if ttype == "training":
                 tiledict["label_gpkg"] = os.path.join(
                     tiledir,
@@ -177,7 +179,16 @@ def get_tile_infos(in_dir, ttype):
             # check if they exist
             for f in checklist:
                 if not os.path.isfile(f):
-                    grass.fatal(_(f"File {f} expected but no found."))
+                    if "ndsm" in f:
+                        tiledict["ndom_tif"] = None
+                        grass.warning(
+                            _(
+                                f"File {f} not found. "
+                                "Expecting no need of ndsm."
+                            )
+                        )
+                    else:
+                        grass.fatal(_(f"File {f} expected but not found."))
 
             all_tiles.append(tiledict)
     return all_tiles
@@ -198,32 +209,43 @@ def vrt_relative_paths(vrt, abs_paths):
         file.write(data)
 
 
-def build_vrts(outdir, dop, ndom, tile_id, singleband_vrt_dir):
+def build_vrts(outdir, imagery, ndom, tile_id, singleband_vrt_dir):
     """Build the required .vrt files."""
-    src_ds = gdal.Open(dop)
-    band_count = 0
-    if src_ds is not None:
-        band_count = int(src_ds.RasterCount)
-    else:
-        grass.fatal(_(f"File {dop} is empty."))
-    src_ds = None
-
-    vrt_input = []
-    for num in range(1, band_count + 1):
-        band_vrt = os.path.join(singleband_vrt_dir, f"{tile_id}_{num}.vrt")
-        vrt_options_sep = gdal.BuildVRTOptions(bandList=[num])
-        gdal.BuildVRT(band_vrt, [dop], options=vrt_options_sep)
-        # replace absolute with relative path
-        vrt_relative_paths(band_vrt, abs_paths=[dop])
-        vrt_input.append(band_vrt)
-
-    # create vrt
-    vrt_input.append(ndom)
     bands_e_vrt = os.path.join(outdir, f"{tile_id}.vrt")
-    vrt_options = gdal.BuildVRTOptions(separate=True)
-    gdal.BuildVRT(bands_e_vrt, vrt_input, options=vrt_options)
-    # replace absolute with relative paths
-    vrt_relative_paths(bands_e_vrt, abs_paths=vrt_input)
+    if ndom:
+        # If ndom will be added: first separate imagery bands to single bands
+        # (singleband-vrts) then append ndom as additional channel (final vrts)
+        src_ds = gdal.Open(imagery)
+        band_count = 0
+        if src_ds is not None:
+            band_count = int(src_ds.RasterCount)
+        else:
+            grass.fatal(_(f"File {imagery} is empty."))
+        src_ds = None
+
+        vrt_input = []
+        for num in range(1, band_count + 1):
+            band_vrt = os.path.join(singleband_vrt_dir, f"{tile_id}_{num}.vrt")
+            vrt_options_sep = gdal.BuildVRTOptions(bandList=[num])
+            gdal.BuildVRT(band_vrt, [imagery], options=vrt_options_sep)
+            # replace absolute with relative path
+            vrt_relative_paths(band_vrt, abs_paths=[imagery])
+            vrt_input.append(band_vrt)
+
+        # create vrt
+        vrt_input.append(ndom)
+        vrt_options = gdal.BuildVRTOptions(separate=True)
+        gdal.BuildVRT(bands_e_vrt, vrt_input, options=vrt_options)
+        # replace absolute with relative paths
+        vrt_relative_paths(bands_e_vrt, abs_paths=vrt_input)
+    else:
+        # If no additional channel added to imagery,
+        # just create (final) vrt with all imagery bands
+        # (simply reference to part1-folder tif)
+        # (Note: results in empty singleband_vrts-folder)
+        gdal.BuildVRT(bands_e_vrt, imagery)
+        # replace absolute with relative paths
+        vrt_relative_paths(bands_e_vrt, abs_paths=[imagery])
     return bands_e_vrt
 
 
@@ -379,7 +401,7 @@ def main():
         tiledict["out_img_dir"] = out_img_dir
         args = [
             out_img_dir,
-            tiledict["dop_tif"],
+            tiledict["imagery_tif"],
             tiledict["ndom_tif"],
             tiledict["id"],
             singleband_vrt_dir,
@@ -415,7 +437,7 @@ def main():
                 worker = Module(
                     "m.neural_network.preparedata_part2.worker_label",
                     input=tiledict["label_gpkg"],
-                    img_path=tiledict["dop_tif"],
+                    img_path=tiledict["imagery_tif"],
                     class_values=class_values,
                     no_class_value=no_class_value,
                     class_column=class_col,

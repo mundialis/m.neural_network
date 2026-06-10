@@ -39,7 +39,6 @@
 # % key: ndsm
 # % required: no
 # % label: Name of the nDSM raster
-# % answer: ndsm
 # % guisection: Input
 # %end
 
@@ -88,6 +87,22 @@
 # % description: Threshold = 0 merges only identical segments; threshold = 1 merges all
 # % answer: 0.3
 # % guisection: Optional input
+# %end
+
+# %option
+# % key: imagery_scale_min
+# % type: integer
+# % description: minimum scaling value for imagery
+# % required: no
+# % answer: 1
+# %end
+
+# %option
+# % key: imagery_scale_max
+# % type: integer
+# % description: maximum scaling value for imagery
+# % required: no
+# % answer: 255
 # %end
 
 # %option G_OPT_M_DIR
@@ -185,6 +200,8 @@ def main() -> None:
     reference = options["reference"]
     segmentation_minsize = int(options["segmentation_minsize"])
     segmentation_threshold = float(options["segmentation_threshold"])
+    imagery_scale_min = int(options["imagery_scale_min"])
+    imagery_scale_max = int(options["imagery_scale_max"])
     output_dir = options["output_dir"]
     nprocs = set_nprocs(int(options["nprocs"]))
 
@@ -214,10 +231,10 @@ def main() -> None:
                 )
             )
         ndsm = None
-    if ndsm == ndsm_out:
+    if ndsm_out and grass.find_file(name=ndsm_out, element="raster")["file"]:
         grass.fatal(
             _(
-                f"Parameter <ndsm_out> is set to <{ndsm}>, but the raster "
+                f"Parameter <ndsm_out> is set to <{ndsm_out}>, but the raster "
                 "map already exists!"
             )
         )
@@ -247,34 +264,38 @@ def main() -> None:
             expression=f"{ndsm} = float({dsm} - {dtm})",
         )
 
-    # nDSM scaled + export (cut to [0 30] and rescale to [1 255]))
-    ndsm_cut = "ndsm_cut"
-    ex_cut = (
-        f"{ndsm_cut} = if( {ndsm} >= 30, 30, if( {ndsm} < 0, 0, {ndsm} ) )"
-    )
-    rm_rasters.append(ndsm_cut)
-    grass.run_command("r.mapcalc", expression=ex_cut)
+    ndsm_scaled = None
+    if ndsm:
+        # nDSM scaled + export (cut to [0 30] and rescale to [1 255]))
+        ndsm_cut = "ndsm_cut"
+        ex_cut = (
+            f"{ndsm_cut} = if( {ndsm} >= 30, 30, if( {ndsm} < 0, 0, {ndsm} ) )"
+        )
+        rm_rasters.append(ndsm_cut)
+        grass.run_command("r.mapcalc", expression=ex_cut)
 
-    ndsm_scaled = "ndsm_scaled"
-    ex_scale = f"{ndsm_scaled} = int(({ndsm_cut} / 30. * 254.) + 1)"
-    rm_rasters.append(ndsm_scaled)
-    grass.run_command("r.mapcalc", expression=ex_scale)
+        ndsm_scaled = "ndsm_scaled"
+        ex_scale = f"{ndsm_scaled} = int(({ndsm_cut} / 30. * 254.) + 1)"
+        rm_rasters.append(ndsm_scaled)
+        grass.run_command("r.mapcalc", expression=ex_scale)
 
     # Image Bands:
-    # convert to byte, if not integer or values out of range [1 255]
+    # scale, if not integer
+    # or values out of range [imagery_scale_min imagery_scale_max]
+    # (default: [1 255] -> for byte + 0: no data value)
     image_bands_new = []
     for image in image_bands:
         if (
             grass.raster_info(image)["datatype"] != "CELL"
-            or grass.raster_info(image)["max"] > 255
-            or grass.raster_info(image)["min"] < 1
+            or grass.raster_info(image)["max"] > imagery_scale_max
+            or grass.raster_info(image)["min"] < imagery_scale_min
         ):
             image_new = f"{image.split('@')[0]}_new"
             rm_rasters.append(image_new)
             grass.run_command(
                 "r.mapcalc",
-                expression=f"{image_new} = int(if({image} < 1, 1, if({image} > "
-                f"255, 255, {image})))",
+                expression=f"{image_new} = int(if({image} < {imagery_scale_min}, {imagery_scale_min}, if({image} > "
+                f"{imagery_scale_max}, {imagery_scale_max}, {image})))",
             )
             image_bands_new.append(image_new)
         else:
@@ -289,6 +310,11 @@ def main() -> None:
         input=image_bands,
         quiet=True,
     )
+    # Adjust export type for imagery (default: Byte)
+    imagery_export_type = "Byte"
+    if imagery_scale_min < 1 or imagery_scale_max > 255:
+        # for now assume Int16 as sufficient for integer data
+        imagery_export_type = "Int16"
 
     # import tindex
     tindex_gdf = gpd.read_file(tindex)
@@ -321,6 +347,7 @@ def main() -> None:
                 res,
                 ndsm_scaled,
                 image_bands_group,
+                imagery_export_type,
                 tindex_gdf_tr_tiles,
                 round_decimals,
                 i,
@@ -345,6 +372,7 @@ def main() -> None:
                 res,
                 ndsm_scaled,
                 image_bands_group,
+                imagery_export_type,
                 tindex_gdf_te_tiles,
                 round_decimals,
                 i,
@@ -389,6 +417,7 @@ def main() -> None:
                 res,
                 ndsm_scaled,
                 image_bands_group,
+                imagery_export_type,
                 tindex_gdf_ap_tiles,
                 round_decimals,
                 i,
@@ -418,6 +447,7 @@ def export_apply_tile(
     res,
     ndsm_scaled,
     image_bands_group,
+    imagery_export_type,
     tindex_gdf_ap_tiles,
     round_decimals,
     i,
@@ -457,6 +487,7 @@ def export_apply_tile(
         tile_name=tile_name,
         ndsm=ndsm,
         ndsm_scaled=ndsm_scaled,
+        imagery_export_type=imagery_export_type,
         output_dir=tile_path,
         orig_mapset=orig_mapset,
         run_=False,
@@ -476,6 +507,7 @@ def export_training_test_tile(
     res,
     ndsm_scaled,
     image_bands_group,
+    imagery_export_type,
     tindex_gdf_tiles,
     round_decimals,
     i,
@@ -520,6 +552,7 @@ def export_training_test_tile(
         reference=reference,
         segmentation_minsize=segmentation_minsize,
         segmentation_threshold=segmentation_threshold,
+        imagery_export_type=imagery_export_type,
         output_dir=tile_path,
         orig_mapset=orig_mapset,
         flags="l" if flags["l"] else "",

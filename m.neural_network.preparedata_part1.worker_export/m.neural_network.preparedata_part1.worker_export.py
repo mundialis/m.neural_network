@@ -76,15 +76,15 @@
 
 # %option G_OPT_R_INPUT
 # % key: ndsm
+# % required: no
 # % label: Name of the nDSM raster
-# % answer: ndsm
 # % guisection: Input
 # %end
 
 # %option G_OPT_R_INPUT
 # % key: ndsm_scaled
+# % required: no
 # % label: Name of the scaled nDSM raster
-# % answer: ndsm_scaled
 # % guisection: Input
 # %end
 
@@ -112,6 +112,14 @@
 # % description: Threshold = 0 merges only identical segments; threshold = 1 merges all
 # % answer: 0.3
 # % guisection: Optional input
+# %end
+
+# %option
+# % key: imagery_export_type
+# % type: string
+# % required: yes
+# % description: Export type for imagery (default: Byte)
+# % answer: Byte
 # %end
 
 # %option G_OPT_M_DIR
@@ -194,6 +202,7 @@ def main() -> None:
     reference = options["reference"]
     segmentation_minsize = int(options["segmentation_minsize"])
     segmentation_threshold = float(options["segmentation_threshold"])
+    imagery_export_type = options["imagery_export_type"]
     output_dir = options["output_dir"]
     l_flag = flags["l"]
 
@@ -239,23 +248,23 @@ def main() -> None:
         "r.out.gdal",
         input=image_bands_group,
         output=image_file,
-        type="Byte",
+        type=imagery_export_type,
         nodata=0,
         createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size},PHOTOMETRIC=RGB,ALPHA=UNSPECIFIED",
         **EXPORT_PARAM,
     )
-
-    # scaled ndom export
-    ndsm_sc_file = os.path.join(output_dir, f"ndsm_1_255_{tile_name}.tif")
-    grass.run_command(
-        "r.out.gdal",
-        input=ndsm_scaled,
-        output=ndsm_sc_file,
-        type="Byte",
-        nodata=0,
-        createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
-        **EXPORT_PARAM,
-    )
+    if ndsm_scaled:
+        # scaled ndom export
+        ndsm_sc_file = os.path.join(output_dir, f"ndsm_1_255_{tile_name}.tif")
+        grass.run_command(
+            "r.out.gdal",
+            input=ndsm_scaled,
+            output=ndsm_sc_file,
+            type="Byte",
+            nodata=0,
+            createopt=f"COMPRESS=LZW,BLOCKXSIZE={tile_size},BLOCKYSIZE={tile_size}",
+            **EXPORT_PARAM,
+        )
 
     # segmentation or clip reference data
     if l_flag:
