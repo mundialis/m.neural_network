@@ -119,6 +119,7 @@
 # % type: string
 # % required: yes
 # % description: Export type for imagery (default: Byte)
+# % options: Byte,Int16,UInt16,Int32,UInt32,Float32,Float64,CInt16,CInt32,CFloat32,CFloat64
 # % answer: Byte
 # %end
 
