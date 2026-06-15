@@ -97,7 +97,7 @@ original_nprocs = None
 
 
 def cleanup():
-    """Reset nprocs"""
+    """Reset nprocs."""
     if original_nprocs:
         grass.run_command("g.gisenv", set=f"NPROCS={original_nprocs}")
     else:
