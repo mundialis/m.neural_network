@@ -428,7 +428,7 @@ def main():
                 rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
                 rm_mapsets.append(new_mapset)
                 # Create new env with new GISRC, to avoid parallel access of same GISRC
-                orig_mapset, worker_env, worker_gisrc = create_grass_env(
+                _orig_mapset, worker_env, worker_gisrc = create_grass_env(
                     new_mapset
                 )
                 rm_gisrcs.append(worker_gisrc)
