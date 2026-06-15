@@ -136,7 +136,7 @@
 # % type: string
 # % required: yes
 # % multiple: no
-# % label: Name for original mapset
+# % label: Name of original mapset
 # %end
 
 # %flag
