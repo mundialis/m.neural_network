@@ -253,8 +253,6 @@ def main() -> None:
     # get location infos
     gisenv = grass.gisenv()
     cur_mapset = gisenv["MAPSET"]
-    gisdbase = gisenv["GISDBASE"]
-    location = gisenv["LOCATION_NAME"]
 
     # check if input data exists
     if not grass.find_file(name=image_band, element="raster")["file"]:
@@ -352,8 +350,6 @@ def main() -> None:
                     nprocs,
                     image_band,
                     cur_mapset,
-                    gisdbase,
-                    location,
                     res,
                     geojson_dict,
                 )
@@ -398,8 +394,6 @@ def remove_tiles_with_null_cells(
     nprocs,
     image_band,
     cur_mapset,
-    gisdbase,
-    location,
     res,
     geojson_dict,
 ):

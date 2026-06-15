@@ -260,8 +260,6 @@ def main():
     # get location infos
     gisenv = grass.gisenv()
     cur_mapset = gisenv["MAPSET"]
-    gisdbase = gisenv["GISDBASE"]
-    location = gisenv["LOCATION_NAME"]
 
     # save original region
     ORIG_REGION = f"orig_region_{ID}"
