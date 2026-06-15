@@ -158,7 +158,6 @@ EXPORT_PARAM = {
     "quiet": True,
 }
 ID = grass.tempname(8)
-NEW_MAPSET = None
 # pylint: disable=C0103
 original_nprocs = None
 

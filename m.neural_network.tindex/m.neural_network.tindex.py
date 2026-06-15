@@ -139,7 +139,7 @@ from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.general import check_installed_addon, set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
-from grass_gis_helpers.parallel import check_parallel_errors
+from grass_gis_helpers.parallel import check_parallel_errors, create_grass_env
 
 # initialize global vars
 ID = grass.tempname(8)
@@ -147,10 +147,22 @@ rm_files = list()
 ORIG_REGION = None
 rm_dirs = []
 rm_vectors = []
+rm_mapsets = []
+rm_gisrcs = []
 
 
 def cleanup() -> None:
     """Clean up function calling general clean up from grass_gis_helpers."""
+    for gisrc in rm_gisrcs:
+        grass.utils.try_remove(gisrc)
+    # delete the new mapsets
+    for mapset in rm_mapsets:
+        gisenv = grass.gisenv()
+        gisdbase = gisenv["GISDBASE"]
+        location = gisenv["LOCATION_NAME"]
+        mapset_dir = os.path.join(gisdbase, location, mapset)
+        if os.path.isdir(mapset_dir):
+            shutil.rmtree(mapset_dir)
     general_cleanup(
         orig_region=ORIG_REGION,
         rm_dirs=rm_dirs,
@@ -405,7 +417,12 @@ def remove_tiles_with_null_cells(
             west = tile["geometry"]["coordinates"][0][0][0]
             east = tile["geometry"]["coordinates"][0][1][0]
             new_mapset = f"tmp_mapset_{ID}_{tile_id}"
-            rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
+            rm_mapsets.append(new_mapset)
+            # Create new env with new GISRC, to avoid parallel access of same GISRC
+            orig_mapset, worker_env, worker_gisrc = create_grass_env(
+                new_mapset
+            )
+            rm_gisrcs.append(worker_gisrc)
             # worker to request the null cells to get the info if the tile
             # can be a training data tile
             worker_nullcells = Module(
@@ -417,8 +434,9 @@ def remove_tiles_with_null_cells(
                 res=res,
                 map=image_band,
                 tile_name=num,
-                new_mapset=new_mapset,
+                orig_mapset=orig_mapset,
                 run_=False,
+                env_=worker_env,
             )
             worker_nullcells.stdout_ = grass.PIPE
             worker_nullcells.stderr_ = grass.PIPE
