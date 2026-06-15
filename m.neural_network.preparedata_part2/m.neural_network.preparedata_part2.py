@@ -127,6 +127,7 @@
 import atexit
 import os
 import random
+import shutil
 from multiprocessing import Pool
 
 import grass.script as grass
@@ -137,6 +138,7 @@ from grass_gis_helpers.mapset import verify_mapsets
 from grass_gis_helpers.parallel import (
     check_parallel_errors,
     check_parallel_warnings,
+    create_grass_env,
 )
 from osgeo import gdal, ogr
 
@@ -144,10 +146,22 @@ from osgeo import gdal, ogr
 ID = grass.tempname(8)
 ORIG_REGION = None
 rm_dirs = []
+rm_mapsets = []
+rm_gisrcs = []
 
 
 def cleanup():
     """Pass args to the general cleanup from grass-gis-helpers."""
+    for gisrc in rm_gisrcs:
+        grass.utils.try_remove(gisrc)
+    # delete the new mapsets
+    for mapset in rm_mapsets:
+        gisenv = grass.gisenv()
+        gisdbase = gisenv["GISDBASE"]
+        location = gisenv["LOCATION_NAME"]
+        mapset_dir = os.path.join(gisdbase, location, mapset)
+        if os.path.isdir(mapset_dir):
+            shutil.rmtree(mapset_dir)
     general_cleanup(orig_region=ORIG_REGION, rm_dirs=rm_dirs)
 
 
@@ -412,6 +426,10 @@ def main():
                 outfile = os.path.join(outdir, f"{tiledict['id']}.tif")
                 new_mapset = f"tmp_mapset_{tiledict['id']}_{ID}"
                 rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
+                rm_mapsets.append(new_mapset)
+                # Create new env with new GISRC, to avoid parallel access of same GISRC
+                _, worker_env, worker_gisrc = create_grass_env(new_mapset)
+                rm_gisrcs.append(worker_gisrc)
                 worker = Module(
                     "m.neural_network.preparedata_part2.worker_label",
                     input=tiledict["label_gpkg"],
@@ -422,8 +440,8 @@ def main():
                     reclassify_rules=reclassify_rules,
                     num_null_cells_label=num_null_cells_label,
                     output=outfile,
-                    new_mapset=new_mapset,
                     run_=False,
+                    env_=worker_env,
                 )
                 worker.stdout_ = grass.PIPE
                 worker.stderr_ = grass.PIPE
