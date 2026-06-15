@@ -427,7 +427,7 @@ def main():
                 new_mapset = f"tmp_mapset_{tiledict['id']}_{ID}"
                 rm_mapsets.append(new_mapset)
                 # Create new env with new GISRC, to avoid parallel access of same GISRC
-                orig_mapset, worker_env, worker_gisrc = create_grass_env(
+                _orig_mapset, worker_env, worker_gisrc = create_grass_env(
                     new_mapset
                 )
                 rm_gisrcs.append(worker_gisrc)
