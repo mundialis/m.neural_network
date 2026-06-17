@@ -86,44 +86,18 @@
 # % guisection: Output
 # %end
 
-# %option
-# % key: new_mapset
-# % type: string
-# % required: yes
-# % multiple: no
-# % label: Name of the new mapset to work in
-# % guisection: Parameters
-# %end
-
 import atexit
-import os
-import shutil
 
 import grass.script as grass
-from grass_gis_helpers.mapset import switch_to_new_mapset
 from osgeo import gdal
 
-NEWGISRC = None
-GISRC = None
 ID = grass.tempname(8)
-NEW_MAPSET = None
 # pylint: disable=C0103
 original_nprocs = None
 
 
 def cleanup():
-    """Switch mapsets and deleting the new one."""
-    # switch back to original mapset
-    grass.utils.try_remove(NEWGISRC)
-    os.environ["GISRC"] = GISRC
-    # delete the new mapset (doppelt haelt besser)
-    gisenv = grass.gisenv()
-    gisdbase = gisenv["GISDBASE"]
-    location = gisenv["LOCATION_NAME"]
-    mapset_dir = os.path.join(gisdbase, location, NEW_MAPSET)
-    if os.path.isdir(mapset_dir):
-        shutil.rmtree(mapset_dir)
-    """Reset nprocs"""
+    """Reset nprocs."""
     if original_nprocs:
         grass.run_command("g.gisenv", set=f"NPROCS={original_nprocs}")
     else:
@@ -132,10 +106,9 @@ def cleanup():
 
 def main():
     """Run label rasterization."""
-    global NEWGISRC, GISRC, NEW_MAPSET, original_nprocs
+    global original_nprocs
     input = options["input"]
     img_file = options["img_path"]
-    NEW_MAPSET = options["new_mapset"]
     class_values = options["class_values"].split(",")
     no_class_value = options["no_class_value"]
     reclassify_rules = options["reclassify_rules"]
@@ -149,8 +122,6 @@ def main():
         original_nprocs = int(gisenv["NPROCS"])
     grass.run_command("g.gisenv", set="NPROCS=1")
 
-    # switch to the new mapset
-    GISRC, NEWGISRC, _old_mapset = switch_to_new_mapset(NEW_MAPSET)
     # get extent from reference img file
     info = gdal.Info(img_file, format="json")
     south = info["cornerCoordinates"]["lowerLeft"][1]

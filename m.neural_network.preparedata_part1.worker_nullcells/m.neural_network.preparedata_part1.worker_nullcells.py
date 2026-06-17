@@ -84,40 +84,27 @@
 # %end
 
 # %option
-# % key: new_mapset
+# % key: orig_mapset
 # % type: string
 # % required: yes
 # % multiple: no
-# % label: Name for new mapset
+# % label: Name of original mapset
 # %end
 
-import os
-import shutil
 import sys
 
 import grass.script as grass
-from grass_gis_helpers.mapset import switch_to_new_mapset
 
-NEWGISRC = None
-GISRC = None
 ID = grass.tempname(8)
-NEW_MAPSET = None
 # pylint: disable=C0103
 original_nprocs = None
 
 
 def cleanup() -> None:
-    """Clean up function switching mapsets and deleting the new one."""
-    grass.utils.try_remove(NEWGISRC)
-    os.environ["GISRC"] = GISRC
-    # delete the new mapset (doppelt haelt besser)
-    gisenv = grass.gisenv()
-    gisdbase = gisenv["GISDBASE"]
-    location = gisenv["LOCATION_NAME"]
-    mapset_dir = os.path.join(gisdbase, location, NEW_MAPSET)
-    if os.path.isdir(mapset_dir):
-        shutil.rmtree(mapset_dir)
-    """Reset nprocs"""
+    """Clean up function.
+
+    Reset nprocs
+    """
     if original_nprocs:
         grass.run_command("g.gisenv", set=f"NPROCS={original_nprocs}")
     else:
@@ -126,9 +113,9 @@ def cleanup() -> None:
 
 def main() -> None:
     """Check null cells."""
-    global NEW_MAPSET, NEWGISRC, GISRC, original_nprocs
+    global original_nprocs
 
-    NEW_MAPSET = options["new_mapset"]
+    orig_mapset = options["orig_mapset"]
     tile_name = options["tile_name"]
     north = options["n"]
     south = options["s"]
@@ -143,12 +130,9 @@ def main() -> None:
         original_nprocs = int(gisenv["NPROCS"])
     grass.run_command("g.gisenv", set="NPROCS=1")
 
-    # switch to the new mapset
-    GISRC, NEWGISRC, old_mapset = switch_to_new_mapset(NEW_MAPSET)
-
     # map full name
     if "@" not in map:
-        map += f"@{old_mapset}"
+        map += f"@{orig_mapset}"
 
     # set region
     grass.message(_(f"Set region for tile {tile_name} ..."))

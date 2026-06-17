@@ -136,7 +136,7 @@
 # % type: string
 # % required: yes
 # % multiple: no
-# % label: Name for original mapset
+# % label: Name of original mapset
 # %end
 
 # %flag
@@ -158,7 +158,6 @@ EXPORT_PARAM = {
     "quiet": True,
 }
 ID = grass.tempname(8)
-NEW_MAPSET = None
 # pylint: disable=C0103
 original_nprocs = None
 
