@@ -289,9 +289,8 @@ def main() -> None:
             if vector_info_topo("reference_clipped")["centroids"] == 0:
                 create_seg = True
             else:
-                if (
-                    "class_number"
-                    not in grass.vector_columns("reference_clipped")
+                if "class_number" not in grass.vector_columns(
+                    "reference_clipped"
                 ):
                     grass.run_command(
                         "v.db.addcolumn",
