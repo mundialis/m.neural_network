@@ -291,7 +291,7 @@ def main() -> None:
             else:
                 if (
                     "class_number"
-                    not in grass.vector_columns("reference_clipped").keys()
+                    not in grass.vector_columns("reference_clipped")
                 ):
                     grass.run_command(
                         "v.db.addcolumn",
