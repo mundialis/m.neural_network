@@ -290,8 +290,8 @@ def main() -> None:
                 create_seg = True
             else:
                 if (
-                    not "class_number"
-                    in grass.vector_columns("reference_clipped").keys()
+                    "class_number"
+                    not in grass.vector_columns("reference_clipped").keys()
                 ):
                     grass.run_command(
                         "v.db.addcolumn",
