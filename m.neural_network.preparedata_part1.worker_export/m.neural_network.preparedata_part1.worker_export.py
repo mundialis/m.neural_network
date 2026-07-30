@@ -289,19 +289,22 @@ def main() -> None:
             if vector_info_topo("reference_clipped")["centroids"] == 0:
                 create_seg = True
             else:
-                grass.run_command(
-                    "v.db.addcolumn",
-                    map="reference_clipped",
-                    columns="class_number INTEGER",
-                    quiet=True,
-                )
-                grass.run_command(
-                    "v.db.update",
-                    map="reference_clipped",
-                    column="class_number",
-                    value=0,
-                    quiet=True,
-                )
+                if "class_number" not in grass.vector_columns(
+                    "reference_clipped"
+                ):
+                    grass.run_command(
+                        "v.db.addcolumn",
+                        map="reference_clipped",
+                        columns="class_number INTEGER",
+                        quiet=True,
+                    )
+                    grass.run_command(
+                        "v.db.update",
+                        map="reference_clipped",
+                        column="class_number",
+                        value=0,
+                        quiet=True,
+                    )
                 grass.run_command(
                     "v.out.ogr",
                     input="reference_clipped",
