@@ -361,6 +361,9 @@ def main() -> None:
                 no_possible_tr_data.reverse()
                 for num in no_possible_tr_data:
                     del geojson_dict["features"][num]
+                    possible_tr_data = [
+                        x - 1 if x > num else x for x in possible_tr_data
+                    ]
         else:
             grass.message(_("Skipping null cell check for tiles!"))
 
@@ -376,6 +379,7 @@ def main() -> None:
                     f"reduced to {true_train_percentage}.",
                 ),
             )
+
         random.shuffle(possible_tr_data)
         tr_tiles = possible_tr_data[:num_tr_tiles]
         for tr_tile in tr_tiles:
@@ -466,6 +470,10 @@ def remove_tiles_with_null_cells(
     tiles_wo_data.reverse()
     for num in tiles_wo_data:
         del geojson_dict["features"][num]
+        possible_tr_data = [x - 1 if x > num else x for x in possible_tr_data]
+        no_possible_tr_data = [
+            x - 1 if x > num else x for x in no_possible_tr_data
+        ]
     return possible_tr_data, no_possible_tr_data
 
 
