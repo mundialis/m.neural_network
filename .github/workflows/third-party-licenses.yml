@@ -8,6 +8,7 @@ jobs:
   collect_all_requirements:
     uses: ./.github/workflows/requirements-all.yml
   generate-third-party-licenses:
+    needs: collect_all_requirements
     uses: mundialis/github-workflows/.github/workflows/third-party-licenses.yml@main
     with:
       requirements: requirements_all.txt
