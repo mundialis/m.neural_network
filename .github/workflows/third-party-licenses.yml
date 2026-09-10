@@ -5,7 +5,9 @@ on:
     types: [published]
 
 jobs:
+  collect_all_requirements:
+    uses: ./.github/workflows/requirements-all.yml
   generate-third-party-licenses:
     uses: mundialis/github-workflows/.github/workflows/third-party-licenses.yml@main
     with:
-      requirements: requirements.txt
+      requirements: requirements_all.txt
