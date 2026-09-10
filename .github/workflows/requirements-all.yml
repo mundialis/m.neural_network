@@ -24,5 +24,11 @@ jobs:
         git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
         git add requirements_all.txt
         # if nothing changed no commit, otherwise commit
-        git diff --cached --quiet || git commit -m "update requirements_all.txt"
-        git push origin HEAD:${{ github.head_ref }}
+        if git diff --cached --quiet; then
+          echo "Nothing to commit"
+          exit 0
+        fi
+        git commit -m "update requirements_all.txt"
+        if git push origin HEAD:main; then
+          exit 0
+        fi
