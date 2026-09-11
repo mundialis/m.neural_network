@@ -1,4 +1,3 @@
-gdal
 geo_neural_network
 geopandas
 grass_gis_helpers>=2.6.0
