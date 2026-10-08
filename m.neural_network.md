@@ -21,9 +21,8 @@ The *m.neural_network* toolset consists of several modules.
 - [m.neural_network.preparedata_part1.worker_export](m.neural_network.preparedata_part1.worker_export.md):
   Worker for parallel processing for exporting for
   **m.neural_network.preparedata_part1**
-- [m.neural_network.preparedata_part1.worker_nullcells](m.neural_network.preparedata_part1.worker_nullcells.md):
-  Worker to analyse the number of null cells in parallel for
-  **m.neural_network.preparedata_part1**
+- [m.neural_network.worker_nullcells](m.neural_network.worker_nullcells.md):
+  Worker to analyse the number of null cells of imagery data for training mode 
 - [m.neural_network.preparedata_part2](m.neural_network.preparedata_part2.md):
   Prepares imagery and labelled data for training and application of a
   neural network.

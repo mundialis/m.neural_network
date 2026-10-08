@@ -8,6 +8,8 @@ The *suffix* option may be used to add a suffix to each output tile/file
 in order to create unique tile IDs that can later be combined with
 results from other runs.
 
+**TODO:** update: apply vs train (zwei stufig damit unabhängig, oder normal z.b. für vorläufige labels)
+
 ## EXAMPLES
 
 ### Create tile index
@@ -15,6 +17,10 @@ results from other runs.
 ```sh
 m.neural_network.tindex image_band=top_red_02 tile_size=512 output_dir=/mnt/data/ nprocs=7
 m.neural_network.tindex aoi=aoi image_band=top_red_02 tile_size=512 output_dir=/mnt/data/ nprocs=7 -aw
+
+# for apply mode:
+ m.neural_network.tindex aoi=aoi_ddorf_small image_band=dop_nw_red suffix=test_suffix output_dir=/home/lkrisztian/data/opendata_germany/mneuralnetwork_changes
+# for train mode: single level
 ```
 
 ## SEE ALSO
