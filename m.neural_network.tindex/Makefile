@@ -2,6 +2,9 @@ MODULE_TOPDIR = ../../..
 
 PGM = m.neural_network.tindex
 
+ETCFILES = tindex_helper
+
+include $(MODULE_TOPDIR)/include/Make/Python.make
 include $(MODULE_TOPDIR)/include/Make/Script.make
 
 QML_ETC = $(patsubst %,$(ETC)/$(PGM)/%,$(wildcard qml/*.qml))

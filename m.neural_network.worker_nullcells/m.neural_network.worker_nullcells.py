@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """############################################################################
 #
-# MODULE:      m.neural_network.preparedata_part1.worker_nullcells
+# MODULE:      m.neural_network.worker_nullcells
 # AUTHOR(S):   Guido Riembauer, Anika Weinmann
 # PURPOSE:     Worker module for m.neural_network.preparedata_part1 to check null
 #              cells
