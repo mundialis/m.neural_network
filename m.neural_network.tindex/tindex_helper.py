@@ -14,6 +14,7 @@
 
 import json
 import os
+import random
 import shutil
 
 import geopandas as gpd
@@ -249,9 +250,6 @@ def remove_tiles_with_null_cells(
     # to remove the latter from the tile index.
     possible_tr_data = []
     no_possible_tr_data = []
-    ###############################
-    #TODO: warum alle null cells?? -> eine kachel müsste richtig sein!
-    ###############################
     for proc in queue_nullcheck.get_finished_modules():
         stdout_strs = proc.outputs["stdout"].value.strip().split(":")
         null_cells = int(stdout_strs[1].strip())
@@ -262,16 +260,44 @@ def remove_tiles_with_null_cells(
         else:
             no_possible_tr_data.append(num)
     # remove tiles without data
+    # TODO: blcok hier drunter weg -> nur noch mit dict direkt weiter arbeiten??
+        # siehe dazu auch funktion split_train_val_test anpassen und testen
     import pdb; pdb.set_trace()
     no_possible_tr_data.reverse()
     for num in no_possible_tr_data:
         del geojson_dict["features"][num]
-        # TODO: wofür??
-        possible_tr_data = [x - 1 if x > num else x for x in possible_tr_data]
-        no_possible_tr_data = [
-            x - 1 if x > num else x for x in no_possible_tr_data
-        ]
-    return possible_tr_data, no_possible_tr_data, rm_mapsets, rm_gisrcs
+        # # TODO: wofür??
+        # possible_tr_data = [x - 1 if x > num else x for x in possible_tr_data]
+        # no_possible_tr_data = [
+        #     x - 1 if x > num else x for x in no_possible_tr_data
+        # ]
+    
+    # return possible_tr_data, no_possible_tr_data, rm_mapsets, rm_gisrcs
+    return geojson_dict, rm_mapsets, rm_gisrcs
+
+
+def split_train_val_test(geojson_dict, val_percentage, test_percentage, seed=None):
+    features = geojson_dict["features"]
+    n = len(features)
+
+    n_val = round(n * val_percentage / 100)
+    n_test = round(n * test_percentage / 100)
+
+    # random split of train-val-test tiles
+    idx = list(range(n))
+    random.Random(seed).shuffle(idx)
+
+    val_idx = set(idx[:n_val])
+    test_idx = set(idx[n_val:n_val + n_test])
+
+    for i, feat in enumerate(features):
+        props = feat["properties"]
+        # TODO: exclude the no part
+        props["validation"] = "yes" if i in val_idx else "no"
+        props["testing"] = "yes" if i in test_idx else "no"
+        props["training"] = "no" if (i in val_idx or i in test_idx) else "yes"
+
+    return geojson_dict
 
 
 def export_tindex(output_dir, geojson_dict, etc_path) -> list:

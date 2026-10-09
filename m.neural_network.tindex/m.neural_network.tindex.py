@@ -308,7 +308,7 @@ def main() -> None:
             
         if not flags["s"]:
             # Check if tile has no null cells inside and can be used for training
-            possible_tr_data, no_possible_tr_data, rm_mapsets_rm_ncells, rm_gisrcs_rm_ncells = (
+            geojson_dict, rm_mapsets_rm_ncells, rm_gisrcs_rm_ncells = (
                 remove_tiles_with_null_cells(
                     nprocs,
                     ID,
@@ -327,28 +327,29 @@ def main() -> None:
         # train-val-test split
         if flags["t"]:
             import pdb; pdb.set_trace()
-            num_val_tiles = round(val_percentage / 100.0 * len(possible_tr_data))
-            num_test_tiles = round(test_percentage / 100.0 * len(possible_tr_data))
-            random.shuffle(possible_tr_data)
-            val_tiles = possible_tr_data[:num_val_tiles]
-            test_tiles = possible_tr_data[num_val_tiles:num_val_tiles + num_test_tiles]
-            train_tiles = [
-                x
-                for x in possible_tr_data
-                if x not in val_tiles and x not in test_tiles
-            ]
-            grass.message(
-                _(
-                    f"Selected {len(val_tiles)} tiles as validation tiles, "
-                    f"{len(test_tiles)} as testing tiles and "
-                    f"{len(train_tiles)} as training tiles.",
-                ),
-            )
-            # TODO: train, val, test
-            for tr_tile in train_tiles:
-                geojson_dict["features"][tr_tile]["properties"][
-                    "training"
-                ] = "TODO"
+            # TODO: use split_train_val_test??
+            # num_val_tiles = round(val_percentage / 100.0 * len(possible_tr_data))
+            # num_test_tiles = round(test_percentage / 100.0 * len(possible_tr_data))
+            # random.shuffle(possible_tr_data)
+            # val_tiles = possible_tr_data[:num_val_tiles]
+            # test_tiles = possible_tr_data[num_val_tiles:num_val_tiles + num_test_tiles]
+            # train_tiles = [
+            #     x
+            #     for x in possible_tr_data
+            #     if x not in val_tiles and x not in test_tiles
+            # ]
+            # grass.message(
+            #     _(
+            #         f"Selected {len(val_tiles)} tiles as validation tiles, "
+            #         f"{len(test_tiles)} as testing tiles and "
+            #         f"{len(train_tiles)} as training tiles.",
+            #     ),
+            # )
+            # # TODO: train, val, test
+            # for tr_tile in train_tiles:
+            #     geojson_dict["features"][tr_tile]["properties"][
+            #         "training"
+            #     ] = "TODO"
 
     # export tindex
     rm_files_exp_tind = export_tindex(output_dir, geojson_dict, etc_path)
