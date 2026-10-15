@@ -147,6 +147,7 @@ sys.path.insert(
         os.path.dirname(sys.path[0]), "etc", "m.neural_network.tindex"
     ),
 )
+# pylint: disable=C0413
 from tindex_helper import (
     check_tile_intersection_with_aoi,
     export_tindex,

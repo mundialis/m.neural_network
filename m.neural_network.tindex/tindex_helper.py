@@ -281,7 +281,7 @@ def check_tile_intersection_with_aoi(
 
 def remove_tiles_with_null_cells(
     nprocs,
-    id,
+    var_id,
     image_band,
     cur_mapset,
     res,
@@ -302,7 +302,7 @@ def remove_tiles_with_null_cells(
             south = tile["geometry"]["coordinates"][0][2][1]
             west = tile["geometry"]["coordinates"][0][0][0]
             east = tile["geometry"]["coordinates"][0][1][0]
-            new_mapset = f"tmp_mapset_{id}_{tile_id}"
+            new_mapset = f"tmp_mapset_{var_id}_{tile_id}"
             rm_mapsets.append(new_mapset)
             # Create new env with new GISRC, to avoid parallel access of same GISRC
             orig_mapset, worker_env, worker_gisrc = create_grass_env(
