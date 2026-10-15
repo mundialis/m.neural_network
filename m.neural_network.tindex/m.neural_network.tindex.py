@@ -248,7 +248,6 @@ def main() -> None:
 
     # get addon etc path
     etc_path = get_lib_path(modname="m.neural_network.tindex")
-    # TODO: update qml files (train and apply mode?)
     if etc_path is None:
         grass.fatal("Unable to find qml files!")
 
