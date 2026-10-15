@@ -31,6 +31,16 @@ from grass_gis_helpers.general import check_installed_addon, set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
 from grass_gis_helpers.parallel import check_parallel_errors, create_grass_env
 
+TINDEX_ATTR_DEFAULT = {
+    "fid": "fid_TODO",
+    "name": "tile_name_TODO",
+    "path": "",
+    "training": "no",
+    "validation": "no",
+    "testing": "no",
+    "apply": "no",
+}
+
 def make_grid(tile_size, tile_overlap, resolution, region, suffix):
     # parameter for tiles
     tile_size_map_units = tile_size * resolution
@@ -38,8 +48,8 @@ def make_grid(tile_size, tile_overlap, resolution, region, suffix):
 
     # start values
     north = region["n"]
-    num_tiles_row = round(region["rows"] / (tile_size - tile_overlap) + 0.5)
-    num_tiles_col = round(region["cols"] / (tile_size - tile_overlap) + 0.5)
+    num_tiles_row = ceil(region["rows"] / (tile_size - tile_overlap))
+    num_tiles_col = ceil(region["cols"] / (tile_size - tile_overlap))
     num_zeros = max([len(str(num_tiles_row)), len(str(num_tiles_col))])
     num_tiles_total = num_tiles_col * num_tiles_row
 
@@ -103,15 +113,7 @@ def init_tindex_elements():
     """Generate single feature elements for tile index"""
     return {
                 "type": "Feature",
-                "properties": {
-                    "fid": "fid_TODO",
-                    "name": "tile_name_TODO",
-                    "path": "",
-                    "training": "no",
-                    "validation": "no",
-                    "testing": "no",
-                    "apply": "no",
-                },
+                "properties": TINDEX_ATTR_DEFAULT.copy(),
                 "geometry": {
                     "type": "Polygon",
                     "coordinates": [
@@ -151,6 +153,61 @@ def add_tile_to_tindex(
         ],
     ]
 
+def make_2level_grid(
+        num_tiles_ind_group_row,
+        num_tiles_ind_group_col,
+        tile_size,
+        tile_overlap,
+        res,
+        reg,
+        suffix,
+    ):
+
+    step_px = tile_size - tile_overlap
+    # level1-block tile-size
+    block_px_r = num_tiles_ind_group_row * step_px + tile_overlap
+    block_px_c = num_tiles_ind_group_col * step_px + tile_overlap
+    # level1-block tile-size in map units
+    block_r_mu = block_px_r * res
+    block_c_mu = block_px_c * res
+    # total fitting number of level1-blocks in row and column direction
+    num_blocks_row = ceil(reg["rows"] / block_px_r)
+    num_blocks_col = ceil(reg["cols"] / block_px_c)
+    # helper variable for formatting indices
+    ind_zeros = max(len(str(num_blocks_row)), len(str(num_blocks_col)))
+
+    all_features = []
+    for brow in range(num_blocks_row):
+        for bcol in range(num_blocks_col):
+            # index for level1-block
+            block_id = f"{str(brow).zfill(ind_zeros)}{str(bcol).zfill(ind_zeros)}"
+
+            # adjust region-dict for current level1-block
+            # (starting from top left)
+            # (just parse dict, no need to change region)
+            block_region = {
+                "n": reg["n"] - brow * block_r_mu,
+                "w": reg["w"] + bcol * block_c_mu,
+                "rows": num_tiles_ind_group_row * step_px,
+                "cols": num_tiles_ind_group_col * step_px,
+            }
+            block_suffix = f"block_{block_id}" + (f"_{suffix}" if suffix else "")
+
+            epsg_code, block_geojson_dict = make_grid(
+                tile_size, tile_overlap, res, block_region, block_suffix
+            )
+            for feat in block_geojson_dict["features"]:
+                # combine block id and tile id for unique tile id in tindex
+                feat["properties"]["fid"] = f"{block_id}_{feat['properties']['fid']}"
+                # add attribute with only block id
+                feat["properties"]["block"] = block_id
+                all_features.append(feat)
+
+    # initialize tindex and append all features of all blocks
+    geojson_dict = init_tindex(0, epsg_code)
+    geojson_dict["features"] = all_features
+    return epsg_code, geojson_dict
+
 
 def check_tile_intersection_with_aoi(
     aoi_buf, aoi_intersection, epsg_code, geojson_dict
@@ -178,17 +235,13 @@ def check_tile_intersection_with_aoi(
     )
     # cleanup columns
     for col in grid_aoi_gdf.columns:
-        print(col)
-        if col not in {
-            "geometry",
-            "fid",
-            "name",
-            "path",
-            "training",
-            "testing",
-        }:
+        # print(col)
+        # "block"-attributes only for 2-level-grid 
+        if col not in TINDEX_ATTR_DEFAULT.keys() and col != "geometry" and col != "block":
             grid_aoi_gdf.drop(col, axis=1, inplace=True)
     geojson_dict["features"] = grid_aoi_gdf.to_geo_dict()["features"]
+    
+    return geojson_dict
 
 
 def remove_tiles_with_null_cells(
@@ -260,42 +313,70 @@ def remove_tiles_with_null_cells(
         else:
             no_possible_tr_data.append(num)
     # remove tiles without data
-    # TODO: blcok hier drunter weg -> nur noch mit dict direkt weiter arbeiten??
-        # siehe dazu auch funktion split_train_val_test anpassen und testen
-    import pdb; pdb.set_trace()
     no_possible_tr_data.reverse()
     for num in no_possible_tr_data:
         del geojson_dict["features"][num]
-        # # TODO: wofür??
-        # possible_tr_data = [x - 1 if x > num else x for x in possible_tr_data]
-        # no_possible_tr_data = [
-        #     x - 1 if x > num else x for x in no_possible_tr_data
-        # ]
+
     
-    # return possible_tr_data, no_possible_tr_data, rm_mapsets, rm_gisrcs
     return geojson_dict, rm_mapsets, rm_gisrcs
 
 
-def split_train_val_test(geojson_dict, val_percentage, test_percentage, seed=None):
-    features = geojson_dict["features"]
-    n = len(features)
+def split_train_val_test(
+        geojson_dict,
+        val_percentage,
+        test_percentage,
+        seed=None,
+        by_block=False,
+    ):
 
+    features = geojson_dict["features"]
+
+    # Determine keys for splitting: 
+    # per default: each tile
+    # for two level: level1-block attribute
+    if by_block and all("block" in f["properties"] for f in features):
+        keys = [f["properties"]["block"] for f in features]
+    else:
+        keys = list(range(len(features)))
+
+    # unique groups, dependent on splitting keys
+    groups = sorted(set(keys))
+    n = len(groups)
     n_val = round(n * val_percentage / 100)
     n_test = round(n * test_percentage / 100)
 
-    # random split of train-val-test tiles
-    idx = list(range(n))
-    random.Random(seed).shuffle(idx)
+    # random split of train-val-test tile groups
+    random.Random(seed).shuffle(groups)
+    val_groups = set(groups[:n_val])
+    test_groups = set(groups[n_val:n_val + n_test])
 
-    val_idx = set(idx[:n_val])
-    test_idx = set(idx[n_val:n_val + n_test])
-
-    for i, feat in enumerate(features):
+    n_val_tiles = n_test_tiles = 0
+    # for each feature check which train-val-test group it is part of
+    for feat, key in zip(features, keys):
         props = feat["properties"]
-        # TODO: exclude the no part
-        props["validation"] = "yes" if i in val_idx else "no"
-        props["testing"] = "yes" if i in test_idx else "no"
-        props["training"] = "no" if (i in val_idx or i in test_idx) else "yes"
+        is_val = key in val_groups
+        is_test = key in test_groups
+        props["validation"] = "yes" if is_val else "no"
+        props["testing"] = "yes" if is_test else "no"
+        props["training"] = "no" if (is_val or is_test) else "yes"
+        n_val_tiles += is_val
+        n_test_tiles += is_test
+
+    n_train_tiles = len(features) - n_val_tiles - n_test_tiles
+    if by_block:  
+        grass.message(
+            _(
+                f"Selected {n - n_val - n_test} training blocks, {n_val} validation "
+                f"blocks and {n_test} testing blocks, i.e.:",
+            ),
+        )
+    grass.message(
+        _(
+            f"Selected {n_train_tiles} tiles as training tiles,"
+            f" {n_val_tiles} tiles as validation tiles,"
+            f" {n_test_tiles} tiles as testing tiles."
+        ),
+    )
 
     return geojson_dict
 
@@ -334,211 +415,3 @@ def export_tindex(output_dir, geojson_dict, etc_path) -> list:
     shutil.copyfile(qml_src_file, qml_dest_file)
 
     return rm_files
-
-
-
-
-
-
-
-
-
-
-
-#########################
-
-#########################
-#########################
-#########################
-#########################
-
-
-def mkgrid_old(gdf, config, level):
-    """Computes the coordinates of the bottom left corner of each tile.
-    
-    Parameters:
-        gdf:        GeoDataFrame for which grid will be calculated
-        config:     config dictionary with required settings
-        level:      level of grid creation (l1 or l2)
-
-    Returns:
-        grid:       numpy array with coordinates of bottom left corner
-    """
-
-    # Get bounding box coordinates:
-    x_min, y_min, x_max, y_max = gdf.total_bounds
-    x_min = floor(x_min)
-    y_min = floor(y_min)
-    x_max = ceil(x_max)
-    y_max = ceil(y_max)
-
-    # For level 1 grid: if given, set start coordinate from config
-    if level == "l1":
-        if ("long_min" in config) and ("lat_min" in config):
-            x_min = config["long_min"]
-            y_min = config["lat_min"]
-
-    # Align start coordinates (bottom left corner) of grid
-    # with reference raster:
-    ref_rast = gdal.Open(config["reference_rast"], gdal.GA_ReadOnly)
-    # See also https://gdal.org/en/stable/tutorials/raster_api_tut.html
-    # (Note that n-s pixel resolution is negative because rows are counted from top to bottom.)
-    ref_rast_geotransform = ref_rast.GetGeoTransform()
-    x_ref = ref_rast_geotransform[0]
-    x_ref_res = ref_rast_geotransform[1]
-    y_ref = ref_rast_geotransform[3]
-    # make n-s resolution positive
-    y_ref_res = -ref_rast_geotransform[5]
-    # close GDAL dataset
-    ref_rast = None
-    # alignment of bottom left corner:
-    # aligned values must not be larger than original values in order to fully cover the aoi
-    x_min_align = x_ref + floor((x_min - x_ref) / x_ref_res) * x_ref_res
-    y_min_align = y_ref - ceil((y_ref - y_min) / y_ref_res) * y_ref_res
-    # same as:
-    # y_min_align = y_ref + floor((y_min - y_ref) / y_ref_res) * y_ref_res
-    # Give warning if l1 start coordinate differs from configuration settings
-    if level == "l1" and ("long_min" in config) and ("lat_min" in config):
-        if x_min != x_min_align:
-            print(f"WARNING: Given start coordinate long_min {config['long_min']} "
-                   "does not align with reference raster. "
-                   f"Adjusting start coordinate to {x_min_align}.")
-        if y_min != y_min_align:
-            print(f"WARNING: Given start coordinate lat_min {config['lat_min']} "
-                   "does not align with reference raster. "
-                   f"Adjusting start coordinate to {y_min_align}.")
-    x_min = x_min_align
-    y_min = y_min_align
-
-    height = y_max - y_min
-    width = x_max - x_min
-
-    if f"overlap_{level}" in config:
-        overlap = config[f"overlap_{level}"]
-        # if overlap/level2 -> remove tile size from max height, to avoid exceeding bounding box
-        tile_size_key = f"tile_size_{level}"
-        height -= config[tile_size_key]
-        width -= config[tile_size_key]
-    elif "overlap" in config:
-        overlap = config["overlap"]
-        tile_size_key = "tile_size"
-    else:
-        overlap = 0
-        tile_size_key = f"tile_size_{level}"
-    # Set stride (if not given, no overlap => stride = tile_size)
-    stride = config[tile_size_key] - overlap
-
-    # Calculate coordinates of bottom left corner
-    grid = []
-    for y in np.arange(0, height + 1, stride):
-        for x in np.arange(0, width + 1, stride):
-            grid.append([x_min + x, y_min + y])
-    
-    # Return grid as numpy array
-    grid = np.array(grid)
-
-    return grid
-
-def grid_np2gdf(grid_np, tile_size, epsg, ind_l1 = None):
-    """Transfrom numpy grid to GeoDataFrame grid
-
-    Parameters:
-        grid_np:    grid as numpy array with coordinates of bottom left corner
-        tile_size:  tile size for grid for generation of polygon tiles
-        epsg:       EPSG-code for creation of GeoDataFrame
-        ind_l1:     Index of corresponding level1 tile (only needed for two level tiling)
-
-    Returns
-        grid_gdf:   grid as GeoDataFrame (with polygon geometry of tiles) 
-    """
-
-    arr_xmin = np.ravel(grid_np[:,0])
-    arr_xmax =arr_xmin + tile_size
-    arr_ymin = np.ravel(grid_np[:,1])
-    arr_ymax = arr_ymin + tile_size
-    df1 = pd.DataFrame({
-        "xmin": arr_xmin,
-        "xmax": arr_xmax,
-        "ymin": arr_ymin,
-        "ymax": arr_ymax,
-    })
-
-    # Only for level two tiling:
-    # set an index of level 1 tile
-    if ind_l1 is not None:
-        arr_ind_l1 = ((arr_ymin*0)+ind_l1).astype("uint32")
-        df2 = pd.DataFrame({"level1_index": arr_ind_l1})
-        # Concat along column axis
-        df1 = pd.concat([df1,df2],axis=1)
-
-    # Create polygons from bottom left corner coordinates + tile size
-    XY_zip = list(zip(df1['xmin'], df1['ymin']))
-    XY_zip_polygon = []
-    for el in XY_zip:
-        list_entry = [
-            el,
-            (el[0],el[1]+tile_size),
-            (el[0]+tile_size,el[1]+tile_size),
-            (el[0]+tile_size,el[1]),
-            el
-            ]
-        XY_zip_polygon.append(list_entry)
-
-    # Append polygon to dataframe
-    df1["coords"] = XY_zip_polygon
-    df1["coords"] = df1["coords"].apply(Polygon)
-
-    # Create GeoDataFrame
-    grid_gdf = gpd.GeoDataFrame(df1, geometry="coords")
-    grid_gdf = grid_gdf.set_crs(epsg)
-
-    return grid_gdf
-
-def grid_within_aoi(grid_gdf, aoi_gdf, predicate):
-    """Extract grid, with given relation to AOI
-
-    Parameters:
-        grid_gdf:       GeoDataFrame of grid
-        aoi_gdf:        GeoDataFrame of AOI
-        predicate:      condition for joining/extraction of GeoDataFrame
-
-    Returns
-        grid_aoi_gdf:   GeoDataFrame of grid for AOI 
-    """
-    # predicate argument see also:
-    # https://geopandas.org/en/stable/docs/user_guide/mergingdata.html#binary-predicate-joins
-    grid_aoi_gdf = gpd.sjoin(
-        left_df = grid_gdf,
-        right_df = aoi_gdf,
-        how = "inner",
-        predicate = predicate)
-    
-    # drop not needed column, created during previous join
-    grid_aoi_gdf = grid_aoi_gdf.drop(columns="index_right")
-    
-    return grid_aoi_gdf
-
-def row_col_index(gdf, tile_size_l1 = None):
-    """Add row and column index for given grid
-
-    Parameters:
-        gdf:            GeoDataFrame of grid
-                        (columns will be appended to given GeoDataFrame)
-        tile_size_l1:   tile size of level1 (only needed for two level grid)
-    """
-    for coord, coord_ind in zip(["ymin", "xmin"],["row", "col"]):
-        # Get unique corrdinates and sort ascending
-        coord_min_unique = gdf[coord].unique()
-        coord_min_unique.sort()
-        coord_min_unique_minimum = coord_min_unique.min()
-        # Map coordinate to index value
-        coord_map_dict = {}
-        rc_ind = 0
-        for val in coord_min_unique:
-            # for level1-tile border: skip one index value
-            if tile_size_l1:
-                if not (val - coord_min_unique_minimum) % tile_size_l1:
-                    rc_ind += 1
-            coord_map_dict[val] = rc_ind
-            rc_ind += 1
-        gdf[coord_ind] = gdf[coord].map(coord_map_dict)

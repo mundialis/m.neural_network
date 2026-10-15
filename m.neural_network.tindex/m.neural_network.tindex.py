@@ -56,7 +56,6 @@
 # % guisection: Optional input
 # %end
 
-# TODO: check if needed for both: train & apply
 # %option
 # % key: suffix
 # % type: string
@@ -94,12 +93,19 @@
 # % guisection: Input
 # %end
 
-# TODO:(row and col indepent wenn möglich)
 # %option
-# % key: num_tiles_ind_group
+# % key: num_tiles_ind_group_row
 # % type: integer
 # % required: no
-# % label: For two level tiling of training tiles: number of tiles in each independent group (level 1 tile)
+# % label: For two level tiling of training tiles: number of tiles in each row per independent group (level 1 tile)
+# % guisection: Input
+# %end
+
+# %option
+# % key: num_tiles_ind_group_col
+# % type: integer
+# % required: no
+# % label: For two level tiling of training tiles: number of tiles in each column per independent group (level 1 tile)
 # % guisection: Input
 # %end
 
@@ -118,6 +124,8 @@
 
 # % requires_all: val_percentage, -t
 # % requires_all: test_percentage, -t
+# % requires_all: num_tiles_ind_group_row, -t
+# % collective: num_tiles_ind_group_row, num_tiles_ind_group_col
 # %end
 # t-flag requires always val_percentage, but it is as default given, so no rule needed/possible
 
@@ -150,7 +158,14 @@ sys.path.insert(
         os.path.dirname(sys.path[0]), "etc", "m.neural_network.tindex"
     ),
 )
-from tindex_helper import make_grid, check_tile_intersection_with_aoi, remove_tiles_with_null_cells, export_tindex
+from tindex_helper import (
+    make_grid,
+    make_2level_grid,
+    check_tile_intersection_with_aoi,
+    remove_tiles_with_null_cells,
+    export_tindex,
+    split_train_val_test,
+)
 # initialize global vars
 ID = grass.tempname(8)
 rm_files = list()
@@ -204,7 +219,8 @@ def main() -> None:
     suffix = options["suffix"]
     val_percentage = int(options["val_percentage"])
     test_percentage = int(options["test_percentage"])
-    num_tiles_ind_group = int(options["num_tiles_ind_group"]) if options["num_tiles_ind_group"] else options["num_tiles_ind_group"]
+    num_tiles_ind_group_row = int(options["num_tiles_ind_group_row"]) if options["num_tiles_ind_group_row"] else options["num_tiles_ind_group_row"]
+    num_tiles_ind_group_col = int(options["num_tiles_ind_group_col"]) if options["num_tiles_ind_group_col"] else options["num_tiles_ind_group_col"]
 
     # checks, which can't be captured via grass parser
     if not flags["t"]:
@@ -212,7 +228,8 @@ def main() -> None:
             "s-flag": flags["s"],
             "val_percentage": val_percentage,
             "test_percentage": test_percentage,
-            "num_tiles_ind_group": num_tiles_ind_group,
+            "num_tiles_ind_group_row": num_tiles_ind_group_row,
+            "num_tiles_ind_group_col": num_tiles_ind_group_col,
         }
         for param in grass_params.items():
             if param[1]:
@@ -282,7 +299,7 @@ def main() -> None:
             # i.e. when complete AOI should be classified, and even a little
             # more tiles are classifed, to ensure gap free classification
             # at the borders of AOI.
-            check_tile_intersection_with_aoi(
+            geojson_dict = check_tile_intersection_with_aoi(
                 aoi_buf, "intersects", epsg_code, geojson_dict
             )
             # Update tindex attribute table
@@ -291,20 +308,32 @@ def main() -> None:
 
     # for training mode
     if flags["t"]:
-        if not num_tiles_ind_group:
-            epsg_code, geojson_dict = make_grid(tile_size, tile_overlap, res, reg, suffix)
+        if not num_tiles_ind_group_row:
+            epsg_code, geojson_dict = make_grid(
+                tile_size,
+                tile_overlap,
+                res,
+                reg,
+                suffix,
+            )
         else:
-            # TODO: two level grid
-            None
-    
-        # TODO: below for two level grid??
+            epsg_code, geojson_dict = make_2level_grid(
+                num_tiles_ind_group_row,
+                num_tiles_ind_group_col,
+                tile_size,
+                tile_overlap,
+                res,
+                reg,
+                suffix,
+            )
         if aoi:
             # -- AOI completely within tiles:
             # Needed for training tiles i.e. when tiles should be completely
             # within AOI (for which input data are prepared).
-            check_tile_intersection_with_aoi(
+            geojson_dict = check_tile_intersection_with_aoi(
                 aoi, "within", epsg_code, geojson_dict
             )
+
             
         if not flags["s"]:
             # Check if tile has no null cells inside and can be used for training
@@ -321,35 +350,14 @@ def main() -> None:
             rm_mapsets.extend(rm_mapsets_rm_ncells)
             rm_gisrcs.extend(rm_gisrcs_rm_ncells)
         else:
-            # TODO?: possible_tr_data
             grass.message(_("Skipping null cell check for tiles!"))
 
         # train-val-test split
-        if flags["t"]:
-            import pdb; pdb.set_trace()
-            # TODO: use split_train_val_test??
-            # num_val_tiles = round(val_percentage / 100.0 * len(possible_tr_data))
-            # num_test_tiles = round(test_percentage / 100.0 * len(possible_tr_data))
-            # random.shuffle(possible_tr_data)
-            # val_tiles = possible_tr_data[:num_val_tiles]
-            # test_tiles = possible_tr_data[num_val_tiles:num_val_tiles + num_test_tiles]
-            # train_tiles = [
-            #     x
-            #     for x in possible_tr_data
-            #     if x not in val_tiles and x not in test_tiles
-            # ]
-            # grass.message(
-            #     _(
-            #         f"Selected {len(val_tiles)} tiles as validation tiles, "
-            #         f"{len(test_tiles)} as testing tiles and "
-            #         f"{len(train_tiles)} as training tiles.",
-            #     ),
-            # )
-            # # TODO: train, val, test
-            # for tr_tile in train_tiles:
-            #     geojson_dict["features"][tr_tile]["properties"][
-            #         "training"
-            #     ] = "TODO"
+        if not num_tiles_ind_group_row:
+            geojson_dict = split_train_val_test(geojson_dict, val_percentage, test_percentage, seed=42)
+        else:
+            geojson_dict = split_train_val_test(geojson_dict, val_percentage, test_percentage, seed=42, by_block=True)
+
 
     # export tindex
     rm_files_exp_tind = export_tindex(output_dir, geojson_dict, etc_path)
