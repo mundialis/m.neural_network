@@ -131,25 +131,14 @@
 
 
 import atexit
-import json
 import os
-import random
 import shutil
 import sys
 
-import geopandas as gpd
-from math import ceil, floor
-import numpy as np
-from osgeo import gdal
-import pandas as pd
-from shapely.geometry import Polygon
 import grass.script as grass
-from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.general import check_installed_addon, set_nprocs
-from grass_gis_helpers.mapset import verify_mapsets
-from grass_gis_helpers.parallel import check_parallel_errors, create_grass_env
 
 # import helper functions file
 sys.path.insert(
@@ -159,13 +148,14 @@ sys.path.insert(
     ),
 )
 from tindex_helper import (
-    make_grid,
-    make_2level_grid,
     check_tile_intersection_with_aoi,
-    remove_tiles_with_null_cells,
     export_tindex,
+    make_2level_grid,
+    make_grid,
+    remove_tiles_with_null_cells,
     split_train_val_test,
 )
+
 # initialize global vars
 ID = grass.tempname(8)
 rm_files = list()
@@ -219,8 +209,16 @@ def main() -> None:
     suffix = options["suffix"]
     val_percentage = int(options["val_percentage"])
     test_percentage = int(options["test_percentage"])
-    num_tiles_ind_group_row = int(options["num_tiles_ind_group_row"]) if options["num_tiles_ind_group_row"] else options["num_tiles_ind_group_row"]
-    num_tiles_ind_group_col = int(options["num_tiles_ind_group_col"]) if options["num_tiles_ind_group_col"] else options["num_tiles_ind_group_col"]
+    num_tiles_ind_group_row = (
+        int(options["num_tiles_ind_group_row"])
+        if options["num_tiles_ind_group_row"]
+        else options["num_tiles_ind_group_row"]
+    )
+    num_tiles_ind_group_col = (
+        int(options["num_tiles_ind_group_col"])
+        if options["num_tiles_ind_group_col"]
+        else options["num_tiles_ind_group_col"]
+    )
 
     # checks, which can't be captured via grass parser
     if not flags["t"]:
@@ -236,11 +234,9 @@ def main() -> None:
                 # Only warning, cause val_percentage and test_percentage
                 # always set (default values)
                 grass.warning(
-                    _(
-                        f"Parameter <{param[0]}> is only used in training mode"
-                    ),
+                    _(f"Parameter <{param[0]}> is only used in training mode"),
                 )
-    
+
     # check tile_size devisible by 16
     if tile_size % 16 != 0:
         grass.fatal(_("<tile_size> is not devisible by 16!"))
@@ -292,7 +288,9 @@ def main() -> None:
 
     # for apply mode
     if not flags["t"]:
-        epsg_code, geojson_dict = make_grid(tile_size, tile_overlap, res, reg, suffix)
+        epsg_code, geojson_dict = make_grid(
+            tile_size, tile_overlap, res, reg, suffix
+        )
         if aoi:
             # -- (buffered) AOI intersects with tiles:
             # Used, when tindex is used for final application of model
@@ -334,7 +332,6 @@ def main() -> None:
                 aoi, "within", epsg_code, geojson_dict
             )
 
-            
         if not flags["s"]:
             # Check if tile has no null cells inside and can be used for training
             geojson_dict, rm_mapsets_rm_ncells, rm_gisrcs_rm_ncells = (
@@ -354,17 +351,23 @@ def main() -> None:
 
         # train-val-test split
         if not num_tiles_ind_group_row:
-            geojson_dict = split_train_val_test(geojson_dict, val_percentage, test_percentage, seed=42)
+            geojson_dict = split_train_val_test(
+                geojson_dict, val_percentage, test_percentage, seed=42
+            )
         else:
-            geojson_dict = split_train_val_test(geojson_dict, val_percentage, test_percentage, seed=42, by_block=True)
-
+            geojson_dict = split_train_val_test(
+                geojson_dict,
+                val_percentage,
+                test_percentage,
+                seed=42,
+                by_block=True,
+            )
 
     # export tindex
     rm_files_exp_tind = export_tindex(output_dir, geojson_dict, etc_path)
     rm_files.extend(rm_files_exp_tind)
 
     grass.message(_("Prepare data done"))
-
 
 
 if __name__ == "__main__":

@@ -16,18 +16,11 @@ import json
 import os
 import random
 import shutil
+from math import ceil
 
 import geopandas as gpd
-from math import ceil, floor
-import numpy as np
-from osgeo import gdal
-import pandas as pd
-from shapely.geometry import Polygon
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
-from grass.pygrass.utils import get_lib_path
-from grass_gis_helpers.cleanup import general_cleanup
-from grass_gis_helpers.general import check_installed_addon, set_nprocs
 from grass_gis_helpers.mapset import verify_mapsets
 from grass_gis_helpers.parallel import check_parallel_errors, create_grass_env
 
@@ -41,7 +34,23 @@ TINDEX_ATTR_DEFAULT = {
     "apply": "no",
 }
 
+
 def make_grid(tile_size, tile_overlap, resolution, region, suffix):
+    """Make a grid of tiles for the given region.
+
+    Args:
+        tile_size (int): Size of each tile in terms of number of cells.
+        tile_overlap (int): Overlap between tiles in terms of number of cells.
+        resolution (float): Resolution of the region in map units per cell.
+        region (dict): Dictionary defining the region with (n,s,e,w,rows,cols)
+        suffix (str): Suffix to append to tile identifiers.
+
+    Returns:
+        tuple:
+            - epsg_code (str): EPSG code of the region's projection.
+            - geojson_dict (dict): Generated tile index as GeoJSON dictionary.
+
+    """
     # parameter for tiles
     tile_size_map_units = tile_size * resolution
     tile_overlap_map_units = tile_overlap * resolution
@@ -88,7 +97,7 @@ def make_grid(tile_size, tile_overlap, resolution, region, suffix):
             west += tile_size_map_units - tile_overlap_map_units
             idx += 1
         north -= tile_size_map_units - tile_overlap_map_units
-    
+
     return epsg_code, geojson_dict
 
 
@@ -103,30 +112,31 @@ def init_tindex(num_tiles_total, epsg_code):
         },
         "features": [
             # Polygon initialized with default values to allocate memory
-            # Do via function to ensure independent objects 
-            init_tindex_elements() for _ in range(num_tiles_total)
-        ]
+            # Do via function to ensure independent objects
+            init_tindex_elements()
+            for _ in range(num_tiles_total)
+        ],
     }
 
 
 def init_tindex_elements():
-    """Generate single feature elements for tile index"""
+    """Generate single feature elements for tile index."""
     return {
-                "type": "Feature",
-                "properties": TINDEX_ATTR_DEFAULT.copy(),
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [
-                        [
-                            [99999.9, 99999.9],
-                            [99999.9, 99999.9],
-                            [99999.9, 99999.9],
-                            [99999.9, 99999.9],
-                            [99999.9, 99999.9],
-                        ],
-                    ],
-                },
-            }
+        "type": "Feature",
+        "properties": TINDEX_ATTR_DEFAULT.copy(),
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [99999.9, 99999.9],
+                    [99999.9, 99999.9],
+                    [99999.9, 99999.9],
+                    [99999.9, 99999.9],
+                    [99999.9, 99999.9],
+                ],
+            ],
+        },
+    }
 
 
 def add_tile_to_tindex(
@@ -153,16 +163,35 @@ def add_tile_to_tindex(
         ],
     ]
 
-def make_2level_grid(
-        num_tiles_ind_group_row,
-        num_tiles_ind_group_col,
-        tile_size,
-        tile_overlap,
-        res,
-        reg,
-        suffix,
-    ):
 
+def make_2level_grid(
+    num_tiles_ind_group_row,
+    num_tiles_ind_group_col,
+    tile_size,
+    tile_overlap,
+    res,
+    reg,
+    suffix,
+):
+    """Make a 2-level grid of tiles for the given region.
+
+    Args:
+        num_tiles_ind_group_row (int): Number of tiles in an independent group
+                                       in row direction.
+        num_tiles_ind_group_col (int): Number of tiles in an independent group
+                                       in column direction.
+        tile_size (int): Size of each tile in terms of number of cells.
+        tile_overlap (int): Overlap between tiles in terms of number of cells.
+        res (float): Resolution of the region in map units per cell.
+        reg (dict): Dictionary defining the region with (n,s,e,w,rows,cols)
+        suffix (str): Suffix to append to tile identifiers.
+
+    Returns:
+        tuple:
+            - epsg_code (str): EPSG code of the region's projection.
+            - geojson_dict (dict): Generated tile index as GeoJSON dictionary.
+
+    """
     step_px = tile_size - tile_overlap
     # level1-block tile-size
     block_px_r = num_tiles_ind_group_row * step_px + tile_overlap
@@ -180,7 +209,9 @@ def make_2level_grid(
     for brow in range(num_blocks_row):
         for bcol in range(num_blocks_col):
             # index for level1-block
-            block_id = f"{str(brow).zfill(ind_zeros)}{str(bcol).zfill(ind_zeros)}"
+            block_id = (
+                f"{str(brow).zfill(ind_zeros)}{str(bcol).zfill(ind_zeros)}"
+            )
 
             # adjust region-dict for current level1-block
             # (starting from top left)
@@ -191,14 +222,18 @@ def make_2level_grid(
                 "rows": num_tiles_ind_group_row * step_px,
                 "cols": num_tiles_ind_group_col * step_px,
             }
-            block_suffix = f"block_{block_id}" + (f"_{suffix}" if suffix else "")
+            block_suffix = f"block_{block_id}" + (
+                f"_{suffix}" if suffix else ""
+            )
 
             epsg_code, block_geojson_dict = make_grid(
                 tile_size, tile_overlap, res, block_region, block_suffix
             )
             for feat in block_geojson_dict["features"]:
                 # combine block id and tile id for unique tile id in tindex
-                feat["properties"]["fid"] = f"{block_id}_{feat['properties']['fid']}"
+                feat["properties"][
+                    "fid"
+                ] = f"{block_id}_{feat['properties']['fid']}"
                 # add attribute with only block id
                 feat["properties"]["block"] = block_id
                 all_features.append(feat)
@@ -236,17 +271,17 @@ def check_tile_intersection_with_aoi(
     # cleanup columns
     for col in grid_aoi_gdf.columns:
         # print(col)
-        # "block"-attributes only for 2-level-grid 
-        if col not in TINDEX_ATTR_DEFAULT.keys() and col != "geometry" and col != "block":
+        # "block"-attributes only for 2-level-grid
+        if col not in TINDEX_ATTR_DEFAULT and col not in {"geometry", "block"}:
             grid_aoi_gdf.drop(col, axis=1, inplace=True)
     geojson_dict["features"] = grid_aoi_gdf.to_geo_dict()["features"]
-    
+
     return geojson_dict
 
 
 def remove_tiles_with_null_cells(
     nprocs,
-    ID,
+    id,
     image_band,
     cur_mapset,
     res,
@@ -267,7 +302,7 @@ def remove_tiles_with_null_cells(
             south = tile["geometry"]["coordinates"][0][2][1]
             west = tile["geometry"]["coordinates"][0][0][0]
             east = tile["geometry"]["coordinates"][0][1][0]
-            new_mapset = f"tmp_mapset_{ID}_{tile_id}"
+            new_mapset = f"tmp_mapset_{id}_{tile_id}"
             rm_mapsets.append(new_mapset)
             # Create new env with new GISRC, to avoid parallel access of same GISRC
             orig_mapset, worker_env, worker_gisrc = create_grass_env(
@@ -317,21 +352,20 @@ def remove_tiles_with_null_cells(
     for num in no_possible_tr_data:
         del geojson_dict["features"][num]
 
-    
     return geojson_dict, rm_mapsets, rm_gisrcs
 
 
 def split_train_val_test(
-        geojson_dict,
-        val_percentage,
-        test_percentage,
-        seed=None,
-        by_block=False,
-    ):
-
+    geojson_dict,
+    val_percentage,
+    test_percentage,
+    seed=None,
+    by_block=False,
+):
+    """Split the tile index into training, validation and testing tiles."""
     features = geojson_dict["features"]
 
-    # Determine keys for splitting: 
+    # Determine keys for splitting:
     # per default: each tile
     # for two level: level1-block attribute
     if by_block and all("block" in f["properties"] for f in features):
@@ -346,13 +380,13 @@ def split_train_val_test(
     n_test = round(n * test_percentage / 100)
 
     # random split of train-val-test tile groups
-    random.Random(seed).shuffle(groups)
+    random.Random(seed).shuffle(groups)  # noqa: S311
     val_groups = set(groups[:n_val])
-    test_groups = set(groups[n_val:n_val + n_test])
+    test_groups = set(groups[n_val : n_val + n_test])
 
     n_val_tiles = n_test_tiles = 0
     # for each feature check which train-val-test group it is part of
-    for feat, key in zip(features, keys):
+    for feat, key in zip(features, keys, strict=False):
         props = feat["properties"]
         is_val = key in val_groups
         is_test = key in test_groups
@@ -363,7 +397,7 @@ def split_train_val_test(
         n_test_tiles += is_test
 
     n_train_tiles = len(features) - n_val_tiles - n_test_tiles
-    if by_block:  
+    if by_block:
         grass.message(
             _(
                 f"Selected {n - n_val - n_test} training blocks, {n_val} validation "
