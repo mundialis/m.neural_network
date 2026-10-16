@@ -4,4 +4,13 @@ PGM = m.neural_network.preparedata_part2
 
 include $(MODULE_TOPDIR)/include/Make/Script.make
 
-default: script
+default: script $(PGM).md $(PGM).html
+
+$(PGM).md: README.md
+	$(INSTALL_DATA)  README.md $(PGM).md
+
+$(PGM).html: $(PGM).md
+	echo "Creating extensions html file..."
+	pandoc -f markdown+hard_line_breaks -t html $(PGM).md -o $(PGM).html
+	sed -i 's+<br />+<br>+g' $(PGM).html
+	sed -i 's+"image-alt" />+"image-alt">+g' $(PGM).html
