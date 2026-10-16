@@ -27,13 +27,23 @@ results from other runs.
 ```sh
 # for apply mode:
 m.neural_network.tindex aoi=aoi image_band=dop_red output_dir=/mnt/data/ tile_size=1024 tile_overlap=256
+```
+Could look like this:
+![apply_mode.png](./example_images/apply_mode.png)
 
+```sh
 # for train mode: normal grid and skip null-cell check
 m.neural_network.tindex aoi=aoi image_band=dop_red output_dir=/mnt/data/ -t -s
+```
+Could look like this:
+![train_mode_single_level_grid.png](./example_images/train_mode_single_level_grid.png)
 
+```sh
 # for train mode: two-level-grid with 10 % test data (and default 20 % validation)
 m.neural_network.tindex aoi=aoi image_band=dop_red output_dir=/mnt/data/ -t num_tiles_ind_group_row=4 num_tiles_ind_group_col=2 test_percentage=10
 ```
+Could look like this:
+![train_mode_two_level_grid.png](./example_images/train_mode_two_level_grid.png)
 
 ## SEE ALSO
 

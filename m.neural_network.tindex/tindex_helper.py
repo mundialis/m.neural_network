@@ -385,7 +385,9 @@ def split_train_val_test(
     test_groups = set(groups[n_val : n_val + n_test])
 
     n_val_tiles = n_test_tiles = 0
-    # for each feature check which train-val-test group it is part of
+    # for each feature check which train-val-test group it is part of.
+    # for two level grid, all tiles of a level1-block
+    # are assigned to the same type (train/val/test)
     for feat, key in zip(features, keys, strict=False):
         props = feat["properties"]
         is_val = key in val_groups
