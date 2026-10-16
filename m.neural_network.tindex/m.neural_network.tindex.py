@@ -246,7 +246,8 @@ def main() -> None:
         "v.out.geojson", url="https://github.com/mundialis/v.out.geojson"
     )
     check_installed_addon(
-        "m.neural_network.worker_nullcells", url="https://github.com/mundialis/m.neural_network/tree/main/m.neural_network.worker_nullcells"
+        "m.neural_network.worker_nullcells",
+        url="https://github.com/mundialis/m.neural_network/tree/main/m.neural_network.worker_nullcells",
     )
 
     # get addon etc path
