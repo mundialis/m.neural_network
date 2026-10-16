@@ -1,8 +1,8 @@
 ## DESCRIPTION
 
-*m.neural_network.preparedata_part1.worker_nullcells* is used within
-*m.neural_network.preparedata_part1* to analyse the number of null cells
-in parallel.
+*m.neural_network.worker_nullcells* is used within
+*m.neural_network.tindex* to analyse the number of null cells
+of imagery data for training mode in parallel.
 
 ## SEE ALSO
 
