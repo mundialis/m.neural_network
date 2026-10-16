@@ -5,7 +5,7 @@ the data preparation. It will be used with
 *m.neural_network.preparedata_part1* and *m.neural_network.preparedata_part2*.
 
 There are in general two modes: apply and training mode.<br>
-Default is apply mode: tindex will be created with given *tile_size* and *tile_overlap* and it is taken care, that the tindex rather exceeds the AOI, to ensure a gap free classificatioin.<br>
+Default is **apply mode**: tindex will be created with given *tile_size* and *tile_overlap* and it is taken care, that the tindex rather exceeds the AOI, to ensure a gap free classificatioin.<br>
 For training mode the *-t*-flag must be used.
 As for apply mode, the tindex is created based on *tile_size* and *tile_overlap*. In contrast to apply mode it is ensured, that only tiles fully within the AOI are selected (to ensure no-data-free image-label-pairs).
 Additionally the given input data can be checked for null-cells with *-s*-flag (tiles including null-cells will be removed from tindex).
