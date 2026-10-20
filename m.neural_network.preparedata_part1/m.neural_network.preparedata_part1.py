@@ -430,12 +430,11 @@ def export_tile(
     south = str(tile_bounds[1])
     west = str(tile_bounds[0])
     east = str(tile_bounds[2])
-    if tile_type == "apply":
-        if i % 100 == 0:
-            # print only every 100-th entry
-            grass.message(
-                _(f"Exporting: apply tile {i} of {len(tindex_gdf_tiles)}"),
-            )
+    if tile_type == "apply" and i % 100 == 0:
+        # print only every 100-th entry
+        grass.message(
+            _(f"Exporting: apply tile {i} of {len(tindex_gdf_tiles)}"),
+        )
     if tile_type == "training":
         grass.message(
             _(
