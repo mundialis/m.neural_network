@@ -278,7 +278,6 @@ def main() -> None:
         )
         label_file = os.path.join(output_dir, f"label_{tile_name}.gpkg")
         create_seg = False
-        # TODO: segmentation only done, if reference map given??
         if reference:
             grass.run_command(
                 "v.clip",
