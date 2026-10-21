@@ -1,26 +1,36 @@
 ## DESCRIPTION
 
-*m.neural_network.preparedata_part1* prepares tiles for the labeling
-process as part of the training data preparation of a neural network
-using DOPs and nDSM as input data. Additionally, a tile index containing
-information about the labeled status is created.
+*m.neural_network.preparedata_part1* export tiles for the labeling
+process (as part of the training data preparation of a neural network) or for model application, using imagery (e.g. DOPs) and optional nDSM as input data.<br>
+Additionally, reference labels can be given for training data preparation. Expect attribute `class_number` with the labeled class values within reference data.
+If attribute not given, these column will be added and initialized with value `0`.<br>
+The addon expects a tileindex as input, including information about the extent of the tiles and if they are used for training or application of a neural network.
 
-The *suffix* option may be used to add a suffix to each output tile/file
-in order to create unique tile IDs that can later be combined with
-results from other runs.
 
 ## EXAMPLES
 
-### Prepare the labeling of training data for a neural network with a tile_size of 512
+### Prepare the training or apply data for a neural network
+
+Note: information which type (training or apply) given within tindex
 
 ```sh
-m.neural_network.preparedata_part1 image_bands=top_red_02,top_green_02,top_blue_02,top_nir_02 ndsm=ndsm tile_size=512 output_dir=/mnt/data/ nprocs=7
+m.neural_network.preparedata_part1 tindex=/mnt/data/tindex.gpkg image_bands=top_red_02,top_green_02,top_blue_02,top_nir_02 ndsm=ndsm output_dir=/mnt/data/prepare_part1 nprocs=7
 ```
 
-### Prepare training data and computing ndsm on the fly (Note: will be kept within mapset, where Addon is executed)
+### Prepare data and computing ndsm on the fly
+
+Note: will be kept within mapset, where Addon is executed
 
 ```sh
-m.neural_network.preparedata_part1 image_bands=top_red_02,top_green_02,top_blue_02,top_nir_02 dsm=dsm dtm=dtm ndsm_out=ndsm tile_size=512 output_dir=/mnt/data/ nprocs=7
+m.neural_network.preparedata_part1 tindex=/mnt/data/tindex.gpkg image_bands=top_red_02,top_green_02,top_blue_02,top_nir_02 dsm=dsm dtm=dtm ndsm_out=ndsm output_dir=/mnt/data/prepare_part1 nprocs=7
+```
+
+### Prepare training data without ndsm but reference labels
+
+Note: label preparation, requires flag `-l`
+
+```sh
+m.neural_network.preparedata_part1 tindex=/mnt/data/tindex.gpkg image_bands=top_red_02,top_green_02,top_blue_02,top_nir_02 reference=reference_labels -l output_dir=/mnt/data/prepare_part1 nprocs=7
 ```
 
 ## SEE ALSO
