@@ -104,7 +104,6 @@
 
 
 import atexit
-import geopandas as gpd
 import os
 from pathlib import Path
 import shutil
