@@ -268,14 +268,15 @@ def main() -> None:
 
     # segmentation or clip reference data
     if l_flag:
-        # unscaled ndom export (as helper map for labeling)
-        grass.run_command(
-            "r.out.gdal",
-            input=ndsm,
-            output=os.path.join(output_dir, f"ndsm_{tile_name}.tif"),
-            createopt="COMPRESS=LZW",
-            **EXPORT_PARAM,
-        )
+        if ndsm:
+            # unscaled ndom export (as helper map for labeling)
+            grass.run_command(
+                "r.out.gdal",
+                input=ndsm,
+                output=os.path.join(output_dir, f"ndsm_{tile_name}.tif"),
+                createopt="COMPRESS=LZW",
+                **EXPORT_PARAM,
+            )
         label_file = os.path.join(output_dir, f"label_{tile_name}.gpkg")
         create_seg = False
         if reference:
@@ -315,11 +316,6 @@ def main() -> None:
         else:
             create_seg = True
         if create_seg:
-            ndsm_range = grass.parse_command(
-                "r.info",
-                map=ndsm_scaled,
-                flags="r",
-            )
             # create copy of imagery group in current mapset
             image_bands_group_name = image_bands_group.split("@")[0]
             image_bands_group_tmp = f"{image_bands_group_name}_tmp"
@@ -329,13 +325,19 @@ def main() -> None:
                 quiet=True,
             )
             # add ndsm_scaled to imagery group
-            if ndsm_range["min"] != ndsm_range["max"]:
-                grass.run_command(
-                    "i.group",
-                    group=image_bands_group_tmp,
-                    input=ndsm_scaled,
-                    quiet=True,
+            if ndsm_scaled:
+                ndsm_range = grass.parse_command(
+                    "r.info",
+                    map=ndsm_scaled,
+                    flags="r",
                 )
+                if ndsm_range["min"] != ndsm_range["max"]:
+                    grass.run_command(
+                        "i.group",
+                        group=image_bands_group_tmp,
+                        input=ndsm_scaled,
+                        quiet=True,
+                    )
             grass.run_command(
                 "i.segment",
                 group=image_bands_group_tmp,

@@ -125,6 +125,7 @@
 # %rules
 # % exclusive: ndsm, ndsm_out
 # % requires_all: dsm, dtm, ndsm_out
+# % requires: reference, -l
 # %end
 
 
