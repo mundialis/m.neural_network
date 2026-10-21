@@ -114,6 +114,12 @@
 # % guisection: Optional input
 # %end
 
+# %option G_OPT_F_INPUT
+# % key: label_qml
+# % description: Optional qml file, for training data or rather exported label files
+# % required: no
+# %end
+
 # %option
 # % key: imagery_export_type
 # % type: string
@@ -202,6 +208,7 @@ def main() -> None:
     reference = options["reference"]
     segmentation_minsize = int(options["segmentation_minsize"])
     segmentation_threshold = float(options["segmentation_threshold"])
+    label_qml = options["label_qml"]
     imagery_export_type = options["imagery_export_type"]
     output_dir = options["output_dir"]
     l_flag = flags["l"]
@@ -371,7 +378,10 @@ def main() -> None:
                 quiet=True,
             )
         # copy qml file
-        qml_src_file = os.path.join(etc_path, "qml", "label.qml")
+        if not label_qml:
+            qml_src_file = os.path.join(etc_path, "qml", "label.qml")
+        else:
+            qml_src_file = label_qml
         qml_dest_file = os.path.join(output_dir, f"label_{tile_name}.qml")
         shutil.copyfile(qml_src_file, qml_dest_file)
 

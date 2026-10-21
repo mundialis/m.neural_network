@@ -105,6 +105,12 @@
 # % answer: 255
 # %end
 
+# %option G_OPT_F_INPUT
+# % key: label_qml
+# % description: Optional qml file, for training data or rather exported label files
+# % required: no
+# %end
+
 # %option G_OPT_M_DIR
 # % key: output_dir
 # % multiple: no
@@ -197,6 +203,7 @@ def main() -> None:
     segmentation_threshold = float(options["segmentation_threshold"])
     imagery_scale_min = int(options["imagery_scale_min"])
     imagery_scale_max = int(options["imagery_scale_max"])
+    label_qml = options["label_qml"]
     output_dir = options["output_dir"]
     nprocs = set_nprocs(int(options["nprocs"]))
 
@@ -343,6 +350,7 @@ def main() -> None:
                 reference,
                 segmentation_minsize,
                 segmentation_threshold,
+                label_qml,
             )
             queue_export_tr.put(worker_export_tr)
         queue_export_tr.wait()
@@ -422,6 +430,7 @@ def export_tile(
     reference=None,
     segmentation_minsize=None,
     segmentation_threshold=None,
+    label_qml=None,
 ):
     """Export training or apply tile."""
     tile_name = tile.name
@@ -475,6 +484,7 @@ def export_tile(
                 "reference": reference,
                 "segmentation_minsize": segmentation_minsize,
                 "segmentation_threshold": segmentation_threshold,
+                "label_qml": label_qml,
                 "flags": "l" if flags["l"] else "",
             }
         )
