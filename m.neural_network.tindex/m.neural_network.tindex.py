@@ -125,9 +125,9 @@
 # % requires_all: val_percentage, -t
 # % requires_all: test_percentage, -t
 # % requires_all: num_tiles_ind_group_row, -t
+# % requires_all: -s, -t
 # % collective: num_tiles_ind_group_row, num_tiles_ind_group_col
 # %end
-# t-flag requires always val_percentage, but it is as default given, so no rule needed/possible
 
 
 import atexit
@@ -220,23 +220,6 @@ def main() -> None:
         if options["num_tiles_ind_group_col"]
         else options["num_tiles_ind_group_col"]
     )
-
-    # checks, which can't be captured via grass parser
-    if not flags["t"]:
-        grass_params = {
-            "s-flag": flags["s"],
-            "val_percentage": val_percentage,
-            "test_percentage": test_percentage,
-            "num_tiles_ind_group_row": num_tiles_ind_group_row,
-            "num_tiles_ind_group_col": num_tiles_ind_group_col,
-        }
-        for param in grass_params.items():
-            if param[1]:
-                # Only warning, cause val_percentage and test_percentage
-                # always set (default values)
-                grass.warning(
-                    _(f"Parameter <{param[0]}> is only used in training mode"),
-                )
 
     # check tile_size devisible by 16
     if tile_size % 16 != 0:
