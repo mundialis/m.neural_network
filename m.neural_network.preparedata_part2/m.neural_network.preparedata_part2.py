@@ -107,6 +107,7 @@ import atexit
 import os
 import shutil
 from multiprocessing import Pool
+from pathlib import Path
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
