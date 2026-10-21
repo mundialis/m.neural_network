@@ -109,6 +109,7 @@ import shutil
 from multiprocessing import Pool
 from pathlib import Path
 
+import geopandas as gpd
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass_gis_helpers.cleanup import general_cleanup
