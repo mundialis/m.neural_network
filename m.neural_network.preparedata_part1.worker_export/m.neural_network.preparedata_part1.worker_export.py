@@ -114,6 +114,12 @@
 # % guisection: Optional input
 # %end
 
+# %option G_OPT_F_INPUT
+# % key: label_qml
+# % description: Optional qml file, for training data or rather exported label files
+# % required: no
+# %end
+
 # %option
 # % key: imagery_export_type
 # % type: string
@@ -202,6 +208,7 @@ def main() -> None:
     reference = options["reference"]
     segmentation_minsize = int(options["segmentation_minsize"])
     segmentation_threshold = float(options["segmentation_threshold"])
+    label_qml = options["label_qml"]
     imagery_export_type = options["imagery_export_type"]
     output_dir = options["output_dir"]
     l_flag = flags["l"]
@@ -268,14 +275,15 @@ def main() -> None:
 
     # segmentation or clip reference data
     if l_flag:
-        # unscaled ndom export (as helper map for labeling)
-        grass.run_command(
-            "r.out.gdal",
-            input=ndsm,
-            output=os.path.join(output_dir, f"ndsm_{tile_name}.tif"),
-            createopt="COMPRESS=LZW",
-            **EXPORT_PARAM,
-        )
+        if ndsm:
+            # unscaled ndom export (as helper map for labeling)
+            grass.run_command(
+                "r.out.gdal",
+                input=ndsm,
+                output=os.path.join(output_dir, f"ndsm_{tile_name}.tif"),
+                createopt="COMPRESS=LZW",
+                **EXPORT_PARAM,
+            )
         label_file = os.path.join(output_dir, f"label_{tile_name}.gpkg")
         create_seg = False
         if reference:
@@ -315,11 +323,6 @@ def main() -> None:
         else:
             create_seg = True
         if create_seg:
-            ndsm_range = grass.parse_command(
-                "r.info",
-                map=ndsm_scaled,
-                flags="r",
-            )
             # create copy of imagery group in current mapset
             image_bands_group_name = image_bands_group.split("@")[0]
             image_bands_group_tmp = f"{image_bands_group_name}_tmp"
@@ -329,7 +332,7 @@ def main() -> None:
                 quiet=True,
             )
             # add ndsm_scaled to imagery group
-            if ndsm_range["min"] != ndsm_range["max"]:
+            if ndsm_scaled:
                 grass.run_command(
                     "i.group",
                     group=image_bands_group_tmp,
@@ -369,7 +372,10 @@ def main() -> None:
                 quiet=True,
             )
         # copy qml file
-        qml_src_file = os.path.join(etc_path, "qml", "label.qml")
+        if not label_qml:
+            qml_src_file = os.path.join(etc_path, "qml", "label.qml")
+        else:
+            qml_src_file = label_qml
         qml_dest_file = os.path.join(output_dir, f"label_{tile_name}.qml")
         shutil.copyfile(qml_src_file, qml_dest_file)
 
