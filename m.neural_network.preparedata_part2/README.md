@@ -58,8 +58,16 @@ If a tile is not completely covered either by *class_values* or
 
 ## EXAMPLES
 
+### Prepare training data
+
 ```sh
   m.neural_network.preparedata_part2 input_dir=/mnt/data/prepare_part1 tindex=/mnt/data/tindex.gpkg nprocs=6 class_column=class_number class_values=2 no_class_value=1 output=/mnt/data/prepare_part2
+```
+
+### Prepare application data
+
+```sh
+  m.neural_network.preparedata_part2 input_dir=/mnt/data/prepare_part1 tindex=/mnt/data/tindex.gpkg nprocs=6 output=/mnt/data/prepare_part2
 ```
 
 ## SEE ALSO

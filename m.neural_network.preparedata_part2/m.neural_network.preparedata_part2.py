@@ -171,11 +171,11 @@ def get_tile_infos(in_dir, ttype, tindex_gdf=None):
                 checklist.append(tiledict["label_gpkg"])
                 # check train/val/test type
                 tindex_gdf_tile = tindex_gdf[tindex_gdf["name"] == tile]
-                if tindex_gdf_tile["training"] == "yes":
+                if (tindex_gdf_tile["training"] == "yes").any():
                     tiledict["type"] = "training"
-                elif tindex_gdf_tile["validation"] == "yes":
+                elif (tindex_gdf_tile["validation"] == "yes").any():
                     tiledict["type"] = "validation"
-                elif tindex_gdf_tile["testing"] == "yes":
+                elif (tindex_gdf_tile["testing"] == "yes").any():
                     tiledict["type"] = "testing"
 
             # check if they exist
@@ -292,10 +292,10 @@ def main():
     create_dirs["singleband_vrt_dir"] = dir_out / "singleband_vrts"
 
     if not tindex_gdf_ap_tiles.empty:
-        create_dirs["apply_img_dir"] = dir_out / "apply_images"
+        create_dirs["apply_images_dir"] = dir_out / "apply_images"
 
     if not tindex_gdf_tr_tiles.empty:
-        create_dirs["train_img_dir"] = dir_out / "train_images"
+        create_dirs["train_images_dir"] = dir_out / "train_images"
         create_dirs["train_masks_dir"] = dir_out / "train_masks"
         create_dirs["val_images_dir"] = dir_out / "val_images"
         create_dirs["val_masks_dir"] = dir_out / "val_masks"
@@ -347,13 +347,13 @@ def main():
         out_img_dir = None
         singleband_vrt_dir = create_dirs["singleband_vrt_dir"]
         if tiledict["type"] == "training":
-            out_img_dir = create_dirs["train_img_dir"]
+            out_img_dir = create_dirs["train_images_dir"]
         elif tiledict["type"] == "validation":
-            out_img_dir = create_dirs["val_img_dir"]
+            out_img_dir = create_dirs["val_images_dir"]
         elif tiledict["type"] == "testing":
-            out_img_dir = create_dirs["test_img_dir"]
+            out_img_dir = create_dirs["test_images_dir"]
         elif tiledict["type"] == "apply":
-            out_img_dir = create_dirs["apply_img_dir"]
+            out_img_dir = create_dirs["apply_images_dir"]
         tiledict["out_img_dir"] = out_img_dir
         args = [
             out_img_dir,
