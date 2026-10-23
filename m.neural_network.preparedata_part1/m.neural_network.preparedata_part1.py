@@ -3,8 +3,8 @@
 #
 # MODULE:      m.neural_network.preparedata_part1
 # AUTHOR(S):   Anika Weinmann, Guido Riembauer and Victoria-Leandra Brunn
-# PURPOSE:     Prepare training data as first step for the process of
-#              creating a neural network.
+# PURPOSE:     Prepare data as first step for the process of
+#              creating or applying a neural network.
 # SPDX-FileCopyrightText: (c) 2024-2025 by mundialis GmbH & Co. KG and the
 #              GRASS Development Team
 # SPDX-License-Identifier: GPL-3.0-or-later.
@@ -13,7 +13,7 @@
 """
 
 # %Module
-# % description: Prepare training data for creating a neuronal network
+# % description: Prepare data for creating a neuronal network or applying a neuronal network
 # % keyword: raster
 # % keyword: vector
 # % keyword: export
@@ -105,6 +105,12 @@
 # % answer: 255
 # %end
 
+# %option G_OPT_F_INPUT
+# % key: label_qml
+# % description: Optional qml file, for training data or rather exported label files. If not given, the label.qml within this repo is used for a binary tree classification.
+# % required: no
+# %end
+
 # %option G_OPT_M_DIR
 # % key: output_dir
 # % multiple: no
@@ -117,20 +123,15 @@
 # %end
 
 # %flag
-# % key: t
-# % label: Only training and testing tiles
-# % description: Option for only exporting training and testing tiles
-# %end
-
-# %flag
 # % key: l
-# % label: Prepare labels for training and testing data
-# % description: Option for preparing labels for training and testing data. If not set, only the tiles for the image bands and nDSM are exported, but no segmentation and labeling is performed.
+# % label: Prepare labels for training data
+# % description: Option for preparing labels for training data. If not set, only the tiles for the image bands and nDSM are exported, but no segmentation and labeling is performed.
 # %end
 
 # %rules
 # % exclusive: ndsm, ndsm_out
 # % requires_all: dsm, dtm, ndsm_out
+# % requires: reference, -l
 # %end
 
 
@@ -186,7 +187,7 @@ def main() -> None:
 
     Main function for data preparation.
     Importing tileindex. Creating tiles for label process
-    with DOPs and nDOM split in train and apply tiles. Exporting tiles
+    with DOPs and nDOM tiles. Exporting tiles
     regarding to tileindex and update tileindex with path variable.
     """
     global ORIG_REGION
@@ -202,6 +203,7 @@ def main() -> None:
     segmentation_threshold = float(options["segmentation_threshold"])
     imagery_scale_min = int(options["imagery_scale_min"])
     imagery_scale_max = int(options["imagery_scale_max"])
+    label_qml = options["label_qml"]
     output_dir = options["output_dir"]
     nprocs = set_nprocs(int(options["nprocs"]))
 
@@ -320,17 +322,12 @@ def main() -> None:
     tindex_gdf = gpd.read_file(tindex)
 
     tindex_gdf_tr_tiles = tindex_gdf[
-        (tindex_gdf["training"] == "TODO") | (tindex_gdf["training"] == "yes")
+        (tindex_gdf["training"] == "yes")
+        | (tindex_gdf["validation"] == "yes")
+        | (tindex_gdf["testing"] == "yes")
     ].copy()
-    tindex_gdf_te_tiles = tindex_gdf[
-        (tindex_gdf["testing"] == "TODO") | (tindex_gdf["testing"] == "yes")
-    ].copy()
-    if flags["t"]:
-        tindex_gdf_ap_tiles = gpd.GeoDataFrame()
-    else:
-        tindex_gdf_ap_tiles = tindex_gdf[
-            (tindex_gdf["training"] == "no") & (tindex_gdf["testing"] == "no")
-        ].copy()
+    tindex_gdf_ap_tiles = tindex_gdf[(tindex_gdf["apply"] == "yes")].copy()
+
     # get number of digits of resolution for correct rounding of coordinates
     round_decimals = len(str(res).split(".")[1])
 
@@ -338,51 +335,27 @@ def main() -> None:
     queue_export_tr = ParallelModuleQueue(nprocs=nprocs)
     try:
         for i, tr_tile in enumerate(tindex_gdf_tr_tiles.itertuples(), start=1):
-            worker_export_tr = export_training_test_tile(
+            worker_export_tr = export_tile(
+                "training",
+                tindex_gdf_tr_tiles,
+                tr_tile,
+                i,
+                image_bands_group,
                 ndsm,
+                ndsm_scaled,
+                res,
+                output_dir,
+                imagery_export_type,
+                round_decimals,
                 reference,
                 segmentation_minsize,
                 segmentation_threshold,
-                output_dir,
-                res,
-                ndsm_scaled,
-                image_bands_group,
-                imagery_export_type,
-                tindex_gdf_tr_tiles,
-                round_decimals,
-                i,
-                tr_tile,
+                label_qml,
             )
             queue_export_tr.put(worker_export_tr)
         queue_export_tr.wait()
     except Exception:
         check_parallel_errors(queue_export_tr)
-    verify_mapsets(cur_mapset)
-
-    # loop over testing data
-    queue_export_te = ParallelModuleQueue(nprocs=nprocs)
-    try:
-        for i, te_tile in enumerate(tindex_gdf_te_tiles.itertuples(), start=1):
-            worker_export_te = export_training_test_tile(
-                ndsm,
-                reference,
-                segmentation_minsize,
-                segmentation_threshold,
-                output_dir,
-                res,
-                ndsm_scaled,
-                image_bands_group,
-                imagery_export_type,
-                tindex_gdf_te_tiles,
-                round_decimals,
-                i,
-                te_tile,
-                tr_te_type="test",
-            )
-            queue_export_te.put(worker_export_te)
-        queue_export_te.wait()
-    except Exception:
-        check_parallel_errors(queue_export_te)
     verify_mapsets(cur_mapset)
 
     # If only apply data -> skip existing tiles
@@ -411,17 +384,18 @@ def main() -> None:
     queue_export_ap = ParallelModuleQueue(nprocs=nprocs)
     try:
         for i, ap_tile in enumerate(tindex_gdf_ap_tiles.itertuples(), start=1):
-            worker_export_ap = export_apply_tile(
-                ndsm,
-                output_dir,
-                res,
-                ndsm_scaled,
-                image_bands_group,
-                imagery_export_type,
+            worker_export_ap = export_tile(
+                "apply",
                 tindex_gdf_ap_tiles,
-                round_decimals,
-                i,
                 ap_tile,
+                i,
+                image_bands_group,
+                ndsm,
+                ndsm_scaled,
+                res,
+                output_dir,
+                imagery_export_type,
+                round_decimals,
             )
             queue_export_ap.put(worker_export_ap)
         queue_export_ap.wait()
@@ -429,9 +403,9 @@ def main() -> None:
         check_parallel_errors(queue_export_ap)
     verify_mapsets(cur_mapset)
 
-    # Update tindex
+    # Update tindex (with added/updated path variable)
     tindex_gdf_updated = pd.concat(
-        [tindex_gdf_tr_tiles, tindex_gdf_te_tiles, tindex_gdf_ap_tiles],
+        [tindex_gdf_tr_tiles, tindex_gdf_ap_tiles],
         ignore_index=True,
     )
     if "fid" in tindex_gdf_updated.columns:
@@ -441,93 +415,43 @@ def main() -> None:
     grass.message(_("Prepare data done"))
 
 
-def export_apply_tile(
-    ndsm,
-    output_dir,
-    res,
-    ndsm_scaled,
-    image_bands_group,
-    imagery_export_type,
-    tindex_gdf_ap_tiles,
-    round_decimals,
-    i,
-    ap_tile,
-):
-    """Export apply tile."""
-    tile_name = ap_tile.name
-    tile_path = os.path.join(output_dir, "apply", tile_name)
-    tile_bounds = np.round(ap_tile.geometry.bounds, round_decimals)
-    north = str(tile_bounds[3])
-    south = str(tile_bounds[1])
-    west = str(tile_bounds[0])
-    east = str(tile_bounds[2])
-    if i % 100 == 0:
-        # print only every 100-th entry
-        grass.message(
-            _(f"Exporting: apply tile {i} of {len(tindex_gdf_ap_tiles)}"),
-        )
-    new_mapset = f"tmp_mapset_{ID}_{tile_name}"
-    # update jeojson values
-    tindex_gdf_ap_tiles.at[ap_tile.Index, "path"] = tile_path
-
-    rm_mapsets.append(new_mapset)
-    # Create new env with new GISRC, to avoid parallel access of same GISRC
-    orig_mapset, worker_env, worker_gisrc = create_grass_env(new_mapset)
-    rm_gisrcs.append(worker_gisrc)
-
-    # worker for export
-    worker_export_ap = Module(
-        "m.neural_network.preparedata_part1.worker_export",
-        n=north,
-        s=south,
-        e=east,
-        w=west,
-        res=res,
-        image_bands_group=image_bands_group,
-        tile_name=tile_name,
-        ndsm=ndsm,
-        ndsm_scaled=ndsm_scaled,
-        imagery_export_type=imagery_export_type,
-        output_dir=tile_path,
-        orig_mapset=orig_mapset,
-        run_=False,
-        env_=worker_env,
-    )
-    worker_export_ap.stdout_ = grass.PIPE
-    worker_export_ap.stderr_ = grass.PIPE
-    return worker_export_ap
-
-
-def export_training_test_tile(
-    ndsm,
-    reference,
-    segmentation_minsize,
-    segmentation_threshold,
-    output_dir,
-    res,
-    ndsm_scaled,
-    image_bands_group,
-    imagery_export_type,
+def export_tile(
+    tile_type,
     tindex_gdf_tiles,
-    round_decimals,
-    i,
     tile,
-    tr_te_type="train",
+    i,
+    image_bands_group,
+    ndsm,
+    ndsm_scaled,
+    res,
+    output_dir,
+    imagery_export_type,
+    round_decimals,
+    reference=None,
+    segmentation_minsize=None,
+    segmentation_threshold=None,
+    label_qml=None,
 ):
-    """Export training/test tile."""
+    """Export training or apply tile."""
     tile_name = tile.name
-    tile_path = os.path.join(output_dir, tr_te_type, tile_name)
+    tile_path = os.path.join(output_dir, tile_name)
     tile_bounds = np.round(tile.geometry.bounds, round_decimals)
     north = str(tile_bounds[3])
     south = str(tile_bounds[1])
     west = str(tile_bounds[0])
     east = str(tile_bounds[2])
-    grass.message(
-        _(
-            f"Segmenting and/or Exporting: "
-            f"{tr_te_type}ing tile {i} of {len(tindex_gdf_tiles)}",
-        ),
-    )
+    if tile_type == "apply" and i % 100 == 0:
+        # print only every 100-th entry
+        grass.message(
+            _(f"Exporting: apply tile {i} of {len(tindex_gdf_tiles)}"),
+        )
+    if tile_type == "training":
+        grass.message(
+            _(
+                f"Segmenting and/or Exporting: "
+                f"training tile {i} of {len(tindex_gdf_tiles)}",
+            ),
+        )
     new_mapset = f"tmp_mapset_{ID}_{tile_name}"
     # update gdf values
     tindex_gdf_tiles.at[tile.Index, "path"] = tile_path
@@ -538,31 +462,40 @@ def export_training_test_tile(
     rm_gisrcs.append(worker_gisrc)
 
     # worker for export
-    worker_export_tr = Module(
+    worker_export_kwargs = {
+        "n": north,
+        "s": south,
+        "e": east,
+        "w": west,
+        "res": res,
+        "image_bands_group": image_bands_group,
+        "ndsm": ndsm,
+        "ndsm_scaled": ndsm_scaled,
+        "tile_name": tile_name,
+        "imagery_export_type": imagery_export_type,
+        "output_dir": tile_path,
+        "orig_mapset": orig_mapset,
+        "run_": False,
+        "env_": worker_env,
+    }
+    if tile_type == "training":
+        worker_export_kwargs.update(
+            {
+                "reference": reference,
+                "segmentation_minsize": segmentation_minsize,
+                "segmentation_threshold": segmentation_threshold,
+                "label_qml": label_qml,
+                "flags": "l" if flags["l"] else "",
+            }
+        )
+    worker_export = Module(
         "m.neural_network.preparedata_part1.worker_export",
-        n=north,
-        s=south,
-        e=east,
-        w=west,
-        res=res,
-        image_bands_group=image_bands_group,
-        ndsm=ndsm,
-        ndsm_scaled=ndsm_scaled,
-        tile_name=tile_name,
-        reference=reference,
-        segmentation_minsize=segmentation_minsize,
-        segmentation_threshold=segmentation_threshold,
-        imagery_export_type=imagery_export_type,
-        output_dir=tile_path,
-        orig_mapset=orig_mapset,
-        flags="l" if flags["l"] else "",
-        run_=False,
-        env_=worker_env,
+        **worker_export_kwargs,
     )
-    worker_export_tr.stdout_ = grass.PIPE
-    worker_export_tr.stderr_ = grass.PIPE
+    worker_export.stdout_ = grass.PIPE
+    worker_export.stderr_ = grass.PIPE
 
-    return worker_export_tr
+    return worker_export
 
 
 if __name__ == "__main__":
