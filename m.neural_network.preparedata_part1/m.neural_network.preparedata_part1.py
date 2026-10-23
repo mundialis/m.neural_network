@@ -13,7 +13,7 @@
 """
 
 # %Module
-# % description: Prepare data for creating a neuronal network
+# % description: Prepare data for creating a neuronal network or applying a neuronal network 
 # % keyword: raster
 # % keyword: vector
 # % keyword: export
