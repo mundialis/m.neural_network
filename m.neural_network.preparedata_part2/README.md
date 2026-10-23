@@ -28,7 +28,7 @@ Always:
 If tileindex contains trainining data:
 - *train_images/* and *val_images/* and optional *test_images/*:
   contains tilewise multiband .vrt-files with all
-  imagery bands and optional an ndsm band to be used for training.
+  imagery bands and optional a ndsm band to be used for training.
 - *train_masks/* and *val_masks/* and optional *test_masks/*:
   contains tilewise rasterized .tif label files to be used for training.
 
