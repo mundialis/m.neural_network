@@ -333,18 +333,12 @@ def main() -> None:
             )
             # add ndsm_scaled to imagery group
             if ndsm_scaled:
-                ndsm_range = grass.parse_command(
-                    "r.info",
-                    map=ndsm_scaled,
-                    flags="r",
+                grass.run_command(
+                    "i.group",
+                    group=image_bands_group_tmp,
+                    input=ndsm_scaled,
+                    quiet=True,
                 )
-                if ndsm_range["min"] != ndsm_range["max"]:
-                    grass.run_command(
-                        "i.group",
-                        group=image_bands_group_tmp,
-                        input=ndsm_scaled,
-                        quiet=True,
-                    )
             grass.run_command(
                 "i.segment",
                 group=image_bands_group_tmp,
