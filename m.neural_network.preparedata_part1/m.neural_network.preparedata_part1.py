@@ -107,7 +107,7 @@
 
 # %option G_OPT_F_INPUT
 # % key: label_qml
-# % description: Optional qml file, for training data or rather exported label files
+# % description: Optional qml file, for training data or rather exported label files. If not given, the label.qml within this repo is used for a binary tree classification.
 # % required: no
 # %end
 
