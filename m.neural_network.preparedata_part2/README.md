@@ -1,6 +1,6 @@
 ## DESCRIPTION
 
-*m.neural_network.preparedata_part2* prepares imagery and optional elevation and/or labelled data for training or application of a neural network.
+*m.neural_network.preparedata_part2* prepares imagery and optional elevation and/or labeled data for training or application of a neural network.
 
 While
 [m.neural_network.preparedata_part1](../m.neural_network.preparedata_part1)
