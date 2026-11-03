@@ -11,6 +11,7 @@ ignore = [
     "E402", # import after file join
     "E501", # allow > 79 characters
     "F841",
+    "FBT002", # Boolean default positional argument in function definition
     "FURB101", # `open` and `read` should be replaced by `Path(vrt).read_text(encoding="utf-8")`
     "FURB103", # `open` and `write` should be replaced by `Path(vrt).write_text(data, encoding="utf-8")`
     "INT001",

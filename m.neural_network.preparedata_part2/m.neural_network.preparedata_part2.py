@@ -23,35 +23,17 @@
 # % keyword: preparation
 # %end
 
-# %option G_OPT_M_DIR
-# % key: input_traindir
-# % label: Name of the input training data directory containing subfolders with imagery and labels per tile
-# % required: no
-# % guisection: Input
-# %end
-
-# %option G_OPT_M_DIR
-# % key: input_applydir
-# % label: Name of the input apply data directory containing subfolders with imagery per tile
-# % required: no
-# % guisection: Input
-# %end
-
-# %option
-# % key: val_percentage
-# % type: integer
+# %option G_OPT_F_INPUT
+# % key: tindex
 # % required: yes
-# % label: Percentage of training tiles to be used as validation during training
-# % answer: 20
-# % guisection: Input
+# % label: tindex file for tiling.
+# % description: must be created with m.neural_network.tindex
 # %end
 
-# %option
-# % key: test_percentage
-# % type: integer
+# %option G_OPT_M_DIR
+# % key: input_dir
+# % label: Name of the input directory with data prepared from part1 containing subfolders with imagery and optional ndom and/or labels per tile
 # % required: yes
-# % label: Percentage of training tiles to be used as testing data during training
-# % answer: 0
 # % guisection: Input
 # %end
 
@@ -120,16 +102,14 @@
 # % answer: -2
 # %end
 
-# %rules
-# % required: input_traindir, input_applydir
-# %end
 
 import atexit
 import os
-import random
 import shutil
 from multiprocessing import Pool
+from pathlib import Path
 
+import geopandas as gpd
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass_gis_helpers.cleanup import general_cleanup
@@ -165,7 +145,7 @@ def cleanup():
     general_cleanup(orig_region=ORIG_REGION, rm_dirs=rm_dirs)
 
 
-def get_tile_infos(in_dir, ttype):
+def get_tile_infos(in_dir, ttype, tindex_gdf=None):
     """Read tile-wise directory and saves metadata in a list of dicts."""
     all_tiles = []
     # get all training_tiles and split into training, validation and testing
@@ -189,6 +169,14 @@ def get_tile_infos(in_dir, ttype):
                     f"label_{tile}.gpkg",
                 )
                 checklist.append(tiledict["label_gpkg"])
+                # check train/val/test type
+                tindex_gdf_tile = tindex_gdf[tindex_gdf["name"] == tile]
+                if (tindex_gdf_tile["training"] == "yes").any():
+                    tiledict["type"] = "training"
+                elif (tindex_gdf_tile["validation"] == "yes").any():
+                    tiledict["type"] = "validation"
+                elif (tindex_gdf_tile["testing"] == "yes").any():
+                    tiledict["type"] = "testing"
 
             # check if they exist
             for f in checklist:
@@ -267,10 +255,8 @@ def main():
     """Run training and apply data preparation."""
     global ORIG_REGION
 
-    train_dir_in = options["input_traindir"]
-    apply_dir_in = options["input_applydir"]
-    val_percentage = int(options["val_percentage"])
-    test_percentage = int(options["test_percentage"])
+    input_dir = options["input_dir"]
+    tindex = options["tindex"]
     nprocs = set_nprocs(int(options["nprocs"]))
     class_col = options["class_column"]
     class_values = options["class_values"].split(",")
@@ -287,62 +273,51 @@ def main():
     ORIG_REGION = f"orig_region_{ID}"
     grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
-    try:
-        os.makedirs(output, exist_ok=False)
-    except FileExistsError:
-        grass.fatal(_(f"Directory {output} exists already."))
-
+    if not os.path.isdir(output):
+        os.makedirs(output)
     rm_dirs.append(output)
-    # create folders if they dont exist
-    if train_dir_in:
-        train_dir_out = os.path.join(output, "train")
-        train_train_img_dir = os.path.join(train_dir_out, "train_images")
-        train_train_masks_dir = os.path.join(train_dir_out, "train_masks")
-        train_val_images_dir = os.path.join(train_dir_out, "val_images")
-        train_val_masks_dir = os.path.join(train_dir_out, "val_masks")
-        train_test_images_dir = os.path.join(train_dir_out, "test_images")
-        train_test_masks_dir = os.path.join(train_dir_out, "test_masks")
-        train_singleband_vrt_dir = os.path.join(
-            train_dir_out,
-            "singleband_vrts",
-        )
-        for c_dir in [
-            train_dir_out,
-            train_train_img_dir,
-            train_train_masks_dir,
-            train_val_images_dir,
-            train_val_masks_dir,
-            train_test_images_dir,
-            train_test_masks_dir,
-            train_singleband_vrt_dir,
-        ]:
-            os.makedirs(c_dir, exist_ok=True)
-    else:
-        grass.warning(_("No input training data directory given."))
 
-    if apply_dir_in:
-        apply_dir_out = os.path.join(output, "apply")
-        apply_img_dir = os.path.join(apply_dir_out, "apply_images")
-        apply_singleband_vrt_dir = os.path.join(
-            apply_dir_out,
-            "singleband_vrts",
-        )
-        for c_dir in [
-            apply_dir_out,
-            apply_img_dir,
-            apply_singleband_vrt_dir,
-        ]:
-            os.makedirs(c_dir, exist_ok=True)
-    else:
-        grass.warning(_("No input apply data directory given."))
+    # import tindex and select train or apply tiles
+    tindex_gdf = gpd.read_file(tindex)
+    tindex_gdf_tr_tiles = tindex_gdf[
+        (tindex_gdf["training"] == "yes")
+        | (tindex_gdf["validation"] == "yes")
+        | (tindex_gdf["testing"] == "yes")
+    ].copy()
+    tindex_gdf_ap_tiles = tindex_gdf[(tindex_gdf["apply"] == "yes")].copy()
+
+    # create folders if they dont exist
+    create_dirs = {}
+    dir_out = Path(output)
+    create_dirs["singleband_vrt_dir"] = dir_out / "singleband_vrts"
+
+    if not tindex_gdf_ap_tiles.empty:
+        create_dirs["apply_images_dir"] = dir_out / "apply_images"
+
+    if not tindex_gdf_tr_tiles.empty:
+        create_dirs["train_images_dir"] = dir_out / "train_images"
+        create_dirs["train_masks_dir"] = dir_out / "train_masks"
+        create_dirs["val_images_dir"] = dir_out / "val_images"
+        create_dirs["val_masks_dir"] = dir_out / "val_masks"
+        # Note: Only create dir, if test data given
+        if any(tindex_gdf_tr_tiles["testing"] == "yes"):
+            create_dirs["test_images_dir"] = dir_out / "test_images"
+            create_dirs["test_masks_dir"] = dir_out / "test_masks"
+
+    for create_dir in create_dirs.values():
+        create_dir.mkdir(parents=True, exist_ok=True)
 
     tile_dict_all = []
-    if apply_dir_in:
-        all_apply_tiles = get_tile_infos(apply_dir_in, ttype="apply")
+    if not tindex_gdf_ap_tiles.empty:
+        all_apply_tiles = get_tile_infos(input_dir, ttype="apply")
         tile_dict_all += all_apply_tiles
 
-    if train_dir_in:
-        all_train_tiles = get_tile_infos(train_dir_in, ttype="training")
+    if not tindex_gdf_tr_tiles.empty:
+        all_train_tiles = get_tile_infos(
+            input_dir,
+            ttype="training",
+            tindex_gdf=tindex_gdf_tr_tiles,
+        )
 
         # check the train tiles for wrong values in the label file
         train_gpkgs = [tile["label_gpkg"] for tile in all_train_tiles]
@@ -362,34 +337,7 @@ def main():
                             f"{allowed_vals}.",
                         ),
                     )
-
-        # split into training, testing and validation
-        num_val_tiles = round(val_percentage / 100.0 * len(all_train_tiles))
-        num_test_tiles = round(test_percentage / 100.0 * len(all_train_tiles))
-        random.shuffle(all_train_tiles)
-        val_tiles = all_train_tiles[:num_val_tiles]
-        test_tiles = all_train_tiles[num_val_tiles:num_val_tiles + num_test_tiles]  # fmt: skip
-        train_tiles = [
-            x
-            for x in all_train_tiles
-            if x not in val_tiles and x not in test_tiles
-        ]
-        grass.message(
-            _(
-                f"Selected {len(val_tiles)} tiles as validation tiles, "
-                f"{len(test_tiles)} as testing tiles and "
-                f"{len(train_tiles)} as training tiles.",
-            ),
-        )
-        for d in val_tiles:
-            d["type"] = "validation"
-
-        for d in test_tiles:
-            d["type"] = "testing"
-
-        tile_dict_all += train_tiles
-        tile_dict_all += val_tiles
-        tile_dict_all += test_tiles
+        tile_dict_all += all_train_tiles
 
     # prepare imagery/ndsm data as needed
     # argument list for parallel processing
@@ -397,19 +345,15 @@ def main():
     args = []
     for tiledict in tile_dict_all:
         out_img_dir = None
-        singleband_vrt_dir = None
+        singleband_vrt_dir = create_dirs["singleband_vrt_dir"]
         if tiledict["type"] == "training":
-            out_img_dir = train_train_img_dir
-            singleband_vrt_dir = train_singleband_vrt_dir
+            out_img_dir = create_dirs["train_images_dir"]
         elif tiledict["type"] == "validation":
-            out_img_dir = train_val_images_dir
-            singleband_vrt_dir = train_singleband_vrt_dir
+            out_img_dir = create_dirs["val_images_dir"]
         elif tiledict["type"] == "testing":
-            out_img_dir = train_test_images_dir
-            singleband_vrt_dir = train_singleband_vrt_dir
+            out_img_dir = create_dirs["test_images_dir"]
         elif tiledict["type"] == "apply":
-            out_img_dir = apply_img_dir
-            singleband_vrt_dir = apply_singleband_vrt_dir
+            out_img_dir = create_dirs["apply_images_dir"]
         tiledict["out_img_dir"] = out_img_dir
         args = [
             out_img_dir,
@@ -431,18 +375,18 @@ def main():
         pool.starmap(build_vrts, arglist)
 
     # loop over tiles
-    if train_dir_in:
+    if not tindex_gdf_tr_tiles.empty:
         grass.message(_("Checking and rasterizing labels..."))
         queue = ParallelModuleQueue(nprocs=nprocs)
         try:
-            for tiledict in train_tiles + val_tiles + test_tiles:
+            for tiledict in tile_dict_all:
                 outdir = None
                 if tiledict["type"] == "training":
-                    outdir = train_train_masks_dir
+                    outdir = create_dirs["train_masks_dir"]
                 elif tiledict["type"] == "validation":
-                    outdir = train_val_masks_dir
+                    outdir = create_dirs["val_masks_dir"]
                 elif tiledict["type"] == "testing":
-                    outdir = train_test_masks_dir
+                    outdir = create_dirs["test_masks_dir"]
                 outfile = os.path.join(outdir, f"{tiledict['id']}.tif")
                 new_mapset = f"tmp_mapset_{tiledict['id']}_{ID}"
                 rm_mapsets.append(new_mapset)

@@ -1,13 +1,14 @@
 ## DESCRIPTION
 
-*m.neural_network.preparedata_part2* prepares imagery and labelled data
-for training and application of a neural network.
+*m.neural_network.preparedata_part2* prepares imagery and optional elevation and/or labeled data for training or application of a neural network.
 
 While
-[m.neural_network.preparedata_part1](m.neural_network.preparedata_part1)
+[m.neural_network.preparedata_part1](../m.neural_network.preparedata_part1)
 initially provides a setup for labelling tiles of imagery,
 *m.neural_network.preparedata_part2* rasterizes the vector labels and
 restructures the imagery data.
+
+It uses the tindex created by [m.neural_network.tindex](../m.neural_network.tindex/) to get information about application or training (and further training, validation, testing split) data
 
 ## Notes
 
@@ -15,42 +16,33 @@ It is expected that all data lie in the directory structure and naming
 format as created by
 [m.neural_network.preparedata_part1](m.neural_network.preparedata_part1).
 This data is provided to *m.neural_network.preparedata_part2* via the
-*input_traindir* and *input_applydir* parameters.
-*m.neural_network.preparedata_part2* creates a new directory with the
-two directories *train* and *apply*. Each of these contains the
+*input_dir* parameter.
+*m.neural_network.preparedata_part2* creates within given *output*-directory
 following directories/data:
 
-- *train_images:*: contains tilewise multiband .vrt-files with all
-  imagery bands and an ndsm band to be used for training. This directory
-  is empty in the *apply* dir.
-- *train_masks:*: contains tilewise rasterized .tif label files to be
-  used for training. This directory is empty in the *apply* dir.
-- *val_images:*: contains tilewise multiband .vrt-files with all imagery
-  bands and an ndsm band to be used for validation. This directory holds
-  data both in the *train* and *apply* dirs. In the *train* dir, this
-  data is used for validation during training, while in the *apply* dir,
-  this directory holds all imagery used for prediction.
-- *val_masks:*: contains tilewise rasterized .tif label files to be used
-  for training. This directory is empty in the *apply* dir.
+Always:
 - *singleband_vrts:*: contains singleband .vrts for each imagery band of
   each tile. They are stored here as a basis to create the tilewise
   multiband .vrts.
+
+If tileindex contains trainining data:
+- *train_images/* and *val_images/* and optional *test_images/*:
+  contains tilewise multiband .vrt-files with all
+  imagery bands and optional a ndsm band to be used for training.
+- *train_masks/* and *val_masks/* and optional *test_masks/*:
+  contains tilewise rasterized .tif label files to be used for training.
+
+If tileindex contains application data:
+- *apply_images/*:
+  contains tilewise multiband .vrt-files with all
+  imagery bands and optional an ndsm band to be used for application.
+
 
 In order to save diskspace, all imagery is stored as .vrts, so the
 original datasets (created by
 [m.neural_network.preparedata_part1](m.neural_network.preparedata_part1))
 should not be moved (or *m.neural_network.preparedata_part2* should be
 run again afterwards).
-
-The user can indicate what percentage of the training tiles are used for
-validation and testing (during training) with the *val_percentage* and
-*test_percentage* parameter.
-
-It is not possible to run *m.neural_network.preparedata_part2*
-repeatedly with the same *output* directory, as the training/validation
-split up happens during runtime. Hence,
-*m.neural_network.preparedata_part2* expects that the *output* directory
-does not exist.
 
 With the *class_values* and the *no_class_value* parameters, the user
 defines the allowed range of values in the *class_column* of the
@@ -66,8 +58,16 @@ If a tile is not completely covered either by *class_values* or
 
 ## EXAMPLES
 
+### Prepare training data
+
 ```sh
-  m.neural_network.preparedata_part2 input_traindir=nn_data_with_labels/train input_applydir=nn_data_with_labels/apply nprocs=6 class_column=class_number class_values=2 no_class_value=1 output=nn_data_structured
+  m.neural_network.preparedata_part2 input_dir=/mnt/data/prepare_part1 tindex=/mnt/data/tindex.gpkg nprocs=6 class_column=class_number class_values=2 no_class_value=1 output=/mnt/data/prepare_part2
+```
+
+### Prepare application data
+
+```sh
+  m.neural_network.preparedata_part2 input_dir=/mnt/data/prepare_part1 tindex=/mnt/data/tindex.gpkg nprocs=6 output=/mnt/data/prepare_part2
 ```
 
 ## SEE ALSO
